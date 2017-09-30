@@ -150,6 +150,20 @@ void emitter(int fd) {
 	}
 }
 
+void writeUAMsg(int fd, char* buffer) {
+	// Setting the UA Message
+	buffer[FLAG1_IDX] = MSG_FLAG;
+	buffer[A_IDX] = MSG_A;
+	buffer[C_IDX] = UA_C;
+	buffer[BCC_IDX] = UA_BCC;
+	buffer[FLAG2_IDX] = MSG_FLAG;
+
+	//Writting Message
+	printArray(buffer, sizeof(buffer));
+	int written = write(fd, buffer, 5);
+	printf("written %d\n", written);
+}
+
 void receiver(int fd) {
 	int num_received = 0, res;
 	char buffer[BUF_SIZE];
@@ -165,45 +179,37 @@ void receiver(int fd) {
 	/* Analizing the message received */
 	int i;
 	for (i = 0; i < num_received; i++) {
-		if (i < MSG_SIZE) {
-			switch(i) {
-				case FLAG1_IDX:
-				case FLAG2_IDX:
-					if (buffer[i] != MSG_FLAG) {
-						printf("Received Value of Flag different from expected. Value: 0x%x\n", buffer[i]);
-						return;
-					}
-					break;
-				case A_IDX:
-					if (buffer[i] != MSG_A) {
-						printf("Received Value of Adress Field different from expected. Value: 0x%x\n", buffer[i]);
-						return;
-					}
-					break;
-				case C_IDX:
-					if (buffer[i] != SET_C) {
-						printf("Received Value of Control Field different from expected. Value: 0x%x\n", buffer[i]);
-						return;
-					}
-					break;
-				case BCC_IDX:
-					if (buffer[i] != SET_BCC) {
-						printf("Received Value of Protection Field different from expected. Value: 0x%x\n", buffer[i]);
-						return;
-					}
-					break;
-			}
+		switch(i) {
+			case FLAG1_IDX:
+			case FLAG2_IDX:
+				if (buffer[i] != MSG_FLAG) {
+					printf("Received Value of Flag different from expected. Value: 0x%x\n", buffer[i]);
+					return;
+				}
+				break;
+			case A_IDX:
+				if (buffer[i] != MSG_A) {
+					printf("Received Value of Adress Field different from expected. Value: 0x%x\n", buffer[i]);
+					return;
+				}
+				break;
+			case C_IDX:
+				if (buffer[i] != SET_C) {
+					printf("Received Value of Control Field different from expected. Value: 0x%x\n", buffer[i]);
+					return;
+				}
+				break;
+			case BCC_IDX:
+				if (buffer[i] != SET_BCC) {
+					printf("Received Value of Protection Field different from expected. Value: 0x%x\n", buffer[i]);
+					return;
+				}
+				break;
+			default:
+				printf("Received extra: %x\n", buffer[i]);
 		}
-		else printf("Received extra: %x\n", buffer[i]);
 	}
 
 	/* Re-writting the buffer with the UA message */
-	buffer[FLAG1_IDX] = MSG_FLAG;
-	buffer[A_IDX] = MSG_A;
-	buffer[C_IDX] = UA_C;
-	buffer[BCC_IDX] = UA_BCC;
-	buffer[FLAG2_IDX] = MSG_FLAG;
-	printArray(buffer, sizeof(buffer));
-	int written = write(fd, buffer, 5);
-	printf("written %d\n", written);
-}
+	writeUAMsg(fd, buffer); //Comment this line to try the time out mechanism
+;}
