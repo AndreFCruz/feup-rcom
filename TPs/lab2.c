@@ -79,7 +79,7 @@ int main(int argc, char** argv)
 
 /* 
 	VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
-	leitura do(s) próximo(s) caracter(es)
+	leitura do(s) prï¿½ximo(s) caracter(es)
 */
 
 	tcflush(fd, TCIOFLUSH);
@@ -131,7 +131,7 @@ void emitter(int fd) {
 	int i = 0;
 	
 	char writeBuffer[] = {MSG_FLAG, MSG_A, SET_C, SET_BCC, MSG_FLAG};
-	char readBuffer[5 * sizeof(char)];
+	char readBuffer[MSG_SIZE * sizeof(char)];
 	
 	// Emit SET
 	while (i++ < TRIES) {
@@ -166,7 +166,7 @@ void writeUAMsg(int fd, char* buffer) {
 
 void receiver(int fd) {
 	int num_received = 0, res;
-	char buffer[BUF_SIZE];
+	char buffer[MSG_SIZE];
 	char c;
 
 	while (num_received < MSG_SIZE) {				/* loop for input */
