@@ -126,6 +126,43 @@ int validUAMsg(char msg[]) {
 	return TRUE;
 }
 
+int validSETMsg(char buffer[]) {
+	int i;
+	for (i = 0; i < MSG_SIZE; i++) {
+		switch(i) {
+			case FLAG1_IDX:
+			case FLAG2_IDX:
+				if (buffer[i] != MSG_FLAG) {
+					printf("Received Value of Flag different from expected. Value: 0x%x\n", buffer[i]);
+					return FALSE;
+				}
+				break;
+			case A_IDX:
+				if (buffer[i] != MSG_A) {
+					printf("Received Value of Adress Field different from expected. Value: 0x%x\n", buffer[i]);
+					return FALSE;
+				}
+				break;
+			case C_IDX:
+				if (buffer[i] != SET_C) {
+					printf("Received Value of Control Field different from expected. Value: 0x%x\n", buffer[i]);
+					return FALSE;
+				}
+				break;
+			case BCC_IDX:
+				if (buffer[i] != SET_BCC) {
+					printf("Received Value of Protection Field different from expected. Value: 0x%x\n", buffer[i]);
+					return FALSE;
+				}
+				break;
+			default:
+				printf("Received extra: %x\n", buffer[i]);
+		}
+	}
+
+	return TRUE;
+}
+
 void emitter(int fd) {
 	unsigned res;
 	int i = 0;
@@ -180,38 +217,7 @@ void receiver(int fd) {
 	printArray(buffer, sizeof(buffer));
 
 	/* Analizing the message received */
-	int i;
-	for (i = 0; i < num_received; i++) {
-		switch(i) {
-			case FLAG1_IDX:
-			case FLAG2_IDX:
-				if (buffer[i] != MSG_FLAG) {
-					printf("Received Value of Flag different from expected. Value: 0x%x\n", buffer[i]);
-					return;
-				}
-				break;
-			case A_IDX:
-				if (buffer[i] != MSG_A) {
-					printf("Received Value of Adress Field different from expected. Value: 0x%x\n", buffer[i]);
-					return;
-				}
-				break;
-			case C_IDX:
-				if (buffer[i] != SET_C) {
-					printf("Received Value of Control Field different from expected. Value: 0x%x\n", buffer[i]);
-					return;
-				}
-				break;
-			case BCC_IDX:
-				if (buffer[i] != SET_BCC) {
-					printf("Received Value of Protection Field different from expected. Value: 0x%x\n", buffer[i]);
-					return;
-				}
-				break;
-			default:
-				printf("Received extra: %x\n", buffer[i]);
-		}
-	}
+	validSETMsg(buffer);
 
 	/* Re-writting the buffer with the UA message */
 	writeUAMsg(fd, buffer); //Comment this line to try the time out mechanism
