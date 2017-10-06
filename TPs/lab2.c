@@ -31,7 +31,7 @@
 #define BCC_IDX		3
 #define FLAG2_IDX	4
 
-#define TRIES	3
+#define TRIES	5
 
 volatile int STOP=FALSE;
 
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 	newtio.c_lflag = 0;
 
 	newtio.c_cc[VTIME]    = 30;   /* inter-character timer unused - in 0.1s*/
-	newtio.c_cc[VMIN]     = 5;   /* blocking read until 5 chars received */
+	newtio.c_cc[VMIN]     = 0;   /* blocking read until 5 chars received */
 
 /* 
 	VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
@@ -140,6 +140,7 @@ void emitter(int fd) {
 			printf("bad write: %d bytes\n", res);
 			continue;
 		}
+		printf("Write successful\n");
 		res = read(fd, readBuffer, sizeof(readBuffer));
 		if (res < sizeof(readBuffer) || validUAMsg(readBuffer) == FALSE) {
 			printf("bad read: %d bytes\n", res);
@@ -160,7 +161,7 @@ void writeUAMsg(int fd, char* buffer) {
 
 	//Writting Message
 	printArray(buffer, sizeof(buffer));
-	int written = write(fd, buffer, 5);
+	int written = write(fd, buffer, MSG_SIZE);
 	printf("written %d\n", written);
 }
 
@@ -171,7 +172,8 @@ void receiver(int fd) {
 
 	while (num_received < MSG_SIZE) {				/* loop for input */
 		res = read(fd, &c, 1);						/* returns each char */
-		buffer[num_received++] = c;					/* printf the message later */
+		if (res > 0)
+			buffer[num_received++] = c;
 	}
 
 	printArray(buffer, sizeof(buffer));
