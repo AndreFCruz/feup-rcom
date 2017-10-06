@@ -140,7 +140,6 @@ void emitter(int fd) {
 			printf("bad write: %d bytes\n", res);
 			continue;
 		}
-		printf("Write successful\n");
 		res = read(fd, readBuffer, sizeof(readBuffer));
 		if (res < sizeof(readBuffer) || validUAMsg(readBuffer) == FALSE) {
 			printf("bad read: %d bytes\n", res);
@@ -174,6 +173,8 @@ void receiver(int fd) {
 		res = read(fd, &c, 1);						/* returns each char */
 		if (res > 0)
 			buffer[num_received++] = c;
+		else
+			printf("Read: time-out\n");
 	}
 
 	printArray(buffer, sizeof(buffer));
