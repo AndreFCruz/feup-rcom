@@ -1,9 +1,10 @@
+#ifndef APPLICATION_LAYER_H
+#define APPLICATION_LAYER_H
+
+#include "utils.h"
+
 #define MAX_FILE_NAME 255
 
-
-enum {
-  TRANSMITTER, RECEIVER
-} ConnectionType;
 
 typedef struct {
   int fileDescriptor; // serial port's file descriptor
@@ -24,3 +25,5 @@ typedef struct {
 int sendDataPacket(Packet * packet);
 int sendCmdPacket(Packet * packet);
 
+
+#endif
