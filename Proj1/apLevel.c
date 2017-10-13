@@ -41,14 +41,14 @@ int array_append(unsigned char * base, int baseSize, int baseStart, unsigned cha
 
 	if(totalSize > baseSize)
 		return 1;
-		
+
 	int i, j = baseStart;
 	for(i = 0; i < suffixSize; i++){
 		base[j] = suffix[i];
 		//printf("Suffix: %d\n",suffix[i]);
 		j++;
 	}
-	
+
 	return 0;
 }
 
@@ -63,12 +63,12 @@ void convertIntToBytes(unsigned char * value, unsigned int val){
 Packet * makeDataPacket(unsigned char seqNr, int packetNr, unsigned char * buffer){
 	int packetSize = HEADER_SIZE+packetNr;
 	unsigned char * data = (unsigned char *) malloc(packetSize);
-	
+
 	data[CTRL_FIELD] = DATA_VAL;
 	data[SEQ_NUM] = seqNr;
 	data[DATA_PACKET_SIZE2] = (unsigned char) (packetNr/SIZE);
 	data[DATA_PACKET_SIZE1] = (unsigned char) (packetNr%SIZE);
-	
+
 	array_append(data, packetSize, HEADER_SIZE, buffer, packetNr);
 
 	Packet * packet = (Packet *) malloc(sizeof(Packet));
@@ -82,20 +82,20 @@ Packet * makeControlPacket(unsigned char type, ControlPacketInf * controlPacketI
 	int fileNameSize = strlen(controlPacketInf->fileName);
 	int packetSize = 1+2*controlPacketInf->argNr+fileNameSize+FILE_SIZE_LENGTH;
 	//printf("packetSize: %d, fileNameSize: %d\n", packetSize, (unsigned char) fileNameSize);
-	
+
 	unsigned char * data = (unsigned char *) malloc(packetSize);
-	
+
 	int index = 1;
 	data[CTRL_FIELD] = type;
-	
+
 	data[index++] = FILE_SIZE;
 	data[index++] = FILE_SIZE_LENGTH;
 	unsigned char fileSize[sizeof(int)];
 	convertIntToBytes(fileSize, controlPacketInf->fileSize);
-	
+
 	array_append(data, packetSize, index, fileSize, FILE_SIZE_LENGTH);
 	index += FILE_SIZE_LENGTH;
-	
+
 	data[index++] = FILE_NAME;
 	data[index++] = (unsigned char) fileNameSize;
 	array_append(data, packetSize, index, controlPacketInf->fileName, fileNameSize);
@@ -103,7 +103,7 @@ Packet * makeControlPacket(unsigned char type, ControlPacketInf * controlPacketI
 	Packet * packet = (Packet *) malloc(sizeof(Packet));
 	packet->data = data;
 	packet->size = packetSize;
-	
+
 	return packet;
 }
 
@@ -135,7 +135,7 @@ int main(){
 	printArray(packet->data, packet->size);
 	free(packet);
 	*/
-	
+
 	//CONTROL PACKET TEST
  	ControlPacketInf pi, pir;
 	pi.fileSize = 5000;
@@ -144,9 +144,9 @@ int main(){
 	Packet * packet = makeControlPacket(2, &pi);
 	printArray(packet->data, packet->size);
 	readControlPacket(packet, &pir);
-	printf("Filename: %s, Filesize: %d\n", pir.fileName, pir.fileSize);	
+	printf("Filename: %s, Filesize: %d\n", pir.fileName, pir.fileSize);
 	free(packet);
-	
+
 
 	/*
 	unsigned int val = 123456789;

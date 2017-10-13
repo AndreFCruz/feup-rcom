@@ -3,12 +3,12 @@
 
 #include "utils.h"
 
-#define MAX_FILE_NAME 32
+#define MAX_PORT_NAME 32
 
 typedef unsigned int uint;
 
 typedef struct {
-	char port[MAX_FILE_NAME];
+	char port[MAX_PORT_NAME];
 	int baudRate;
 	uint sequenceNumber;
 	uint timeout;
