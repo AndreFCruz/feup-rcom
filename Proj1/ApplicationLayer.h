@@ -3,29 +3,32 @@
 
 #include "utils.h"
 
-#define MAX_FILE_NAME 255
+#define MAX_FILE_NAME       255
 
 typedef struct {
-  int fileDescriptor; // serial port's file descriptor
-  ConnectionType status;
+    int fileDescriptor; // serial port's file descriptor
+    char fileName[MAX_FILE_NAME];
+    ConnectionType status;
 } ApplicationLayer;
 
 typedef struct {
-  unsigned char * data;
-  unsigned int size;
+    unsigned char * data;
+    unsigned int size;
 } Packet;
 
 typedef struct {
-  unsigned char seqNr;
-  unsigned int packetSize;
-  unsigned char * data;
+    unsigned char seqNr;
+    unsigned int packetSize;
+    unsigned char * data;
 } DataPacket;
 
 typedef struct {
-	int fileSize;
-	char fileName[MAX_FILE_NAME];
-	int argNr;
+    int fileSize;
+    int argNr;
 } ControlPacket;
+
+int initApplicationLayer(const char * port, ConnnectionType type, int baudrate,
+    int maxDataMsgSize, int numRetries, int timeout, char* file);
 
 int sendFile();
 int receiveFile();
