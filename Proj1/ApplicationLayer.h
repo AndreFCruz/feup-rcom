@@ -5,10 +5,9 @@
 
 #define MAX_FILE_NAME 255
 
-
 typedef struct {
   int fileDescriptor; // serial port's file descriptor
-  //ConnectionType status;
+  ConnectionType status;
 } ApplicationLayer;
 
 typedef struct {
@@ -17,13 +16,25 @@ typedef struct {
 } Packet;
 
 typedef struct {
+  unsigned char seqNr;
+  unsigned int packetSize;
+  unsigned char * data;
+} DataPacket;
+
+typedef struct {
 	int fileSize;
 	char fileName[MAX_FILE_NAME];
 	int argNr;
-} ControlPacketInf;
+} ControlPacket;
 
-int sendDataPacket(Packet * packet);
-int sendCmdPacket(Packet * packet);
+int sendFile();
+int receiveFile();
+
+int sendControlPacket(ControlPacket * src);
+int receiveControlPacket(ControlPacket * dest);
+
+Packet * sendDataPacket(DataPacket * packet);
+Packet * receiveDataPacket(DataPacket * packet);
 
 
 #endif
