@@ -9,9 +9,23 @@
 // TODO filtrar estes includes
 
 #define FLAG 	0x7E
-#define ESC 	0xCC
+#define ESC 	0x7D
 #define TRUE	0
 #define FALSE	1
+
+// Control Fields
+#define C_SET	0x03
+#define C_DISC	0x0B
+#define C_UA	0x07
+#define C_RR1	0x85
+#define C_RR0	0x05
+#define	C_REJ1	0x81
+#define C_REJ0	0x01
+#define C_INF1	0x40
+#define C_INF0	0x00
+
+//Protection Field
+#define BCC1_SET
 
 //static struct linkLayer globalPtr;
 
@@ -54,6 +68,10 @@ int byteDestuffing(char* buffer, int* size) {
 	}
 
 	return TRUE;
+}
+
+int addHeader(char* buffer, int *length) {
+
 }
 
 
