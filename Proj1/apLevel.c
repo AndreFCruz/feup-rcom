@@ -24,129 +24,156 @@
 
 #define FILE_SIZE_LENGTH	4
 
+ApplicationLayer * al;
+Packet * p;
 
-//TODO: use memcpy
-
-void printArray(unsigned char buffer[], int size) {
-	int i;
-	for (i = 0; i < size; i++) {
-		printf("%02X ", buffer[i]);
-	}
-	printf("\n");
-}
-
-int array_append(unsigned char * base, int baseSize, int baseStart, unsigned char * suffix, int suffixSize){
-	int totalSize = baseStart+suffixSize;
-	//printf("TotalSize: %d, BaseSize: %d\n",totalSize, sizeof(base));
-
-	if(totalSize > baseSize)
-		return 1;
-
-	int i, j = baseStart;
-	for(i = 0; i < suffixSize; i++){
-		base[j] = suffix[i];
-		//printf("Suffix: %d\n",suffix[i]);
-		j++;
-	}
-
-	return 0;
-}
-
-void convertIntToBytes(unsigned char * value, unsigned int val){
-	int i;
-	for(i = sizeof(int)-1; i >= 0; i--){
-		value[i] = (unsigned char) val;
-		val >>= 8;
-	}
-}
-
-Packet * makeDataPacket(unsigned char seqNr, int packetNr, unsigned char * buffer){
-	int packetSize = HEADER_SIZE+packetNr;
+int sendDataPacket(DataPacket * src){
+	int packetSize = HEADER_SIZE+src->size;
 	unsigned char * data = (unsigned char *) malloc(packetSize);
 
 	data[CTRL_FIELD] = DATA_VAL;
-	data[SEQ_NUM] = seqNr;
-	data[DATA_PACKET_SIZE2] = (unsigned char) (packetNr/SIZE);
-	data[DATA_PACKET_SIZE1] = (unsigned char) (packetNr%SIZE);
+	data[SEQ_NUM] = src->seqNr;
+	data[DATA_PACKET_SIZE2] = (unsigned char) (src->size/SIZE);
+	data[DATA_PACKET_SIZE1] = (unsigned char) (src->size%SIZE);
 
-	array_append(data, packetSize, HEADER_SIZE, buffer, packetNr);
+	memcpy(&data[HEADER_SIZE], src->data, src->size);
 
-	Packet * packet = (Packet *) malloc(sizeof(Packet));
-	packet->data = data;
-	packet->size = packetSize;
+	Packet packet;
+	packet.data = data;
+	packet.size = packetSize;
 
-	return packet;
+	printArray(packet.data, packet.size);
+	p = &packet;
+
+	//return llwrite(packet);
+	return 0;
 }
 
-Packet * makeControlPacket(unsigned char type, ControlPacketInf * controlPacketInf){
-	int fileNameSize = strlen(controlPacketInf->fileName);
-	int packetSize = 1+2*controlPacketInf->argNr+fileNameSize+FILE_SIZE_LENGTH;
+int receiveDataPacket(DataPacket * dest) {
+	uchar * data = p->data;
+	if(data[CTRL_FIELD] != 1)
+		return ERROR;
+	dest->seqNr = data[SEQ_NUM];
+	int size = data[DATA_PACKET_SIZE2]*SIZE+data[DATA_PACKET_SIZE1];
+	dest->data = (uchar *) malloc(size);
+	memcpy(dest->data, &data[HEADER_SIZE], size);
+	free(dest->data);
+	return OK;
+}
+
+
+int sendControlPacket(ControlPacket * src){
+	int fileNameSize = strlen(al->fileName);
+	int packetSize = 1+2*src->argNr+fileNameSize+FILE_SIZE_LENGTH;
 	//printf("packetSize: %d, fileNameSize: %d\n", packetSize, (unsigned char) fileNameSize);
 
 	unsigned char * data = (unsigned char *) malloc(packetSize);
 
 	int index = 1;
-	data[CTRL_FIELD] = type;
+	data[CTRL_FIELD] = 2;
 
 	data[index++] = FILE_SIZE;
 	data[index++] = FILE_SIZE_LENGTH;
 	unsigned char fileSize[sizeof(int)];
-	convertIntToBytes(fileSize, controlPacketInf->fileSize);
+	convertIntToBytes(fileSize, src->fileSize);
+	memcpy(&data[index], fileSize, FILE_SIZE_LENGTH);
 
-	array_append(data, packetSize, index, fileSize, FILE_SIZE_LENGTH);
+	printf("Size: %d\n", src->fileSize);
+	//memcpy(&data[index], (uchar*) &src->fileSize, sizeof(int));
+
 	index += FILE_SIZE_LENGTH;
 
 	data[index++] = FILE_NAME;
 	data[index++] = (unsigned char) fileNameSize;
-	array_append(data, packetSize, index, controlPacketInf->fileName, fileNameSize);
+	memcpy(&data[index], al->fileName, fileNameSize);
 
-	Packet * packet = (Packet *) malloc(sizeof(Packet));
-	packet->data = data;
-	packet->size = packetSize;
+	Packet packet;
+	packet.data = data;
+	packet.size = packetSize;
 
-	return packet;
-}
+	printArray(packet.data, packet.size);
+	p = &packet;
 
-int readControlPacket(Packet * packet, ControlPacketInf * packetInf){
-	unsigned char * data = packet->data;
-	int i=1;
-	/*
-	t = data[i++];
-	l = data[i++];
-	*/
-	i += 2;
-	packetInf->fileSize = (int) data[i];
-	i += HEADER_SIZE+1;
-	/*
-	t = data[i++];
-	l = data[i++];
-	*/
-	i += 2;
-	strcpy(packetInf->fileName, (char) data[i]);
-	printf("Filename: %s\n", packetInf->fileName);
+	//return llwrite(packet);
 	return 0;
 }
 
+int fillArgs(uchar * data, ControlPacket * dest, int argNr, int argSize, int offset){
+	if(argNr == 0){
+		uint size = convertBytesToInt(data+offset);
+			
+		/*
+		uint size = *(uint*) (data+1);
+		printf("Val: %0X\n", size);
+		memcpy(&size, data+4, sizeof(int));			//ESTAS FORMAS TROCAM OS BYTES - FICA O REVERSO DO ORIGINAL
+		printf("Val: %0X\n", size);
+		*/
+
+		dest->fileSize = size;
+	}
+	else if(argNr == 1){
+		strcpy(dest->fileName, (char *) (data+offset));
+	}
+	else
+		return ERROR;
+
+	return OK;
+}
+
+int receiveControlPacket(ControlPacket * dest){
+	//Packet packet;
+	/*
+	if(llread(&packet) != OK)
+		return ERROR;
+	*/
+	uchar * data = p->data;
+	if(data[CTRL_FIELD] == START_VAL)
+		dest->type = START;
+	else 
+		dest->type = END;
+
+	dest->argNr = 0;
+	int index = 1, argNr = 0, argSize;
+	while(index < p->size){
+		if(data[index++] != argNr)
+			return ERROR;
+		argSize = data[index++];
+		if(fillArgs(data, dest, argNr, argSize, index) == ERROR)
+			return ERROR;
+		index += argSize;
+		argNr++;
+	}
+
+
+	printf("Size: %d, Name: %s\n",dest->fileSize,dest->fileName);
+	return OK;
+
+}
+
 int main(){
+	al = (ApplicationLayer *) malloc(sizeof(ApplicationLayer));
+	strcpy(al->fileName, "Derp.jpg");
+
 	/*
 	//DATA PACKET TEST
 	unsigned char data[] = {0xFF, 0xFF, 0xFF, 0xBB, 0x1A};
-	Packet * packet = makeDataPacket(1,5, data);
-	printArray(packet->data, packet->size);
-	free(packet);
+	DataPacket dp, dr;
+	dp.seqNr = 1;
+	dp.size = 5;
+	dp.data = data;
+	sendDataPacket(&dp);
+	receiveDataPacket(&dr);
 	*/
-
+	
 	//CONTROL PACKET TEST
- 	ControlPacketInf pi, pir;
-	pi.fileSize = 5000;
-	strcpy(pi.fileName, "Derp.jpg");
+ 	ControlPacket pi, pr;
+	pi.fileSize = 5000000;
 	pi.argNr = 2;
-	Packet * packet = makeControlPacket(2, &pi);
-	printArray(packet->data, packet->size);
-	readControlPacket(packet, &pir);
-	printf("Filename: %s, Filesize: %d\n", pir.fileName, pir.fileSize);
-	free(packet);
-
+	sendControlPacket(&pi);
+	receiveControlPacket(&pr);
+	//printArray(packet->data, packet->size);
+	//readControlPacket(packet, &pir);
+	//printf("Filename: %s, Filesize: %d\n", pir.fileName, pir.fileSize);
 
 	/*
 	unsigned int val = 123456789;

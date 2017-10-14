@@ -1,14 +1,11 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "ApplicationLayer.h"
-#include "utils.h"
 
 #define CTRL_PACKET_ARGS    2
 #define FILE_BUFFER_SIZE	256
 
 ApplicationLayer * al;
-
 
 int sendFile() {
 	FILE * file = fopen(al->fileName, "r"); // may need to be changed to "ab" for compatibility
@@ -28,7 +25,7 @@ int sendFile() {
 	// ctrlPacket.fileSize
 
 	DataPacket dataPacket;
-	if (sendControlPacket(ctrlPacket) != OK)
+	if (sendControlPacket(&ctrlPacket) != OK)
 		return ERROR;
 
 	unsigned char fileBuffer[FILE_BUFFER_SIZE];
@@ -37,7 +34,7 @@ int sendFile() {
 		dataPacket.seqNr = i++;
 		dataPacket.packetSize = res;
 		dataPacket.data = fileBuffer;
-		if (!sendDataPacket()) {
+		if (!sendDataPacket(&dataPacket)) {
 			// error ocurred
 			return ERROR;
 		}
@@ -45,14 +42,14 @@ int sendFile() {
 		progress += res;
 	}
 
-	free(fileBuffer);
+	//free(fileBuffer);
 	if (fclose(file) != OK) {
 		perror("Error while closing file");
 		return ERROR;
 	}
 
 	ctrlPacket.type = END;
-	if (sendControlPacket(ctrlPacket) != OK)
+	if (sendControlPacket(&ctrlPacket) != OK)
 		return ERROR;
 
 	if (llclose(al->fd) != OK)

@@ -9,10 +9,13 @@
 typedef unsigned int uint;
 typedef unsigned char uchar;
 
-enum ConnectionType {
+typedef enum {
   TRANSMITTER, RECEIVER
-};
+} ConnectionType ;
 
+void printArray(uchar buffer[], int size);
+void convertIntToBytes(uchar * res, uint src);
+uint convertBytesToInt(uchar * src);
 uint getFileSize(FILE * file);
 
 #endif

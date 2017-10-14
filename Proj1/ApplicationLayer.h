@@ -12,14 +12,14 @@ typedef struct {
 } ApplicationLayer;
 
 typedef struct {
-    unsigned char * data;
-    unsigned int size;
+    uchar * data;
+    uint size;
 } Packet;
 
 typedef struct {
-    unsigned char seqNr;
-    unsigned int packetSize;
-    unsigned char * data;
+    uchar seqNr;
+    uint size;
+    uchar * data;
 } DataPacket;
 
 typedef enum {
@@ -28,12 +28,13 @@ typedef enum {
 
 typedef struct {
     CtrlPacketType type;
-    int fileSize;
-    int argNr;
+    char fileName[MAX_FILE_NAME];
+    uint fileSize;
+    uint argNr;
 } ControlPacket;
 
 // TODO extract data/control packets structures and constructor functions to another file, OOP?
-int initApplicationLayer(const char * port, ConnnectionType type, int baudrate,
+int initApplicationLayer(const char * port, ConnectionType type, int baudrate,
     int maxDataMsgSize, int numRetries, int timeout, char* file);
 
 int sendFile();
