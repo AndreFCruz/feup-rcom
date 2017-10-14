@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ApplicationLayer.h"
+#include "utils.h"
 
 #define CTRL_PACKET_ARGS    2
 #define FILE_BUFFER_SIZE	256
@@ -21,21 +22,43 @@ int sendFile() {
 	if (al->fd < 0)
 		return ERROR;
 
-	ControlPacket packet;
-	packet.argNr = CTRL_PACKET_ARGS;
-	// packet.fileSize
+	ControlPacket ctrlPacket;
+	ctrlPacket.argNr = CTRL_PACKET_ARGS;
+	ctrlPacket.type = START;
+	// ctrlPacket.fileSize
 
-	DataPacket data;
-	if ((data = sendControlPacket(packet)) == NULL)
+	DataPacket dataPacket;
+	if (sendControlPacket(ctrlPacket) != OK)
 		return ERROR;
 
-	char fileBuffer[FILE_BUFFER_SIZE];
-	uint res, writtenBytes = 0;
+	unsigned char fileBuffer[FILE_BUFFER_SIZE];
+	uint res, progress = 0, i = 0;
 	while ( (res = fread(fileBuffer, sizeof(char), FILE_BUFFER_SIZE, file)) > 0 ) {
+		dataPacket.seqNr = i++;
+		dataPacket.packetSize = res;
+		dataPacket.data = fileBuffer;
+		if (!sendDataPacket()) {
+			// error ocurred
+			return ERROR;
+		}
 
+		progress += res;
 	}
 
-	return 0;
+	free(fileBuffer);
+	if (fclose(file) != OK) {
+		perror("Error while closing file");
+		return ERROR;
+	}
+
+	ctrlPacket.type = END;
+	if (sendControlPacket(ctrlPacket) != OK)
+		return ERROR;
+
+	if (llclose(al->fd) != OK)
+		return ERROR;
+
+	return OK;
 }
 
 int receiveFile() {
