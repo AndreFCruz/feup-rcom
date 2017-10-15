@@ -14,8 +14,9 @@ typedef enum {
 } ConnectionType ;
 
 void printArray(uchar buffer[], int size);
-void convertIntToBytes(uchar * res, uint src);
-uint convertBytesToInt(uchar * src);
+
+void convertIntToBytes(uchar * res, uint src);	// DEPRECATED
+uint convertBytesToInt(uchar * src);			// DEPRECATED
 uint getFileSize(FILE * file);
 
 #endif

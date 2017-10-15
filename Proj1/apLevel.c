@@ -3,7 +3,7 @@
 #include <string.h>
 #include "ApplicationLayer.h"
 
-#define SIZE				256	//mudar nome de variavel
+#define SIZE2_MUL				256	//mudar nome de variavel
 #define HEADER_SIZE_IDX		4
 
 
@@ -28,8 +28,8 @@ int sendDataPacket(DataPacket * src){
 
 	data[CTRL_FIELD_IDX] = DATA;
 	data[SEQ_NUM_IDX] = src->seqNr;
-	data[DATA_PACKET_SIZE2_IDX] = (unsigned char) (src->size/SIZE);
-	data[DATA_PACKET_SIZE1_IDX] = (unsigned char) (src->size%SIZE);
+	data[DATA_PACKET_SIZE2_IDX] = (unsigned char) (src->size / SIZE2_MUL);
+	data[DATA_PACKET_SIZE1_IDX] = (unsigned char) (src->size % SIZE2_MUL);
 
 	memcpy(&data[HEADER_SIZE], src->data, src->size);
 
@@ -49,7 +49,7 @@ int receiveDataPacket(DataPacket * dest) {
 	if(data[CTRL_FIELD_IDX] != 1)
 		return ERROR;
 	dest->seqNr = data[SEQ_NUM_IDX];
-	int size = data[DATA_PACKET_SIZE2_IDX]*SIZE+data[DATA_PACKET_SIZE1_IDX];
+	int size = data[DATA_PACKET_SIZE2_IDX] * SIZE + data[DATA_PACKET_SIZE1_IDX];
 	dest->data = (uchar *) malloc(size);
 	memcpy(dest->data, &data[HEADER_SIZE], size);
 	free(dest->data);
@@ -59,7 +59,7 @@ int receiveDataPacket(DataPacket * dest) {
 
 int sendControlPacket(ControlPacket * src){
 	int fileNameSize = strlen(al->fileName);
-	int packetSize = 1+2*src->argNr+fileNameSize+FILE_SIZE_LENGTH;
+	int packetSize = 1 + 2 * (src->argNr) + fileNameSize + FILE_SIZE_LENGTH;
 	//printf("packetSize: %d, fileNameSize: %d\n", packetSize, (unsigned char) fileNameSize);
 
 	unsigned char * data = (unsigned char *) malloc(packetSize);
@@ -69,7 +69,7 @@ int sendControlPacket(ControlPacket * src){
 
 	data[index++] = FILE_SIZE_IDX;
 	data[index++] = FILE_SIZE_LENGTH;
-	unsigned char fileSize[sizeof(int)];
+	unsigned char fileSize[sizeof(int)]; // TODO delete convertIntToBytes
 	convertIntToBytes(fileSize, src->fileSize);
 	memcpy(&data[index], fileSize, FILE_SIZE_LENGTH);
 
