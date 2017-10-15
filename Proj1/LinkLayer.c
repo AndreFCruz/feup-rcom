@@ -1,7 +1,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <termios.h>
+//#include <termios.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +10,7 @@
 
 #define FLAG 	0x7E
 #define ESC 	0x7D
+#define STUFFING 0X20
 #define TRUE	0
 #define FALSE	1
 
@@ -31,6 +32,8 @@
 
 typedef unsigned int uint;
 
+enum ControlTypes {SET, DISC, UA, RR, REJ};
+
 
 int byteStuffing(char * buffer, uint * size) {
 	uint i;
@@ -45,6 +48,7 @@ int byteStuffing(char * buffer, uint * size) {
 
 			memmove(buffer+i+1, buffer+i, (*size)-i);
 			buffer[i] = ESC;
+			buffer[i+1] = (buffer[i+1] ^ STUFFING);
 			i++;
 		}
 	}
@@ -64,6 +68,8 @@ int byteDestuffing(char* buffer, int* size) {
 				printf("ByteDestuffing: Realloc error.\n");
 				return FALSE;
 			}
+
+			buffer[i] = (buffer[i] ^ STUFFING);
 		}
 	}
 
@@ -96,7 +102,7 @@ int main() {
 	buffer [3] = 0x7E; 
 	buffer [4] = 0x04; 
 	buffer [5] = 0x05; 
-	buffer [6] = 0xCC; 
+	buffer [6] = 0x7D; 
 	buffer [7] = 0x06; 
 
 	uint len = sizeof(buffer);
