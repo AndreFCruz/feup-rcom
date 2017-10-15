@@ -3,24 +3,19 @@
 #include <string.h>
 #include "ApplicationLayer.h"
 
-#define DATA_VAL		1
-#define START_VAL		2
-#define END_VAL			3
-
-
-#define SIZE			256     //mudar nome de variavel
-#define HEADER_SIZE		4
+#define SIZE				256	//mudar nome de variavel
+#define HEADER_SIZE_IDX		4
 
 
 //DATA_PACKET
-#define CTRL_FIELD 			0
-#define SEQ_NUM				1
-#define DATA_PACKET_SIZE2	2
-#define DATA_PACKET_SIZE1	3
+#define CTRL_FIELD_IDX		0
+#define SEQ_NUM_IDX			1
+#define DATA_PACKET_SIZE2_IDX	2
+#define DATA_PACKET_SIZE1_IDX	3
 
 //CONTROL_PACKET
-#define FILE_SIZE		0
-#define FILE_NAME		1
+#define FILE_SIZE_IDX		0
+#define FILE_NAME_IDX		1
 
 #define FILE_SIZE_LENGTH	4
 
@@ -28,13 +23,13 @@ ApplicationLayer * al;
 Packet * p;
 
 int sendDataPacket(DataPacket * src){
-	int packetSize = HEADER_SIZE+src->size;
+	int packetSize = HEADER_SIZE + (src->size);
 	unsigned char * data = (unsigned char *) malloc(packetSize);
 
-	data[CTRL_FIELD] = DATA_VAL;
-	data[SEQ_NUM] = src->seqNr;
-	data[DATA_PACKET_SIZE2] = (unsigned char) (src->size/SIZE);
-	data[DATA_PACKET_SIZE1] = (unsigned char) (src->size%SIZE);
+	data[CTRL_FIELD_IDX] = DATA;
+	data[SEQ_NUM_IDX] = src->seqNr;
+	data[DATA_PACKET_SIZE2_IDX] = (unsigned char) (src->size/SIZE);
+	data[DATA_PACKET_SIZE1_IDX] = (unsigned char) (src->size%SIZE);
 
 	memcpy(&data[HEADER_SIZE], src->data, src->size);
 
@@ -51,10 +46,10 @@ int sendDataPacket(DataPacket * src){
 
 int receiveDataPacket(DataPacket * dest) {
 	uchar * data = p->data;
-	if(data[CTRL_FIELD] != 1)
+	if(data[CTRL_FIELD_IDX] != 1)
 		return ERROR;
-	dest->seqNr = data[SEQ_NUM];
-	int size = data[DATA_PACKET_SIZE2]*SIZE+data[DATA_PACKET_SIZE1];
+	dest->seqNr = data[SEQ_NUM_IDX];
+	int size = data[DATA_PACKET_SIZE2_IDX]*SIZE+data[DATA_PACKET_SIZE1_IDX];
 	dest->data = (uchar *) malloc(size);
 	memcpy(dest->data, &data[HEADER_SIZE], size);
 	free(dest->data);
@@ -70,9 +65,9 @@ int sendControlPacket(ControlPacket * src){
 	unsigned char * data = (unsigned char *) malloc(packetSize);
 
 	int index = 1;
-	data[CTRL_FIELD] = 2;
+	data[CTRL_FIELD_IDX] = 2;
 
-	data[index++] = FILE_SIZE;
+	data[index++] = FILE_SIZE_IDX;
 	data[index++] = FILE_SIZE_LENGTH;
 	unsigned char fileSize[sizeof(int)];
 	convertIntToBytes(fileSize, src->fileSize);
@@ -83,7 +78,7 @@ int sendControlPacket(ControlPacket * src){
 
 	index += FILE_SIZE_LENGTH;
 
-	data[index++] = FILE_NAME;
+	data[index++] = FILE_NAME_IDX;
 	data[index++] = (unsigned char) fileNameSize;
 	memcpy(&data[index], al->fileName, fileNameSize);
 
@@ -127,10 +122,7 @@ int receiveControlPacket(ControlPacket * dest){
 		return ERROR;
 	*/
 	uchar * data = p->data;
-	if(data[CTRL_FIELD] == START_VAL)
-		dest->type = START;
-	else 
-		dest->type = END;
+	dest->type = data[CTRL_FIELD_IDX];
 
 	dest->argNr = 0;
 	int index = 1, argNr = 0, argSize;
