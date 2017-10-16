@@ -8,17 +8,20 @@
 #include <unistd.h>
 // TODO filtrar estes includes
 
-#define FLAG 	0x7E
-#define ESC 	0x7D
-#define STUFFING 0X20
 #define OK		0
 #define ERROR	1
 #define RESEND	2
+
+#define FLAG 			0x7E
+#define ESC 			0x7D
+#define STUFFING 		0X20
+#define FLAGS_PER_FRAME	2
 
 #define CONTROL_FRAME_SIZE	5
 #define INF_FORMAT_SIZE		6
 #define INF_HEAD_SIZE		4
 #define INF_TRAILER_SIZE 	2
+#define RECEIVER_SIZE		256
 
 //Information Message Trailers position
 #define TRAIL_BCC_POS		0
@@ -257,17 +260,17 @@ int byteDestuffing(char* buffer, int* size) {
 
 int llwrite(int fd, char * buffer, int length) {
 
-	do {
-		if (createInfFrame(buffer, &length) == ERROR) {
-			printf("llwrite error: Failed to create Information Frame.\n");
-			return ERROR;
-		}
-		
-		if (byteStuffing(buffer, &length) == ERROR) {
-			printf("llwrite error: Failed to create Information Frame.\n");
-			return ERROR;
-		}
+	if (createInfFrame(buffer, &length) == ERROR) {
+		printf("llwrite error: Failed to create Information Frame.\n");
+		return ERROR;
+	}
+	
+	if (byteStuffing(buffer, &length) == ERROR) {
+		printf("llwrite error: Failed to create Information Frame.\n");
+		return ERROR;
+	}
 
+	do {
 		if ((res = write(fd, buffer, length) < length)) {
 			printf("llwrite error: Bad write: %d bytes\n", res);
 			return ERROR;
@@ -278,9 +281,36 @@ int llwrite(int fd, char * buffer, int length) {
 }
 
 int llread(int fd, char * buffer) {
-	// adição de header e trailer ao buffer.
-	//remoção de stuffing ao buffer
-	//escrever a nova mensagem
+	char* buffer = malloc(RECEIVER_SIZE);
+	char readChar;			//Char read in each iteration of the loop
+	int flagCounter;		//Counter for number of FLAG bytes received - Ends Loop
+	int bufferSize = 0;		//Number of bytes received
+
+	do {
+		if (readChar = read(fd, &readChar, 1) < 0) {
+			printf("llread error: Failed to read from SerialPort\n");
+			return ERROR;
+		}
+		
+		if (readChar == FLAG)
+			flagCounter++;
+
+		if ((bufferSize % RECEIVER_SIZE) == 0 ) {
+			if ((buffer = realloc(buffer, ((bufferSize / RECEIVER_SIZE)+1) * RECEIVER_SIZE )) == NULL) {
+				printf("llread error: Failed to realloc buffer\n");
+				return ERROR;
+			}
+		}
+	} while(flagCounter != FLAGS_PER_FRAME);
+
+	if (byteDestuffing(buffer, &bufferSize) == ERROR) {
+		printf("llread error: Failed byteDestuffing\n");
+		return ERROR;
+	}
+
+	//Retirar o head e o trailer
+
+	write(fd, genControlFrame(RR), CONTROL_FRAME_SIZE);
 }
 
 int main() {
