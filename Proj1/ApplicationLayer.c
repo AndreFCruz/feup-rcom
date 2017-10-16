@@ -26,8 +26,7 @@ int sendFile() {
 	ctrlPacket.type = START;
 	ctrlPacket.fileSize = getFileSize(file);
 
-	DataPacket dataPacket;
-	if (sendControlPacket(&ctrlPacket) != OK)
+	if (sendControlPacket(al->filelDescriptor, &ctrlPacket) != OK)
 		return logError("Error sending control packet");
 
 	DataPacket dataPacket;
@@ -37,7 +36,7 @@ int sendFile() {
 		dataPacket.seqNr = i++;
 		dataPacket.packetSize = res;
 		dataPacket.data = fileBuffer;
-		if (!sendDataPacket(&dataPacket))
+		if (!sendDataPacket(al->filelDescriptor, &dataPacket))
 			return logError("Error sending data packet");
 
 		progress += res;
@@ -49,7 +48,7 @@ int sendFile() {
 	}
 
 	ctrlPacket.type = END;
-	if (sendControlPacket(&ctrlPacket) != OK)
+	if (sendControlPacket(al->filelDescriptor, &ctrlPacket) != OK)
 		return logError("Error sending control packet");
 
 	if (llclose(al->fd) != OK)
