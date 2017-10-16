@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #define BAUDRATE B38400
-#define MODEMDEVICE "/dev/ttyS1"
+#define MODEMDEVICE "/dev/ttyS0"
 #define _IDXIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
@@ -33,7 +33,7 @@
 
 #define TRIES	3
 
-volatile int STOP=FALSE;
+volatile int STOP = FALSE;
 
 void emitter(int fd);
 void receiver(int fd);

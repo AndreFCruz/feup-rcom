@@ -5,8 +5,11 @@
 
 #define MAX_FILE_NAME	256
 
-#define ERROR	1
-#define OK		0
+#define FALSE	0
+#define TRUE	1
+
+#define ERROR	0
+#define OK		1
 
 typedef unsigned int uint;
 typedef unsigned char uchar;
