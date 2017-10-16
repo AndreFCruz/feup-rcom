@@ -419,36 +419,36 @@ int llread(int fd, char ** dest) {
 }
 
 
-int main() {
+// int main() {
 
-	unsigned char* buffer = malloc(8);
-	buffer [0] = 0x01;
-	buffer [1] = 0x02;
-	buffer [2] = 0x03;
-	buffer [3] = 0x7E;
-	buffer [4] = 0x04;
-	buffer [5] = 0x05;
-	buffer [6] = 0x7D;
-	buffer [7] = 0x06;
+// 	unsigned char* buffer = malloc(8);
+// 	buffer [0] = 0x01;
+// 	buffer [1] = 0x02;
+// 	buffer [2] = 0x03;
+// 	buffer [3] = 0x7E;
+// 	buffer [4] = 0x04;
+// 	buffer [5] = 0x05;
+// 	buffer [6] = 0x7D;
+// 	buffer [7] = 0x06;
 
-	uint len = sizeof(buffer);
+// 	uint len = sizeof(buffer);
 
-	printf("\n\ninitial size: %d\n", len);
+// 	printf("\n\ninitial size: %d\n", len);
 
-	byteStuffing(buffer, &len);
+// 	byteStuffing(buffer, &len);
 
-	printf("\nmed size: %d\n", len);
+// 	printf("\nmed size: %d\n", len);
 
-	uint i;
-	for (i = 0; i < len; ++i) {
-		printf("0x%x  ", (uint) buffer[i]);
-	}
-	printf("\n");
-	byteDestuffing(buffer, &len);
+// 	uint i;
+// 	for (i = 0; i < len; ++i) {
+// 		printf("0x%x  ", (uint) buffer[i]);
+// 	}
+// 	printf("\n");
+// 	byteDestuffing(buffer, &len);
 
-	int j;
-	for (j = 0; j < len; ++j) {
-		printf("0x%x  ", buffer[j]);
-	}
-	printf("\n\nSize: %d\n", len);
-}
+// 	int j;
+// 	for (j = 0; j < len; ++j) {
+// 		printf("0x%x  ", buffer[j]);
+// 	}
+// 	printf("\n\nSize: %d\n", len);
+// }
