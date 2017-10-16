@@ -13,6 +13,7 @@
 #define STUFFING 0X20
 #define OK		0
 #define ERROR	1
+#define RESEND	2
 
 #define CONTROL_FRAME_SIZE	5
 #define INF_FORMAT_SIZE		6
@@ -49,7 +50,8 @@ typedef unsigned int uint;
 enum ControlTypes {SET, DISC, UA, RR, REJ};
 
 //TODO: REVER ISTO AQUI -> O R TEM QUE SER CONTROLADO DE ALGUMA FORMA
-int NR = 0;
+int nr = 0;
+int ns = 0;
 
 /**
  * Creates a Control Frame, according to the protocols.
@@ -115,7 +117,7 @@ char* genControlFrame(ControlTypes type) {
  *
  * @param frame The frame to evaluated
  * @param size The frame's size.
- * @return Error if something went wrong, ok otherwise
+ * @return ERROR if something went wrong, OK otherwise
  */
 int evaluateFrameHeader(char* frame, char* size) {
 	//Checking the Flag field
@@ -154,12 +156,22 @@ int evaluateFrameHeader(char* frame, char* size) {
 }
 
 /**
+ * Verifies if a Positive Acknoledgement was received.
+ *
+ *
+ * @return OK if it was, ERROR otherwise.
+ */
+int receiveAck(int fd) {
+
+}
+
+/**
  * Creates a Information Frame, according to the protocols.
  * Final Frame and its size its retrivied in the function parameters.
  *
  * @param packet The packet to be framed.
  * @param size The packet's size.
- * @return Error if something went wrong, ok otherwise
+ * @return ERROR if something went wrong, OK otherwise
  */
 int createInfFrame(char* packet, uint* size) {
 
@@ -193,7 +205,7 @@ dados, conforme os casos) e o próprio BCC (antes de stuffing) */
  *
  * @param buffer The buffer containing the message to be stuffed.
  * @param size The buffer's size
- * @return Error if something went wrong, ok otherwise
+ * @return ERROR if something went wrong, OK otherwise
  */
 int byteStuffing(char * buffer, uint * size) {
 	uint i;
@@ -243,11 +255,26 @@ int byteDestuffing(char* buffer, int* size) {
 	return OK;
 }
 
-
 int llwrite(int fd, char * buffer, int length) {
-	//adição de stuffing ao buffer
-	//adição de header e trailer ao buffer.
-	//escrever a nova mensagem
+
+	do {
+		if (createInfFrame(buffer, &length) == ERROR) {
+			printf("llwrite error: Failed to create Information Frame.\n");
+			return ERROR;
+		}
+		
+		if (byteStuffing(buffer, &length) == ERROR) {
+			printf("llwrite error: Failed to create Information Frame.\n");
+			return ERROR;
+		}
+
+		if ((res = write(fd, buffer, length) < length)) {
+			printf("llwrite error: Bad write: %d bytes\n", res);
+			return ERROR;
+		}
+	} while (receiveAck(fd) == RESEND);
+
+	return OK;
 }
 
 int llread(int fd, char * buffer) {
