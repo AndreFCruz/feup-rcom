@@ -4,7 +4,7 @@
 #include "ApplicationLayer.h"
 
 #define SIZE2_MUL			256
-#define HEADER_SIZE_IDX		4
+#define HEADER_SIZE			4
 
 
 //DATA_PACKET
@@ -14,10 +14,8 @@
 #define DATA_PACKET_SIZE1_IDX	3
 
 //CONTROL_PACKET
-#define FILE_SIZE_IDX		0
-#define FILE_NAME_IDX		1
-
-#define FILE_SIZE_LENGTH	4
+#define FILE_SIZE_ARG		0
+#define FILE_NAME_ARG		1
 
 ApplicationLayer * al;
 Packet * p;
@@ -64,11 +62,13 @@ int sendControlPacket(ControlPacket * src){
 
 	unsigned char * data = (unsigned char *) malloc(packetSize);
 
-	int index = 1;
-	data[CTRL_FIELD_IDX] = 2;
+	data[CTRL_FIELD_IDX] = START;
 
-	data[index++] = FILE_SIZE_IDX;
-	data[index++] = FILE_SIZE_LENGTH;
+	int index = 1;
+	data[index++] = FILE_SIZE_ARG;
+	data[index++] = sizeof(int);
+	((uint *) (data + index)) = src->fileSize;
+	
 	unsigned char fileSize[sizeof(int)]; // TODO delete convertIntToBytes
 	convertIntToBytes(fileSize, src->fileSize);
 	memcpy(&data[index], fileSize, FILE_SIZE_LENGTH);

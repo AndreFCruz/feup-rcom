@@ -46,3 +46,8 @@ uint convertBytesToInt(uchar * src){
 	}
 	return res;
 }
+
+int logError(char * errorMsg){
+	fprintf(stderr, "Error: %s\n", errorMsg);
+	return ERROR;
+}

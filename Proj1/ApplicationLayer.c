@@ -30,6 +30,7 @@ int sendFile() {
 	if (sendControlPacket(&ctrlPacket) != OK)
 		return logError("Error sending control packet");
 
+	DataPacket dataPacket;
 	unsigned char fileBuffer[FILE_BUFFER_SIZE];
 	uint res, progress = 0, i = 0;
 	while ( (res = fread(fileBuffer, sizeof(char), FILE_BUFFER_SIZE, file)) > 0 ) {

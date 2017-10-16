@@ -2,6 +2,7 @@
 #define APPLICATION_LAYER_H
 
 #include "utils.h"
+#include "Packets.h"
 
 typedef struct {
     int fileDescriptor; // serial port's file descriptor

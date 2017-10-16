@@ -3,25 +3,13 @@
 
 #include "utils.h"
 
-#define MAX_PORT_NAME 32
+int initLinkLayer(char port[], int baudRate, uint timeout, uint numTransmissions);
 
-typedef unsigned int uint;
-
-typedef struct {
-	char port[MAX_PORT_NAME];
-	int baudRate;
-	uint sequenceNumber;
-	uint timeout;
-	uint numTransmissions;
-} LinkLayer;
-
-int initLinkLayer(char port[], int baudRate, uint timeout, uint numTransmissions, char frame[]);
-
-int openSerialPort(LinkLayer * ptr);
+int openSerialPort();
 
 int llopen(int porta, ConnectionType type);
 
-int llclose(int fd);
+int llclose(int fd, ConnectionType type);
 
 int llwrite(int fd, char * buffer, int length);
 
