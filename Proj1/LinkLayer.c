@@ -6,16 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "LinkLayer.h"
 // TODO filtrar estes includes
 
-#define OK		0
-#define ERROR	1
 #define RESEND	2
 
 #define FLAG 			0x7E
 #define ESC 			0x7D
 #define STUFFING 		0X20
-#define FLAGS_PER_FRAME	2
 
 #define CONTROL_FRAME_SIZE	5
 #define INF_FORMAT_SIZE		6
@@ -30,7 +28,7 @@
 //Positions of Fields in the Control Message
 #define FLAG1_POS	1
 #define AF_POS		2
-#define CF 			3
+#define CF_POS 			3
 #define BCC_POS 	4
 #define FLAG2_POS	5
 
@@ -46,12 +44,24 @@
 #define C_REJ	0x01
 #define C_INF	0x00
 
+#define MAX_PORT_NAME 32
+
+typedef struct {
+	char port[MAX_PORT_NAME];
+	int baudRate;
+	uint seqNumber;
+	uint timeout;
+	uint numTrans;
+} LinkLayer;
+
 static LinkLayer * ll = NULL;
 
-typedef enum 
-{SET, DISC, UA, RR, REJ} ControlTypes;
+static struct termios oldtio = NULL;
 
-//TODO: REVER ISTO AQUI -> O R TEM QUE SER CONTROLADO DE ALGUMA FORMA
+typedef enum
+{SET, DISC, UA, RR, REJ} ControlType;
+
+//TODO: REVER ISTO AQUI -> O R TEM QUE SER CONTROLADO DE ALGUMA FORMA É COM O SEQUENCE NUMBER (seqNumber) SEU BUBA
 int nr = 0;
 int ns = 0;
 
@@ -62,7 +72,7 @@ int ns = 0;
  * @param controlField The Control field value.
  * @return The generated frame.
  */
-char* createControlFrame(char adressField, char controlField) {
+char* createControlFrame(char * buffer, char adressField, char controlField) {
 	char* buffer = malloc(CONTROL_FRAME_SIZE);
 
 	buffer[FLAG1_POS] = FLAG;
@@ -75,40 +85,40 @@ char* createControlFrame(char adressField, char controlField) {
 }
 
 /**
- * Generates a Controll frame, corresponding to the given type. 
+ * Generates a Controll frame, corresponding to the given type.
  *
  * @param type The type of control frame
  * @return The frame generated.
  */
-char* genControlFrame(ControlTypes type) {
-	int nrValue = (NR << 7);
+char * genControlFrame(ControlType controlType, ConnectionType connType) {
+	int nrValue = (nr << 7);
 
-	if (TRANSMITER) {
-		switch(types) {
-			CASE SET:
+	if (connType == TRANSMITER) {
+		switch(controlType) {
+			case SET:
 				return createControlFrame(AF1, C_SET);
-			CASE DISC:
+			case DISC:
 				return createControlFrame(AF1, C_DISC);
-			CASE UA:
+			case UA:
 				return createControlFrame(AF2, C_UA);
-			CASE RR:
+			case RR:
 				return createControlFrame(AF2, (C_RR | nrValue));
-			CASE REJ:
+			case REJ:
 				return createControlFrame(AF2, (C_REJ | nrValue));
 		}
 	}
-	else if (RECEIVER) {
-		switch(types) {
-			CASE SET:
+	else if (connType == RECEIVER) {
+		switch(controlType) {
+			case SET:
 				return createControlFrame(AF2, C_SET);
-			CASE DISC:
+			case DISC:
 				return createControlFrame(AF2, C_DISC);
-			CASE UA:
+			case UA:
 				return createControlFrame(AF1, C_UA);
-			CASE RR:
-				return createControlFrame(AF1, (C_RR & nrValue));
-			CASE REJ:
-				return createControlFrame(AF1, (C_REJ & nrValue));
+			case RR:
+				return createControlFrame(AF1, (C_RR | nrValue));
+			case REJ:
+				return createControlFrame(AF1, (C_REJ | nrValue));
 		}
 	}
 	return NULL;
@@ -134,16 +144,17 @@ int evaluateFrameHeader(char* frame, char* size) {
 		return ERROR;
 	}
 
+//TODO puxar para outra funcao validFrame
 	//Checking the Control Field
 	if ((frame[CF_POS] != C_SET) ||
 		(frame[CF_POS] != C_DISK) ||
 		(frame[CF_POS] != C_UA) ||
-		(frame[CF_POS] != (C_RR | NR)) ||
-		(frame[CF_POS] != (C_RR | ~NR)) ||
-		(frame[CF_POS] != (C_REJ| NR)) ||
-		(frame[CF_POS] != (C_REJ| ~NR)) ||
-		(frame[CF_POS] != (C_INF| NS)) ||
-		(frame[CF_POS] != (C_INF| ~NS))) {		
+		(frame[CF_POS] != (C_RR | nr)) ||
+		(frame[CF_POS] != (C_RR | ~nr)) ||
+		(frame[CF_POS] != (C_REJ| nr)) ||
+		(frame[CF_POS] != (C_REJ| ~nr)) ||
+		(frame[CF_POS] != (C_INF| ns)) ||
+		(frame[CF_POS] != (C_INF| ~ns))) {
 		printf("Error in received Frame Header: Control Field\n");
 		return ERROR;
 	}
@@ -197,7 +208,7 @@ dados, conforme os casos) e o próprio BCC (antes de stuffing) */
 	memmove(packet + INF_HEAD_SIZE, packet, previousSize + INF_TRAILER_SIZE);
 	packet[FLAG1_POS] = FLAG;
 	packet[AF_POS] = AF1;
-	packet[CF_POS] = (C_INF | (NS << 6));
+	packet[CF_POS] = (C_INF | (ns << 6));
 	packet[BCC_POS] = (AF1 ^ packet[CF_POSF]);
 
 	return OK;
@@ -214,7 +225,7 @@ int byteStuffing(char * buffer, uint * size) {
 	uint i;
 
 	for (i = 0; i < (*size); ++i) {
-		if ((buffer[i] == (char) FLAG) || (buffer[i] == (char) ESC)) 
+		if ((buffer[i] == (char) FLAG) || (buffer[i] == (char) ESC))
 		{
 			if ((buffer = realloc(buffer, (*size)++)) == NULL) {
 				printf("ByteStuffing: Realloc error.\n");
@@ -259,71 +270,89 @@ int byteDestuffing(char* buffer, int* size) {
 }
 
 int llwrite(int fd, char * buffer, int length) {
+	int res = 0;
 
 	/*if (createInfFrame(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
-		return ERROR;
+		return -1;
 	}*/
-	
+
 	if (byteStuffing(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
-		return ERROR;
+		return -1;
 	}
 
 	do {
 		if ((res = write(fd, buffer, length) < length)) {
 			printf("llwrite error: Bad write: %d bytes\n", res);
-			return ERROR;
+			return -1;
 		}
 	} while (receiveAck(fd) == RESEND);
 
-	return OK;
+	return res;
+}
+
+//Retorna o n de caracteres lidos total
+int readFrameFlag(int fd) {
+	char tempChar;
+	int readBytes = 0;
+
+	while (tempChar != FLAG) {
+		if (tempChar = read(fd, &tempChar, sizeof(char)) < 0) {
+			printf("readFrameFlag error: Failed to read from SerialPort\n");
+			return -1;
+		}
+		++readBytes;
+	}
+	return readBytes;
 }
 
 int llread(int fd, char * buffer) {
 	char* buffer = malloc(RECEIVER_SIZE);
-	char readChar;			//Char read in each iteration of the loop
-	int flagCounter;		//Counter for number of FLAG bytes received - Ends Loop
-	int bufferSize = 0;		//Number of bytes received
+	int bufferIdx = 0;		//Number of bytes received
 
-	do {
-		if (readChar = read(fd, &readChar, 1) < 0) {
+	if (readFrameFlag(fd) >)
+
+	while (buffer[bufferIdx] != FLAG) {
+		if (read(fd, buffer + bufferIdx, sizeof(char)) < 0) {
 			printf("llread error: Failed to read from SerialPort\n");
-			return ERROR;
+			return -1;
 		}
-		
-		if (readChar == FLAG)
-			flagCounter++;
 
-		if ((bufferSize % RECEIVER_SIZE) == 0 ) {
-			if ((buffer = realloc(buffer, ((bufferSize / RECEIVER_SIZE)+1) * RECEIVER_SIZE )) == NULL) {
+		if ((++bufferIdx % RECEIVER_SIZE) == 0 ) {
+			if ((buffer = realloc(buffer, ((bufferIdx / RECEIVER_SIZE)+1) * RECEIVER_SIZE )) == NULL) {
 				printf("llread error: Failed to realloc buffer\n");
-				return ERROR;
+				return -1;
 			}
 		}
-	} while(flagCounter != FLAGS_PER_FRAME);
+	}
 
-	if (byteDestuffing(buffer, &bufferSize) == ERROR) {
+	if (byteDestuffing(buffer, &bufferIdx) == ERROR) {
 		printf("llread error: Failed byteDestuffing\n");
-		return ERROR;
+		return -1;
 	}
 
 	//Retirar o head e o trailer
-
 	//write(fd, genControlFrame(RR), CONTROL_FRAME_SIZE);
+	return bufferIdx;
 }
 
-int initLinkLayer(char port[], int baudRate, uint timeout, uint numTransmissions, char frame[]) {
+int initLinkLayer(char port[], int baudRate, uint timeout, uint numTransmissions) {
 	ll = malloc(sizeof(LinkLayer));
 
 	ll->port = port;
 	ll->baudRate = baudRate;
 	ll->timeout = timeout;
-	ll->numTransmissions = numTransmissions;
-	ll->sequenceNumber = 
+	ll->numTrans = numTransmissions;
+	ll->seqNumber = 0;
 }
 
-int openSerialPort(LinkLayer * ptr) {
+int llopen(int porta, ConnectionType type) {
+	int fd,c, res;
+	struct termios newtio;
+
+	ll->seqNumber = (type == TRANSMITTER ? 0 : 1);
+
 /*
 	Open serial port device for reading and writing and not as controlling tty
 	because we don't want to get killed if linenoise sends CTRL-C.
@@ -348,8 +377,8 @@ int openSerialPort(LinkLayer * ptr) {
 	newtio.c_cc[VTIME]    = 30;   /* inter-character timer unused - in 0.1s*/
 	newtio.c_cc[VMIN]     = 0;   /* blocking read until 5 chars received */
 
-/* 
-	VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
+/*
+	VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
 	leitura do(s) proximo(s) caracter(es)
 */
 
@@ -359,15 +388,26 @@ int openSerialPort(LinkLayer * ptr) {
 		perror("tcsetattr");
 		exit(-1);
 	}
-
 	printf("New termios structure set\n");
 
-	if (strcmp("r", argv[2]) == 0)
-		receiver(fd);
-	else if (strcmp("w", argv[2]) == 0)
-		emitter(fd);
-	else
-		printf("Error in 3rd argument, should be 'r' or 'w'\n");
+//sE TRANSMITTER MANDA, se ERCEIVER espera pela set.
+	//TODO: Mandar uma mensagem de contol: SET
+}
+
+int llclose(int fd, ConnectionType type) {
+
+	//TODO mandar control message -> disc, que varia para read e writter
+
+	/*
+	* Reset terminal to previous configuration
+	*/
+		if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
+			perror("tcsetattr");
+			exit(-1);
+		}
+
+		close(fd);
+		return OK;
 }
 
 
@@ -375,13 +415,13 @@ int main() {
 
 	unsigned char* buffer = malloc(8);
 	buffer [0] = 0x01;
-	buffer [1] = 0x02; 
-	buffer [2] = 0x03; 
-	buffer [3] = 0x7E; 
-	buffer [4] = 0x04; 
-	buffer [5] = 0x05; 
-	buffer [6] = 0x7D; 
-	buffer [7] = 0x06; 
+	buffer [1] = 0x02;
+	buffer [2] = 0x03;
+	buffer [3] = 0x7E;
+	buffer [4] = 0x04;
+	buffer [5] = 0x05;
+	buffer [6] = 0x7D;
+	buffer [7] = 0x06;
 
 	uint len = sizeof(buffer);
 
