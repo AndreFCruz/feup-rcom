@@ -46,11 +46,10 @@
 #define C_REJ	0x01
 #define C_INF	0x00
 
-//static struct linkLayer globalPtr;
+static LinkLayer * ll = NULL;
 
-typedef unsigned int uint;
-
-enum ControlTypes {SET, DISC, UA, RR, REJ};
+typedef enum 
+{SET, DISC, UA, RR, REJ} ControlTypes;
 
 //TODO: REVER ISTO AQUI -> O R TEM QUE SER CONTROLADO DE ALGUMA FORMA
 int nr = 0;
@@ -165,7 +164,8 @@ int evaluateFrameHeader(char* frame, char* size) {
  * @return OK if it was, ERROR otherwise.
  */
 int receiveAck(int fd) {
-
+	//TODO
+	RETURN OK;
 }
 
 /**
@@ -260,10 +260,10 @@ int byteDestuffing(char* buffer, int* size) {
 
 int llwrite(int fd, char * buffer, int length) {
 
-	if (createInfFrame(buffer, &length) == ERROR) {
+	/*if (createInfFrame(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return ERROR;
-	}
+	}*/
 	
 	if (byteStuffing(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
@@ -310,8 +310,66 @@ int llread(int fd, char * buffer) {
 
 	//Retirar o head e o trailer
 
-	write(fd, genControlFrame(RR), CONTROL_FRAME_SIZE);
+	//write(fd, genControlFrame(RR), CONTROL_FRAME_SIZE);
 }
+
+int initLinkLayer(char port[], int baudRate, uint timeout, uint numTransmissions, char frame[]) {
+	ll = malloc(sizeof(LinkLayer));
+
+	ll->port = port;
+	ll->baudRate = baudRate;
+	ll->timeout = timeout;
+	ll->numTransmissions = numTransmissions;
+	ll->sequenceNumber = 
+}
+
+int openSerialPort(LinkLayer * ptr) {
+/*
+	Open serial port device for reading and writing and not as controlling tty
+	because we don't want to get killed if linenoise sends CTRL-C.
+*/
+
+	fd = open(argv[1], O_RDWR | O_NOCTTY );
+	if (fd <0) {perror(argv[1]); exit(-1); }
+
+	if ( tcgetattr(fd,&oldtio) == -1) { /* save current port settings */
+		perror("tcgetattr");
+		exit(-1);
+	}
+
+	bzero(&newtio, sizeof(newtio));
+	newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+	newtio.c_iflag = IGNPAR;
+	newtio.c_oflag = 0;
+
+	/* set input mode (non-canonical, no echo,...) */
+	newtio.c_lflag = 0;
+
+	newtio.c_cc[VTIME]    = 30;   /* inter-character timer unused - in 0.1s*/
+	newtio.c_cc[VMIN]     = 0;   /* blocking read until 5 chars received */
+
+/* 
+	VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
+	leitura do(s) proximo(s) caracter(es)
+*/
+
+	tcflush(fd, TCIOFLUSH);
+
+	if ( tcsetattr(fd,TCSANOW,&newtio) == -1) {
+		perror("tcsetattr");
+		exit(-1);
+	}
+
+	printf("New termios structure set\n");
+
+	if (strcmp("r", argv[2]) == 0)
+		receiver(fd);
+	else if (strcmp("w", argv[2]) == 0)
+		emitter(fd);
+	else
+		printf("Error in 3rd argument, should be 'r' or 'w'\n");
+}
+
 
 int main() {
 
