@@ -56,12 +56,87 @@ static LinkLayer * ll = NULL;
 
 static struct termios oldtio;
 
-typedef enum
-{SET, DISC, UA, RR, REJ} ControlType;
+typedef enum {
+	SET = 0x03, DISC = 0x0B, UA = 0x07, RR = 0x05, REJ = 0x01
+} ControlType;
 
-//TODO: REVER ISTO AQUI -> O R TEM QUE SER CONTROLADO DE ALGUMA FORMA É COM O SEQUENCE NUMBER (seqNumber) SEU BUBA
-int nr = 0;
-int ns = 0; // rip dis shit
+
+/**
+ * Keeps reading until a FRAME FLAG is found.
+ *
+ * @param The Serial Port's filedescriptor
+ * @returned Number of bytes read, -1 if an error ocurred.
+ */
+int readFrameFlag(int fd);
+
+/**
+ * Creates a Control Frame, according to the protocols.
+ *
+ * @param buffer Buffer where the control Frame will be created
+ * @param adressField The Adress field value.
+ * @param controlField The Control field value.
+ * @return OK if all went well, ERROR otherwise
+ */
+void createControlFrame(char * buffer, char adressField, char controlField);
+
+/**
+ * Sends a Control frame of the given type.
+ *
+ * @param fd The Serial Port filedescriptor
+ * @param controlType The type of control frame
+ * @return Number of written bytes, -1 if an error happened.
+ */
+int sendControlFrame(int fd, ControlType controlType);
+
+/**
+ * Sends a Control frame of the given type, with the given adress field
+ * For the special occasion of variating Adress Fields from Transmisser / Receiver
+ *
+ * @param fd The Serial Port filedescriptor
+ * @param controlType The type of control frame
+ * @param adressField The adress field to be used
+ * @return Number of written bytes, -1 if an error happened.
+ */
+int sendControlFrameWAdress(int fd, ControlType controlType, char adressField);
+
+/**
+ * Reads a frame and checks if it is of the given type.
+ *
+ * @param The Serial Port's filedescriptor
+ * @param controlType The type of control frame
+ * @return OK if the frame was of the given type, ERROR otherwise.
+ */ 
+int readControlFrame(int fd, ControlType controlType);
+
+/**
+ * Reads a frame and checks if it is of the given type, and has the given adress field
+ * For the special occasion of variating Adress Fields from Transmisser / Receiver
+ *
+ * @param The Serial Port's filedescriptor
+ * @param controlType The type of control frame
+ * @param adressField The adress field to be used
+ * @return OK if the frame was of the given type, ERROR otherwise.
+ */ 
+int readControlFrameWAdress(int fd, ControlType controlType, char adressField);
+
+/**
+ * Applies byte stuffing to the given message according to the protocols, retriving the new message in the same buffer.
+ *
+ * @param buffer The buffer containing the message to be stuffed.
+ * @param size The buffer's size
+ * @return ERROR if something went wrong, OK otherwise
+ */
+int byteStuffing(char * buffer, uint * size);
+
+/**
+ * Applies byte destuffing to the given message according to the protocols, retriving the new message in the same buffer.
+ *
+ * @param buffer The buffer containing the stuffed message.
+ * @param size The buffer's size
+ * @return Error if something went wrong, ok otherwise
+ */
+int byteDestuffing(char* buffer, uint * size);
+
 
 
 int initLinkLayer(int porta, int baudRate, uint timeout, uint numTransmissions) {
@@ -120,87 +195,196 @@ int llopen(ConnectionType type) {
 	ll->seqNumber = (type == TRANSMITTER ? 0 : 1);
 	fd = openSerialPort();
 
-
-//sE TRANSMITTER MANDA, se ERCEIVER espera pela set.
-	//TODO: Mandar uma mensagem de contol: SET/UA
+	if (type == TRANSMITTER) {
+		sendControlFrame(fd, SET);
+		readControlFrame(fd, UA);
+		return fd;
+	} 
+	else if (type == RECEIVER) {
+		readControlFrame(fd,SET);
+		sendControlFrame(fd, UA);
+		return fd;
+	} 
+	else return logError("Unknow Connection Type");
 }
 
 int llclose(int fd, ConnectionType type) {
 
 	//TODO mandar control message -> disc, que varia para read e writter
 
-/*
-* Reset terminal to previous configuration
-*/
+
+	//Reset terminal to previous configuration
 	if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
 		perror("tcsetattr");
 		exit(-1);
 	}
 
 	close(fd);
-
 	return OK;
 }
 
+int llwrite(int fd, char * buffer, int length) {
+	int res = 0;
 
-/**
- * Creates a Control Frame, according to the protocols.
- *
- * @param adressField The Adress field value.
- * @param controlField The Control field value.
- * @return The generated frame.
- *//*
-char * createControlFrame(char * buffer, char adressField, char controlField) {
-	char * buffer = malloc(CONTROL_FRAME_SIZE);
+	/*if (createInfFrame(buffer, &length) == ERROR) {
+		printf("llwrite error: Failed to create Information Frame.\n");
+		return -1;
+	}*/
+
+	if (byteStuffing(buffer, &length) == ERROR) {
+		printf("llwrite error: Failed to create Information Frame.\n");
+		return -1;
+	}
+
+	do {
+		if ((res = write(fd, buffer, length) < length)) {
+			printf("llwrite error: Bad write: %d bytes\n", res);
+			return -1;
+		}
+	} while (readControlFrame(fd, RR));
+
+	return res;
+}
+
+
+int llread(int fd, char ** dest) {
+	char * buffer = malloc(RECEIVER_SIZE);
+	int bufferIdx = 0;		//Number of bytes received
+
+	if (readFrameFlag(fd) < 0) {
+		printf("llread Error: read Frame flag error\n");
+		return -1;
+	}
+
+	while (buffer[bufferIdx] != FLAG) {
+		if (read(fd, buffer + bufferIdx, sizeof(char)) < 0) {
+			printf("llread error: Failed to read from SerialPort\n");
+			return -1;
+		}
+
+		if ((++bufferIdx % RECEIVER_SIZE) == 0 ) {
+			if ((buffer = realloc(buffer, ((bufferIdx / RECEIVER_SIZE)+1) * RECEIVER_SIZE )) == NULL) {
+				printf("llread error: Failed to realloc buffer\n");
+				return -1;
+			}
+		}
+	}
+
+	if (byteDestuffing(buffer, &bufferIdx) == ERROR) {
+		printf("llread error: Failed byteDestuffing\n");
+		return -1;
+	}
+	*dest = buffer;
+
+	//TODO: Retirar o head e o trailer
+	//write(fd, genControlFrame(RR), CONTROL_FRAME_SIZE);
+	return bufferIdx;
+}
+
+
+
+int readFrameFlag(int fd) {
+	char tempChar;
+	int readBytes = 0;
+
+	while (tempChar != FLAG) {
+		if ( (tempChar = read(fd, &tempChar, sizeof(char))) < 0 ) {
+			printf("readFrameFlag error: Failed to read from SerialPort\n");
+			return -1;
+		}
+		++readBytes;
+	}
+	return readBytes;
+}
+
+
+void createControlFrame(char * buffer, char adressField, char controlField) {
+	buffer = malloc(CONTROL_FRAME_SIZE);
 
 	buffer[FLAG1_POS] = FLAG;
 	buffer[AF_POS] = adressField;
 	buffer[CF_POS] = controlField;
 	buffer[BCC_POS] = (adressField ^ controlField);
 	buffer[FLAG2_POS] = FLAG;
+}
 
-	return buffer;
-}*/
+int sendControlFrame(int fd, ControlType controlType) {
+	int nrValue = (ll->seqNumber << 7);
 
-/**
- * Generates a Controll frame, corresponding to the given type.
- *
- * @param type The type of control frame TODO - MUDAR ESTA FUNAÇÃO PARA DEIXAR DE DEPENDER DA CONNECTIONTYPE
- * @return The frame generated.
- */ /*
-char * genControlFrame(ControlType controlType, ConnectionType connType) {
-	int nrValue = (nr << 7);
+	char * controlFrame = NULL;
+	if ((controlType == RR) || (controlType ==REJ)) {
+		createControlFrame(controlFrame, AF1, (controlType | nrValue));
+	} else {
+		createControlFrame(controlFrame, AF1, controlType);
+	}
 
-	if (connType == TRANSMITER) {
-		switch(controlType) {
-			case SET:
-				return createControlFrame(AF1, C_SET);
-			case DISC:
-				return createControlFrame(AF1, C_DISC);
-			case UA:
-				return createControlFrame(AF2, C_UA);
-			case RR:
-				return createControlFrame(AF2, (C_RR | nrValue));
-			case REJ:
-				return createControlFrame(AF2, (C_REJ | nrValue));
+	int res;
+	if ((res = write(fd, controlFrame, CONTROL_FRAME_SIZE)) < CONTROL_FRAME_SIZE) {
+		printf("senControlFrame error: Bad write: %d bytes\n", res);
+		return -1;
+	}
+	
+	free(controlFrame);
+	return res;
+}
+
+int sendControlFrameWAdress(int fd, ControlType controlType, char adressField) {
+	
+	if ((controlType != DISC) && (controlType != UA))
+		sendControlFrame(fd, controlType);
+
+	char * controlFrame = NULL;
+	createControlFrame(controlFrame, adressField, controlType);
+
+	int res;
+	if ((res = write(fd, controlFrame, CONTROL_FRAME_SIZE)) < CONTROL_FRAME_SIZE) {
+		printf("senControlFrame (Disk) error: Bad write: %d bytes\n", res);
+		return -1;
+	}
+	
+	free(controlFrame);
+	return res;
+}
+
+int readControlFrame(int fd, ControlType controlType) {
+	char * controlFrame = malloc(CONTROL_FRAME_SIZE);
+
+	if (read(fd, controlFrame, CONTROL_FRAME_SIZE) < CONTROL_FRAME_SIZE)
+		return logError("Failed to read Control Frame");
+
+	if ((controlFrame[FLAG1_POS] == FLAG) && (controlFrame[CF_POS] == controlType) && (controlFrame[AF_POS] == AF1) && 
+		(controlFrame[FLAG2_POS] == FLAG) && (controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS]))) 
+	{
+		if ((controlType == RR) || (controlType == REJ)) {
+			if (controlFrame[CF_POS] == (controlType | (ll->seqNumber << 7) ))
+				return OK;
+		
+		} else {
+			if (controlFrame[CF_POS] == controlType)
+				return OK;
 		}
 	}
-	else if (connType == RECEIVER) {
-		switch(controlType) {
-			case SET:
-				return createControlFrame(AF2, C_SET);
-			case DISC:
-				return createControlFrame(AF2, C_DISC);
-			case UA:
-				return createControlFrame(AF1, C_UA);
-			case RR:
-				return createControlFrame(AF1, (C_RR | nrValue));
-			case REJ:
-				return createControlFrame(AF1, (C_REJ | nrValue));
-		}
-	}
-	return NULL;
-} */
+	free(controlFrame);
+	return logError("Frame was note of the given type or Flags were not recognized\n");
+}
+
+int readControlFrameWAdress(int fd, ControlType controlType, char adressField) {
+	if ((controlType != DISC) && (controlType != UA))
+		readControlFrame(fd, controlType);
+
+	char * controlFrame = malloc(CONTROL_FRAME_SIZE);
+
+	if (read(fd, controlFrame, CONTROL_FRAME_SIZE) < CONTROL_FRAME_SIZE)
+		return logError("Failed to read Control Frame");
+
+	if ((controlFrame[FLAG1_POS] == FLAG) && (controlFrame[CF_POS] == controlType) && (controlFrame[AF_POS] == adressField) && 
+		(controlFrame[FLAG2_POS] == FLAG) && (controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS])))
+		return OK;
+
+
+	free(controlFrame);
+	return logError("Frame was note of the given type or Flags were not recognized\n");
+}
 
 /**
  * Evaluates if the Frame's header is wrong, being descarted if so.
@@ -246,15 +430,6 @@ int evaluateFrameHeader(char* frame, char* size) {
 	return OK;
 } */
 
-/**
- * Reads a frame and checks if it is of TYPE == type
- *
- * @return OK if it was, ERROR otherwise.
- */ 
-int receiveControlFrame(int fd, ControlType type) {
-	//TODO
-	return ERROR;
-}
 
 /**
  * Creates a Information Frame, according to the protocols.
@@ -291,13 +466,7 @@ dados, conforme os casos) e o próprio BCC (antes de stuffing) */ /*
 	return OK;
 } */
 
-/**
- * Applies byte stuffing to the given message according to the protocols, retriving the new message in the same buffer.
- *
- * @param buffer The buffer containing the message to be stuffed.
- * @param size The buffer's size
- * @return ERROR if something went wrong, OK otherwise
- */
+
 int byteStuffing(char * buffer, uint * size) {
 	uint i;
 
@@ -319,13 +488,7 @@ int byteStuffing(char * buffer, uint * size) {
 	return OK;
 }
 
-/**
- * Applies byte destuffing to the given message according to the protocols, retriving the new message in the same buffer.
- *
- * @param buffer The buffer containing the stuffed message.
- * @param size The buffer's size
- * @return Error if something went wrong, ok otherwise
- */
+
 int byteDestuffing(char* buffer, uint * size) {
 	uint i;
 
@@ -345,79 +508,6 @@ int byteDestuffing(char* buffer, uint * size) {
 
 	return OK;
 }
-
-int llwrite(int fd, char * buffer, int length) {
-	int res = 0;
-
-	/*if (createInfFrame(buffer, &length) == ERROR) {
-		printf("llwrite error: Failed to create Information Frame.\n");
-		return -1;
-	}*/
-
-	if (byteStuffing(buffer, &length) == ERROR) {
-		printf("llwrite error: Failed to create Information Frame.\n");
-		return -1;
-	}
-
-	do {
-		if ((res = write(fd, buffer, length) < length)) {
-			printf("llwrite error: Bad write: %d bytes\n", res);
-			return -1;
-		}
-	} while (receiveControlFrame(fd, RR));
-
-	return res;
-}
-
-//Retorna o n de caracteres lidos total
-int readFrameFlag(int fd) {
-	char tempChar;
-	int readBytes = 0;
-
-	while (tempChar != FLAG) {
-		if ( (tempChar = read(fd, &tempChar, sizeof(char))) < 0 ) {
-			printf("readFrameFlag error: Failed to read from SerialPort\n");
-			return -1;
-		}
-		++readBytes;
-	}
-	return readBytes;
-}
-
-int llread(int fd, char ** dest) {
-	char * buffer = malloc(RECEIVER_SIZE);
-	int bufferIdx = 0;		//Number of bytes received
-
-	if (readFrameFlag(fd) < 0) {
-		printf("llread Error: read Frame flag error\n");
-		return -1;
-	}
-
-	while (buffer[bufferIdx] != FLAG) {
-		if (read(fd, buffer + bufferIdx, sizeof(char)) < 0) {
-			printf("llread error: Failed to read from SerialPort\n");
-			return -1;
-		}
-
-		if ((++bufferIdx % RECEIVER_SIZE) == 0 ) {
-			if ((buffer = realloc(buffer, ((bufferIdx / RECEIVER_SIZE)+1) * RECEIVER_SIZE )) == NULL) {
-				printf("llread error: Failed to realloc buffer\n");
-				return -1;
-			}
-		}
-	}
-
-	if (byteDestuffing(buffer, &bufferIdx) == ERROR) {
-		printf("llread error: Failed byteDestuffing\n");
-		return -1;
-	}
-	*dest = buffer;
-
-	//TODO: Retirar o head e o trailer
-	//write(fd, genControlFrame(RR), CONTROL_FRAME_SIZE);
-	return bufferIdx;
-}
-
 
 // int main() {
 
