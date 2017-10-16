@@ -1,5 +1,25 @@
 #include "utils.h"
 
+long getFileSize(FILE* file) {
+	// saving current position
+	long currentPosition = ftell(file);
+
+	// seeking end of file
+	if (fseek(file, 0, SEEK_END) == -1) {
+		printf("ERROR: Could not get file size.\n");
+		return -1;
+	}
+
+	// saving file size
+	long size = ftell(file);
+
+	// seeking to the previously saved position
+	fseek(file, 0, currentPosition);
+
+	// returning size
+	return size;
+}
+
 void printArray(uchar buffer[], int size) {
 	int i;
 	for (i = 0; i < size; i++) {
@@ -8,6 +28,7 @@ void printArray(uchar buffer[], int size) {
 	printf("\n");
 }
 
+// useless function pls
 void convertIntToBytes(uchar * res, uint src){
 	int i;
 	for(i = sizeof(int)-1; i >= 0; i--){

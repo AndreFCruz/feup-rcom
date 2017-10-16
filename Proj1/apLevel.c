@@ -3,7 +3,7 @@
 #include <string.h>
 #include "ApplicationLayer.h"
 
-#define SIZE2_MUL				256	//mudar nome de variavel
+#define SIZE2_MUL			256
 #define HEADER_SIZE_IDX		4
 
 
@@ -22,7 +22,7 @@
 ApplicationLayer * al;
 Packet * p;
 
-int sendDataPacket(DataPacket * src){
+int sendDataPacket(DataPacket * src) {
 	int packetSize = HEADER_SIZE + (src->size);
 	unsigned char * data = (unsigned char *) malloc(packetSize);
 
@@ -56,9 +56,9 @@ int receiveDataPacket(DataPacket * dest) {
 	return OK;
 }
 
-
+// dividir como estava antes, makeControlPacket e sendControlPacket chama-a
 int sendControlPacket(ControlPacket * src){
-	int fileNameSize = strlen(al->fileName);
+	int fileNameSize = strnlen(al->fileName, MAX_FILE_NAME);
 	int packetSize = 1 + 2 * (src->argNr) + fileNameSize + FILE_SIZE_LENGTH;
 	//printf("packetSize: %d, fileNameSize: %d\n", packetSize, (unsigned char) fileNameSize);
 
@@ -93,7 +93,8 @@ int sendControlPacket(ControlPacket * src){
 	return 0;
 }
 
-int fillArgs(uchar * data, ControlPacket * dest, int argNr, int argSize, int offset){
+// mudar nome da função para algo maix explicativo
+int fillArgs(uchar * data, ControlPacket * dest, int argNr, int argSize, int offset) {
 	if(argNr == 0){
 		uint size = convertBytesToInt(data+offset);
 			
@@ -115,7 +116,7 @@ int fillArgs(uchar * data, ControlPacket * dest, int argNr, int argSize, int off
 	return OK;
 }
 
-int receiveControlPacket(ControlPacket * dest){
+int receiveControlPacket(ControlPacket * dest) {
 	//Packet packet;
 	/*
 	if(llread(&packet) != OK)
@@ -142,7 +143,7 @@ int receiveControlPacket(ControlPacket * dest){
 
 }
 
-int main(){
+int main() {
 	al = (ApplicationLayer *) malloc(sizeof(ApplicationLayer));
 	strcpy(al->fileName, "Derp.jpg");
 

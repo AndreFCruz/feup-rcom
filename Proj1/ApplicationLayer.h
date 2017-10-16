@@ -3,35 +3,12 @@
 
 #include "utils.h"
 
-#define MAX_FILE_NAME       255
-
 typedef struct {
     int fileDescriptor; // serial port's file descriptor
     char fileName[MAX_FILE_NAME];
     ConnectionType status;
 } ApplicationLayer;
 
-typedef struct {
-    uchar * data;
-    uint size;
-} Packet;
-
-typedef enum {
-    DATA = 0x01, START = 0x02, END = 0x03
-} PacketType;
-
-typedef struct {
-    uchar seqNr;
-    uint size;
-    uchar * data;
-} DataPacket;
-
-typedef struct {
-    PacketType type;
-    char fileName[MAX_FILE_NAME];
-    uint fileSize;
-    uint argNr;
-} ControlPacket;
 
 // TODO extract data/control packets structures and constructor functions to another file, OOP?
 int initApplicationLayer(const char * port, ConnectionType type, int baudrate,
@@ -53,7 +30,7 @@ int receiveControlPacket(ControlPacket * dest);
 int sendDataPacket(DataPacket * src);
 
 /**
- * Receives a Packet theough the LinkLayer and extracts the DataPacket
+ * Receives a Packet through the LinkLayer and extracts the DataPacket
  * to the provided destinationwrite).
  * returns whether an error occurred
  */

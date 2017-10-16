@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ApplicationLayer.h"
+#include "utils.h"
 
-#define CTRL_PACKET_ARGS    2
+#define CTRL_PACKET_ARGS	2
 #define FILE_BUFFER_SIZE	256
 
 ApplicationLayer * al;
@@ -22,11 +23,13 @@ int sendFile() {
 	ControlPacket ctrlPacket;
 	ctrlPacket.argNr = CTRL_PACKET_ARGS;
 	ctrlPacket.type = START;
-	// ctrlPacket.fileSize
+	ctrlPacket.fileSize = getFileSize(file);
 
 	DataPacket dataPacket;
-	if (sendControlPacket(&ctrlPacket) != OK)
+	if (sendControlPacket(&ctrlPacket) != OK) {
+		printf("Error sending control packet.\n");
 		return ERROR;
+	}
 
 	unsigned char fileBuffer[FILE_BUFFER_SIZE];
 	uint res, progress = 0, i = 0;
@@ -35,7 +38,7 @@ int sendFile() {
 		dataPacket.packetSize = res;
 		dataPacket.data = fileBuffer;
 		if (!sendDataPacket(&dataPacket)) {
-			// error ocurred
+			printf("Error sending data packet.\n");
 			return ERROR;
 		}
 
@@ -49,8 +52,10 @@ int sendFile() {
 	}
 
 	ctrlPacket.type = END;
-	if (sendControlPacket(&ctrlPacket) != OK)
+	if (sendControlPacket(&ctrlPacket) != OK) {
+		printf("Error sending control packet.\n");
 		return ERROR;
+	}
 
 	if (llclose(al->fd) != OK)
 		return ERROR;
