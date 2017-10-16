@@ -6,14 +6,15 @@
 #define CTRL_PACKET_ARGS	2
 #define FILE_BUFFER_SIZE	256
 
-ApplicationLayer * al;
+static ApplicationLayer * al;
 
 int sendFile() {
+	if (al == NULL)
+		return logError("AL not initialized");
+
 	FILE * file = fopen(al->fileName, "r"); // may need to be changed to "ab" for compatibility
-	if (file == NULL) {
-		printf("Error while opening file.\n");
-		return ERROR;
-	}
+	if (file == NULL)
+		return logError("Error while opening file");
 
 	// establish connection
 	al->fd = llopen(al->type);
@@ -26,10 +27,8 @@ int sendFile() {
 	ctrlPacket.fileSize = getFileSize(file);
 
 	DataPacket dataPacket;
-	if (sendControlPacket(&ctrlPacket) != OK) {
-		printf("Error sending control packet.\n");
-		return ERROR;
-	}
+	if (sendControlPacket(&ctrlPacket) != OK)
+		return logError("Error sending control packet");
 
 	unsigned char fileBuffer[FILE_BUFFER_SIZE];
 	uint res, progress = 0, i = 0;
@@ -37,25 +36,20 @@ int sendFile() {
 		dataPacket.seqNr = i++;
 		dataPacket.packetSize = res;
 		dataPacket.data = fileBuffer;
-		if (!sendDataPacket(&dataPacket)) {
-			printf("Error sending data packet.\n");
-			return ERROR;
-		}
+		if (!sendDataPacket(&dataPacket))
+			return logError("Error sending data packet");
 
 		progress += res;
 	}
 
-	//free(fileBuffer);
 	if (fclose(file) != OK) {
 		perror("Error while closing file");
 		return ERROR;
 	}
 
 	ctrlPacket.type = END;
-	if (sendControlPacket(&ctrlPacket) != OK) {
-		printf("Error sending control packet.\n");
-		return ERROR;
-	}
+	if (sendControlPacket(&ctrlPacket) != OK)
+		return logError("Error sending control packet");
 
 	if (llclose(al->fd) != OK)
 		return ERROR;
@@ -64,5 +58,31 @@ int sendFile() {
 }
 
 int receiveFile() {
+	if (al == NULL)
+		return logError("AL not initialized");
+
+	al->fd = llopen(al->type);
+	if (fd <= 0)
+		return 0;
+
+	ControlPacket ctrlPacket;
+	if (receiveControlPacket(&ctrlPacket) != OK || ctrlPacket->type != START) {
+		return logError("Error receiving control packet");
+	}
+
+	al->fileName = ctrlPacket.fileName;
+
+	FILE * outputFile = fopen(al->fileName, "wb");
+	if (outputFile == NULL)
+		return logError("Could not create output file");
+
+	// TODO create function to print **pretty** messages :)
+	printf("Created file %s with expected size %d.\n", al->fileName, ctrlPacket.fileSize);
+
+	uint res, progress = 0;
+	while (progress < ctrlPacket.fileSize) {
+		
+	}
+
   return 0;
 }
