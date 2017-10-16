@@ -24,5 +24,6 @@ void printArray(uchar buffer[], int size);
 
 void convertIntToBytes(uchar * res, uint src);	// DEPRECATED
 uint convertBytesToInt(uchar * src);			// DEPRECATED
+int logError(char * errorMsg);
 
 #endif

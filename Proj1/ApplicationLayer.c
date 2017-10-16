@@ -25,12 +25,12 @@ int sendFile() {
 	ctrlPacket.type = START;
 	ctrlPacket.fileSize = getFileSize(file);
 
-	DataPacket dataPacket;
 	if (sendControlPacket(&ctrlPacket) != OK) {
 		printf("Error sending control packet.\n");
 		return ERROR;
 	}
 
+	DataPacket dataPacket;
 	unsigned char fileBuffer[FILE_BUFFER_SIZE];
 	uint res, progress = 0, i = 0;
 	while ( (res = fread(fileBuffer, sizeof(char), FILE_BUFFER_SIZE, file)) > 0 ) {
