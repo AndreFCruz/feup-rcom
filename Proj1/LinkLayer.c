@@ -56,7 +56,7 @@ typedef struct {
 
 static LinkLayer * ll = NULL;
 
-static struct termios oldtio = NULL;
+static struct termios oldtio;
 
 typedef enum
 {SET, DISC, UA, RR, REJ} ControlType;
@@ -71,9 +71,9 @@ int ns = 0;
  * @param adressField The Adress field value.
  * @param controlField The Control field value.
  * @return The generated frame.
- */
-char* createControlFrame(char * buffer, char adressField, char controlField) {
-	char* buffer = malloc(CONTROL_FRAME_SIZE);
+ *//*
+char * createControlFrame(char * buffer, char adressField, char controlField) {
+	char * buffer = malloc(CONTROL_FRAME_SIZE);
 
 	buffer[FLAG1_POS] = FLAG;
 	buffer[AF_POS] = adressField;
@@ -82,14 +82,14 @@ char* createControlFrame(char * buffer, char adressField, char controlField) {
 	buffer[FLAG2_POS] = FLAG;
 
 	return buffer;
-}
+}*/
 
 /**
  * Generates a Controll frame, corresponding to the given type.
  *
  * @param type The type of control frame TODO - MUDAR ESTA FUNAÇÃO PARA DEIXAR DE DEPENDER DA CONNECTIONTYPE
  * @return The frame generated.
- */
+ */ /*
 char * genControlFrame(ControlType controlType, ConnectionType connType) {
 	int nrValue = (nr << 7);
 
@@ -122,7 +122,7 @@ char * genControlFrame(ControlType controlType, ConnectionType connType) {
 		}
 	}
 	return NULL;
-}
+} */
 
 /**
  * Evaluates if the Frame's header is wrong, being descarted if so.
@@ -130,7 +130,7 @@ char * genControlFrame(ControlType controlType, ConnectionType connType) {
  * @param frame The frame to evaluated
  * @param size The frame's size.
  * @return ERROR if something went wrong, OK otherwise
- */
+ */ /*
 int evaluateFrameHeader(char* frame, char* size) {
 	//Checking the Flag field
 	if (frame[FLAG1_POS] != FLAG) {
@@ -166,17 +166,17 @@ int evaluateFrameHeader(char* frame, char* size) {
 	}
 
 	return OK;
-}
+} */
 
 /**
  * Verifies if a Positive Acknoledgement was received.
  *
  *
  * @return OK if it was, ERROR otherwise.
- */
+ */ 
 int receiveAck(int fd) {
 	//TODO
-	RETURN OK;
+	return OK;
 }
 
 /**
@@ -186,7 +186,7 @@ int receiveAck(int fd) {
  * @param packet The packet to be framed.
  * @param size The packet's size.
  * @return ERROR if something went wrong, OK otherwise
- */
+ */ /*
 int createInfFrame(char* packet, uint* size) {
 
 	int previousSize = (*size);
@@ -198,11 +198,11 @@ int createInfFrame(char* packet, uint* size) {
 	}
 
 	//Setting the trailer
-	packet[(*size) + TRAIL_BCC_POS] = 0;
+	packet[(*size) + TRAIL_BCC_POS] = 0; */
 	/* TODO: BCC (Block Check Character) – detecção de erros baseada na geração de
 um octeto (BCC) tal que exista um número par de 1s em cada posição
 (bit), considerando todos os octetos protegidos pelo BCC (cabeçalho ou
-dados, conforme os casos) e o próprio BCC (antes de stuffing) */
+dados, conforme os casos) e o próprio BCC (antes de stuffing) */ /*
 	packet[(*size) + TRAIL_FLAG_POS] = FLAG;
 
 	memmove(packet + INF_HEAD_SIZE, packet, previousSize + INF_TRAILER_SIZE);
@@ -212,7 +212,7 @@ dados, conforme os casos) e o próprio BCC (antes de stuffing) */
 	packet[BCC_POS] = (AF1 ^ packet[CF_POSF]);
 
 	return OK;
-}
+} */
 
 /**
  * Applies byte stuffing to the given message according to the protocols, retriving the new message in the same buffer.
@@ -311,7 +311,10 @@ int llread(int fd, char * buffer) {
 	char* buffer = malloc(RECEIVER_SIZE);
 	int bufferIdx = 0;		//Number of bytes received
 
-	if (readFrameFlag(fd) >)
+	if (readFrameFlag(fd) < 0) {
+		printf("llread Error: read Frame flag error\n");
+		return -1;
+	}
 
 	while (buffer[bufferIdx] != FLAG) {
 		if (read(fd, buffer + bufferIdx, sizeof(char)) < 0) {
@@ -332,7 +335,7 @@ int llread(int fd, char * buffer) {
 		return -1;
 	}
 
-	//Retirar o head e o trailer
+	//TODO: Retirar o head e o trailer
 	//write(fd, genControlFrame(RR), CONTROL_FRAME_SIZE);
 	return bufferIdx;
 }
