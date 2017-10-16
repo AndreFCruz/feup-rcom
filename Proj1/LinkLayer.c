@@ -41,7 +41,8 @@
 #define C_REJ	0x01
 #define C_INF	0x00
 
-#define MAX_PORT_NAME 32
+#define MAX_PORT_NAME 16
+#define PORT_NAME	"/dev/ttyS"
 
 typedef struct {
 	char port[MAX_PORT_NAME];
@@ -61,6 +62,86 @@ typedef enum
 //TODO: REVER ISTO AQUI -> O R TEM QUE SER CONTROLADO DE ALGUMA FORMA É COM O SEQUENCE NUMBER (seqNumber) SEU BUBA
 int nr = 0;
 int ns = 0; // rip dis shit
+
+
+int initLinkLayer(int porta, int baudRate, uint timeout, uint numTransmissions) {
+	ll = malloc(sizeof(LinkLayer));
+
+	snprintf(ll->port, MAX_PORT_NAME, "%s%d", PORT_NAME, porta);
+
+	ll->baudRate = baudRate;
+	ll->timeout = timeout;
+	ll->numTrans = numTransmissions;
+	ll->seqNumber = 0;
+}
+
+int openSerialPort() {
+	if (ll == NULL)
+		return logError("LinkLayer not initialized");
+
+	int fd = open(argv[1], O_RDWR | O_NOCTTY );
+	if (fd <0) { perror(argv[1]); exit(-1); }
+
+	if ( tcgetattr(fd,&oldtio) == -1 ) { /* save current port settings */
+		perror("tcgetattr");
+		exit(-1);
+	}
+
+	struct termios newtio;
+	bzero(&newtio, sizeof(newtio));
+	newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+	newtio.c_iflag = IGNPAR;
+	newtio.c_oflag = 0;
+
+	/* set input mode (non-canonical, no echo,...) */
+	newtio.c_lflag = 0;
+
+	newtio.c_cc[VTIME]    = 30;   /* inter-character timer unused - in 0.1s*/
+	newtio.c_cc[VMIN]     = 0;   /* blocking read until 5 chars received */
+/* 
+	VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
+	leitura do(s) proximo(s) caracter(es)
+*/
+
+	tcflush(fd, TCIOFLUSH);
+
+	if ( tcsetattr(fd,TCSANOW,&newtio) == -1) {
+		perror("tcsetattr");
+		exit(-1);
+	}
+
+	return fd;
+}
+
+int llopen(ConnectionType type) {
+	int fd, c, res;
+	struct termios newtio;
+
+	ll->seqNumber = (type == TRANSMITTER ? 0 : 1);
+	fd = openSerialPort(porta);
+
+
+//sE TRANSMITTER MANDA, se ERCEIVER espera pela set.
+	//TODO: Mandar uma mensagem de contol: SET/UA
+}
+
+int llclose(int fd, ConnectionType type) {
+
+	//TODO mandar control message -> disc, que varia para read e writter
+
+/*
+* Reset terminal to previous configuration
+*/
+	if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
+		perror("tcsetattr");
+		exit(-1);
+	}
+
+	close(fd);
+
+	return OK;
+}
+
 
 /**
  * Creates a Control Frame, according to the protocols.
@@ -335,79 +416,6 @@ int llread(int fd, char ** dest) {
 	//TODO: Retirar o head e o trailer
 	//write(fd, genControlFrame(RR), CONTROL_FRAME_SIZE);
 	return bufferIdx;
-}
-
-int initLinkLayer(char port[], int baudRate, uint timeout, uint numTransmissions) {
-	ll = malloc(sizeof(LinkLayer));
-
-	ll->port = port;
-	ll->baudRate = baudRate;
-	ll->timeout = timeout;
-	ll->numTrans = numTransmissions;
-	ll->seqNumber = 0;
-}
-
-int llopen(int porta, ConnectionType type) {
-	int fd,c, res;
-	struct termios newtio;
-
-	ll->seqNumber = (type == TRANSMITTER ? 0 : 1);
-
-/*
-	Open serial port device for reading and writing and not as controlling tty
-	because we don't want to get killed if linenoise sends CTRL-C.
-*/
-
-	fd = open(argv[1], O_RDWR | O_NOCTTY );
-	if (fd <0) {perror(argv[1]); exit(-1); }
-
-	if ( tcgetattr(fd,&oldtio) == -1) { /* save current port settings */
-		perror("tcgetattr");
-		exit(-1);
-	}
-
-	bzero(&newtio, sizeof(newtio));
-	newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
-	newtio.c_iflag = IGNPAR;
-	newtio.c_oflag = 0;
-
-	/* set input mode (non-canonical, no echo,...) */
-	newtio.c_lflag = 0;
-
-	newtio.c_cc[VTIME]    = 30;   /* inter-character timer unused - in 0.1s*/
-	newtio.c_cc[VMIN]     = 0;   /* blocking read until 5 chars received */
-
-/*
-	VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
-	leitura do(s) proximo(s) caracter(es)
-*/
-
-	tcflush(fd, TCIOFLUSH);
-
-	if ( tcsetattr(fd,TCSANOW,&newtio) == -1) {
-		perror("tcsetattr");
-		exit(-1);
-	}
-	printf("New termios structure set\n");
-
-//sE TRANSMITTER MANDA, se ERCEIVER espera pela set.
-	//TODO: Mandar uma mensagem de contol: SET
-}
-
-int llclose(int fd, ConnectionType type) {
-
-	//TODO mandar control message -> disc, que varia para read e writter
-
-	/*
-	* Reset terminal to previous configuration
-	*/
-		if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
-			perror("tcsetattr");
-			exit(-1);
-		}
-
-		close(fd);
-		return OK;
 }
 
 

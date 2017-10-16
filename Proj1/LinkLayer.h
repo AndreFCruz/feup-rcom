@@ -3,11 +3,11 @@
 
 #include "utils.h"
 
-int initLinkLayer(char port[], int baudRate, uint timeout, uint numTransmissions);
+int initLinkLayer(int porta, int baudRate, uint timeout, uint numTransmissions);
 
 int openSerialPort();
 
-int llopen(int porta, ConnectionType type);
+int llopen(ConnectionType type);
 
 int llclose(int fd, ConnectionType type);
 

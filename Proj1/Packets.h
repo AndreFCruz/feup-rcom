@@ -6,7 +6,6 @@
 #define SIZE2_MUL           256
 #define HEADER_SIZE         4
 
-
 //DATA_PACKET
 #define CTRL_FIELD_IDX      0
 #define SEQ_NUM_IDX         1
