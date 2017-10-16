@@ -1,6 +1,6 @@
 #include "Packets.h"
 
-void makeControlPacket(ControlPacket * src, Packet * dest){
+void makeDataPacket(DataPacket * src, Packet * dest){
 	int packetSize = HEADER_SIZE + (src->size);
 	unsigned char * data = (unsigned char *) malloc(packetSize);
 
@@ -11,12 +11,12 @@ void makeControlPacket(ControlPacket * src, Packet * dest){
 
 	memcpy(&data[HEADER_SIZE], src->data, src->size);
 
-	packet->data = data;
-	packet->size = packetSize;
+	dest->data = data;
+	dest->size = packetSize;
 }
 
-void makeDataPacket(DataPacket * src, Packet * dest){
-	int fileNameSize = strnlen(al->fileName, MAX_FILE_NAME);
+void makeControlPacket(ControlPacket * src, Packet * dest){
+	int fileNameSize = strnlen(src->fileName, MAX_FILE_NAME);
 	int packetSize = 1 + 2 * (src->argNr) + fileNameSize + FILE_SIZE_LENGTH;
 	//printf("packetSize: %d, fileNameSize: %d\n", packetSize, (unsigned char) fileNameSize);
 
@@ -27,53 +27,52 @@ void makeDataPacket(DataPacket * src, Packet * dest){
 	int index = 1;
 	data[index++] = FILE_SIZE_ARG;
 	data[index++] = sizeof(int);
-	((uint *) (data + index)) = src->fileSize;
 	
 	unsigned char fileSize[sizeof(int)]; // TODO delete convertIntToBytes
 	convertIntToBytes(fileSize, src->fileSize);
 	memcpy(&data[index], fileSize, FILE_SIZE_LENGTH);
 
 	printf("Size: %d\n", src->fileSize);
+	//((uint *) (data + index)) = src->fileSize;
 	//memcpy(&data[index], (uchar*) &src->fileSize, sizeof(int));
 
 	index += FILE_SIZE_LENGTH;
 
-	data[index++] = FILE_NAME_IDX;
+	data[index++] = FILE_NAME_ARG;
 	data[index++] = (unsigned char) fileNameSize;
-	memcpy(&data[index], al->fileName, fileNameSize);
+	memcpy(&data[index], src->fileName, fileNameSize);
 
-	packet->data = data;
-	packet->size = packetSize;
+	dest->data = data;
+	dest->size = packetSize;
 }
 
 
-int sendDataPacket(DataPacket * src) {
+int sendDataPacket(int fd, DataPacket * src) {
 	Packet packet;
 	makeDataPacket(src, &packet);
-	int status = llwrite(al->fileDescriptor, packet.data, packet.size);
+	int status = llwrite(fd, packet.data, packet.size);
 	free(packet.data);
 	return status;
 }
 
-int sendControlPacket(ControlPacket * src){
+int sendControlPacket(int fd, ControlPacket * src){
 	Packet packet;
 	makeControlPacket(src, &packet);
-	int status = llwrite(al->fileDescriptor, packet.data, packet.size);
+	int status = llwrite(fd, packet.data, packet.size);
 	free(packet.data);
 	return status;
 }
 
-int receiveDataPacket(DataPacket * dest) {
-	Packet packet;
-	if(llread(al->fileDescriptor, packet.data, packet.size))
+int receiveDataPacket(int fd, DataPacket * dest) {
+	uchar * data;
+	if(llread(fd, data))
 		return logError("failed to read packet");
 
-	uchar * data = p->data;
 	if(data[CTRL_FIELD_IDX] != DATA)
 		return logError("type does not match any known type (START, END)");
 	
 	dest->seqNr = data[SEQ_NUM_IDX];
-	int size = data[DATA_PACKET_SIZE2_IDX] * SIZE + data[DATA_PACKET_SIZE1_IDX];
+	int size = data[DATA_PACKET_SIZE2_IDX] * SIZE2_MUL + data[DATA_PACKET_SIZE1_IDX];
 	dest->data = (uchar *) malloc(size);
 	memcpy(dest->data, &data[HEADER_SIZE], size);
 	free(dest->data);
@@ -104,19 +103,19 @@ int fillControlPacketArg(uchar * data, ControlPacket * dest, int argNr, int argS
 	return OK;
 }
 
-int receiveControlPacket(ControlPacket * dest) {
-	Packet packet;
-	if(llread(al->fileDescriptor, packet.data, packet.size))
+int receiveControlPacket(int fd, ControlPacket * dest) {
+	uchar * data;
+	int dataSize; 
+	if((dataSize = llread(fd, data)) > 0)
 		return logError("failed to read packet");
 
-	uchar * data = packet.data;
 	dest->type = data[CTRL_FIELD_IDX];
 
 	if(dest->type != START || dest->type != END)
 		return logError("type does not match any known type (START, END)");
 
 	int index = 1, argNr = 0, argSize;
-	while(index < packet.size){
+	while(index < dataSize){
 		if(data[index++] != argNr)
 			return logError("wrong sequence of arguments");
 

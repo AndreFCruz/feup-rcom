@@ -17,6 +17,8 @@
 #define FILE_SIZE_ARG       0
 #define FILE_NAME_ARG       1
 
+#define FILE_SIZE_LENGTH    4
+
 typedef struct {
     uchar * data;
     uint size;
@@ -39,16 +41,17 @@ typedef struct {
     uint argNr;
 } ControlPacket;
 
-void makeControlPacket(ControlPacket * src, Packet * dest);
 
 void makeDataPacket(DataPacket * src, Packet * dest);
 
-int sendDataPacket(DataPacket * src);
+void makeControlPacket(ControlPacket * src, Packet * dest);
 
-int sendControlPacket(ControlPacket * src);
+int sendDataPacket(int fd, DataPacket * src);
 
-int receiveDataPacket(DataPacket * dest);
+int sendControlPacket(int fd, ControlPacket * src);
+
+int receiveDataPacket(int fd, DataPacket * dest);
 
 int fillControlPacketArg(uchar * data, ControlPacket * dest, int argNr, int argSize, int offset);
 
-int receiveControlPacket(ControlPacket * dest);
+int receiveControlPacket(int fd, ControlPacket * dest);
