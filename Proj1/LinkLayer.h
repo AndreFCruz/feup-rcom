@@ -13,6 +13,6 @@ int llclose(int fd, ConnectionType type);
 
 int llwrite(int fd, char * buffer, int length);
 
-int llread(int fd, char * buffer);
+int llread(int fd, char ** buffer);
 
 #endif

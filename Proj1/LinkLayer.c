@@ -1,15 +1,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-//#include <termios.h>
+#include <termios.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "LinkLayer.h"
-// TODO filtrar estes includes
-
-#define RESEND	2
 
 #define FLAG 			0x7E
 #define ESC 			0x7D
@@ -63,7 +60,7 @@ typedef enum
 
 //TODO: REVER ISTO AQUI -> O R TEM QUE SER CONTROLADO DE ALGUMA FORMA É COM O SEQUENCE NUMBER (seqNumber) SEU BUBA
 int nr = 0;
-int ns = 0;
+int ns = 0; // rip dis shit
 
 /**
  * Creates a Control Frame, according to the protocols.
@@ -169,14 +166,13 @@ int evaluateFrameHeader(char* frame, char* size) {
 } */
 
 /**
- * Verifies if a Positive Acknoledgement was received.
- *
+ * Reads a frame and checks if it is of TYPE == type
  *
  * @return OK if it was, ERROR otherwise.
  */ 
-int receiveAck(int fd) {
+int receiveControlFrame(int fd, ControlType type) {
 	//TODO
-	return OK;
+	return ERROR;
 }
 
 /**
@@ -249,7 +245,7 @@ int byteStuffing(char * buffer, uint * size) {
  * @param size The buffer's size
  * @return Error if something went wrong, ok otherwise
  */
-int byteDestuffing(char* buffer, int* size) {
+int byteDestuffing(char* buffer, uint * size) {
 	uint i;
 
 	for (i = 0; i < (*size); ++i) {
@@ -287,7 +283,7 @@ int llwrite(int fd, char * buffer, int length) {
 			printf("llwrite error: Bad write: %d bytes\n", res);
 			return -1;
 		}
-	} while (receiveAck(fd) == RESEND);
+	} while (receiveControlFrame(fd, RR));
 
 	return res;
 }
@@ -298,7 +294,7 @@ int readFrameFlag(int fd) {
 	int readBytes = 0;
 
 	while (tempChar != FLAG) {
-		if (tempChar = read(fd, &tempChar, sizeof(char)) < 0) {
+		if ( (tempChar = read(fd, &tempChar, sizeof(char))) < 0 ) {
 			printf("readFrameFlag error: Failed to read from SerialPort\n");
 			return -1;
 		}
@@ -307,8 +303,8 @@ int readFrameFlag(int fd) {
 	return readBytes;
 }
 
-int llread(int fd, char * buffer) {
-	char* buffer = malloc(RECEIVER_SIZE);
+int llread(int fd, char ** dest) {
+	char * buffer = malloc(RECEIVER_SIZE);
 	int bufferIdx = 0;		//Number of bytes received
 
 	if (readFrameFlag(fd) < 0) {
@@ -334,6 +330,7 @@ int llread(int fd, char * buffer) {
 		printf("llread error: Failed byteDestuffing\n");
 		return -1;
 	}
+	*dest = buffer;
 
 	//TODO: Retirar o head e o trailer
 	//write(fd, genControlFrame(RR), CONTROL_FRAME_SIZE);
