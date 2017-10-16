@@ -6,7 +6,7 @@
 #define CTRL_PACKET_ARGS	2
 #define FILE_BUFFER_SIZE	256
 
-static ApplicationLayer * al;
+ApplicationLayer * al = NULL;
 
 int sendFile() {
 	if (al == NULL)
@@ -79,10 +79,31 @@ int receiveFile() {
 	// TODO create function to print **pretty** messages :)
 	printf("Created file %s with expected size %d.\n", al->fileName, ctrlPacket.fileSize);
 
-	uint res, progress = 0;
+	DataPacket dataPacket;
+	uint res, progress = 0, totalPackets = 0;
 	while (progress < ctrlPacket.fileSize) {
-		
+		receiveDataPacket(&dataPacket);
+		progress += dataPacket.length;
+
+		if (fwrite(dataPacket.data, sizeof(char), dataPacket.length, outputFile) == 0) {
+			printf("fwrite returned 0\n");
+			return OK;
+		}
 	}
 
-  return 0;
+	if (fclose(outputFile) != 0) {
+		perror("fclose failed");
+		return ERROR;
+	}
+
+	if (receiveControlPacket(&ctrlPacket) != OK || ctrlPacket->type != END) {
+		return logError("Error receiving control packet");
+	}
+
+	if (!llclose(al->fd, al->type))
+		return logError("llclose failed");
+
+	printf("File received successfully.\n");
+
+	return OK;
 }

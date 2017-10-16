@@ -7,7 +7,7 @@
 typedef struct {
     int fileDescriptor; // serial port's file descriptor
     char fileName[MAX_FILE_NAME];
-    ConnectionType status;
+    ConnectionType type;
 } ApplicationLayer;
 
 
