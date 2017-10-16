@@ -41,16 +41,19 @@ typedef struct {
 } ControlPacket;
 
 
-void makeDataPacket(DataPacket * src, Packet * dest);
-
-void makeControlPacket(ControlPacket * src, Packet * dest);
-
+/**
+ * Makes the DataPacket into a Packet and sends it through the LinkLayer (llwrite)
+ * returns whether an error occurred
+ */
 int sendDataPacket(int fd, DataPacket * src);
 
 int sendControlPacket(int fd, ControlPacket * src);
 
+/**
+ * Receives a Packet through the LinkLayer and extracts the DataPacket
+ * to the provided destinationwrite).
+ * returns whether an error occurred
+ */
 int receiveDataPacket(int fd, DataPacket * dest);
-
-int fillControlPacketArg(uchar * data, ControlPacket * dest, int argNr, int argSize, int offset);
 
 int receiveControlPacket(int fd, ControlPacket * dest);

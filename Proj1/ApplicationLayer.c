@@ -1,12 +1,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ApplicationLayer.h"
+#include "LinkLayer.h"
 #include "utils.h"
 
 #define CTRL_PACKET_ARGS	2
 #define FILE_BUFFER_SIZE	256
 
-ApplicationLayer * al = NULL;
+static ApplicationLayer * al = NULL;
 
 int sendFile() {
 	if (al == NULL)
@@ -26,7 +27,7 @@ int sendFile() {
 	ctrlPacket.type = START;
 	ctrlPacket.fileSize = getFileSize(file);
 
-	if (sendControlPacket(al->filelDescriptor, &ctrlPacket) != OK)
+	if (sendControlPacket(al->fd, &ctrlPacket) != OK)
 		return logError("Error sending control packet");
 
 	DataPacket dataPacket;
@@ -34,9 +35,9 @@ int sendFile() {
 	uint res, progress = 0, i = 0;
 	while ( (res = fread(fileBuffer, sizeof(char), FILE_BUFFER_SIZE, file)) > 0 ) {
 		dataPacket.seqNr = i++;
-		dataPacket.packetSize = res;
+		dataPacket.size = res;
 		dataPacket.data = fileBuffer;
-		if (!sendDataPacket(al->filelDescriptor, &dataPacket))
+		if (!sendDataPacket(al->fd, &dataPacket))
 			return logError("Error sending data packet");
 
 		progress += res;
@@ -48,10 +49,10 @@ int sendFile() {
 	}
 
 	ctrlPacket.type = END;
-	if (sendControlPacket(al->filelDescriptor, &ctrlPacket) != OK)
+	if (sendControlPacket(al->fd, &ctrlPacket) != OK)
 		return logError("Error sending control packet");
 
-	if (llclose(al->fd) != OK)
+	if (llclose(al->fd, al->type) != OK)
 		return ERROR;
 
 	return OK;
@@ -62,15 +63,15 @@ int receiveFile() {
 		return logError("AL not initialized");
 
 	al->fd = llopen(al->type);
-	if (fd <= 0)
+	if (al->fd <= 0)
 		return 0;
 
 	ControlPacket ctrlPacket;
-	if (receiveControlPacket(&ctrlPacket) != OK || ctrlPacket->type != START) {
+	if (receiveControlPacket(al->fd, &ctrlPacket) != OK || ctrlPacket.type != START) {
 		return logError("Error receiving control packet");
 	}
 
-	al->fileName = ctrlPacket.fileName;
+	strncpy(al->fileName, ctrlPacket.fileName, MAX_FILE_NAME);
 
 	FILE * outputFile = fopen(al->fileName, "wb");
 	if (outputFile == NULL)
@@ -82,10 +83,10 @@ int receiveFile() {
 	DataPacket dataPacket;
 	uint res, progress = 0, totalPackets = 0;
 	while (progress < ctrlPacket.fileSize) {
-		receiveDataPacket(&dataPacket);
-		progress += dataPacket.length;
+		receiveDataPacket(al->fd, &dataPacket);
+		progress += dataPacket.size;
 
-		if (fwrite(dataPacket.data, sizeof(char), dataPacket.length, outputFile) == 0) {
+		if (fwrite(dataPacket.data, sizeof(char), dataPacket.size, outputFile) == 0) {
 			printf("fwrite returned 0\n");
 			return OK;
 		}
@@ -96,7 +97,7 @@ int receiveFile() {
 		return ERROR;
 	}
 
-	if (receiveControlPacket(&ctrlPacket) != OK || ctrlPacket->type != END) {
+	if (receiveControlPacket(al->fd, &ctrlPacket) != OK || ctrlPacket.type != END) {
 		return logError("Error receiving control packet");
 	}
 

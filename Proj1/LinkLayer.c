@@ -79,8 +79,8 @@ int openSerialPort() {
 	if (ll == NULL)
 		return logError("LinkLayer not initialized");
 
-	int fd = open(argv[1], O_RDWR | O_NOCTTY );
-	if (fd <0) { perror(argv[1]); exit(-1); }
+	int fd = open(ll->port, O_RDWR | O_NOCTTY );
+	if (fd <0) { perror(ll->port); exit(-1); }
 
 	if ( tcgetattr(fd,&oldtio) == -1 ) { /* save current port settings */
 		perror("tcgetattr");
@@ -89,7 +89,7 @@ int openSerialPort() {
 
 	struct termios newtio;
 	bzero(&newtio, sizeof(newtio));
-	newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+	newtio.c_cflag = ll->baudRate | CS8 | CLOCAL | CREAD;
 	newtio.c_iflag = IGNPAR;
 	newtio.c_oflag = 0;
 
@@ -118,7 +118,7 @@ int llopen(ConnectionType type) {
 	struct termios newtio;
 
 	ll->seqNumber = (type == TRANSMITTER ? 0 : 1);
-	fd = openSerialPort(porta);
+	fd = openSerialPort();
 
 
 //sE TRANSMITTER MANDA, se ERCEIVER espera pela set.

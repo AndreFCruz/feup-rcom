@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 {
 	if ( (argc < 3) || 
 		((strcmp("/dev/ttyS0", argv[1])!=0) && (strcmp("/dev/ttyS1", argv[1])!=0)) ) {
-		printUsage();
+		printUsage(argv[0]);
 		exit(1);
 	}
 
@@ -28,7 +28,7 @@ int main(int argc, char** argv)
 	} else if ( strcmp("r", argv[2]) != 0 ) {
 		initReceiver();
 	} else {
-		printUsage();
+		printUsage(argv[0]);
 		exit(1);
 	}
 
@@ -36,8 +36,8 @@ int main(int argc, char** argv)
 }
 
 
-void printUsage() {
-	printf("Usage:\t%s SerialPort r/w\n\tex: %s /dev/ttyS1 w\n", arg[0], arg[0]);
+void printUsage(char * progName) {
+	printf("Usage:\t%s SerialPort r/w\n\tex: %s /dev/ttyS1 w\n", progName, progName);
 }
 
 void initSender() {
