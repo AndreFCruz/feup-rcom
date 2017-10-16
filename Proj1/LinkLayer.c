@@ -14,7 +14,7 @@
 #define OK		0
 #define ERROR	1
 
-#define CONTROL_MSG_SIZE	5
+#define CONTROL_FRAME_SIZE	5
 #define INF_FORMAT_SIZE		6
 #define INF_HEAD_SIZE		4
 #define INF_TRAILER_SIZE 	2
@@ -51,8 +51,15 @@ enum ControlTypes {SET, DISC, UA, RR, REJ};
 //TODO: REVER ISTO AQUI -> O R TEM QUE SER CONTROLADO DE ALGUMA FORMA
 int NR = 0;
 
-char* createControlMsg(char adressField, char controlField) {
-	char* buffer = malloc(CONTROL_MSG_SIZE);
+/**
+ * Creates a Control Frame, according to the protocols.
+ *
+ * @param adressField The Adress field value.
+ * @param controlField The Control field value.
+ * @return The generated frame.
+ */
+char* createControlFrame(char adressField, char controlField) {
+	char* buffer = malloc(CONTROL_FRAME_SIZE);
 
 	buffer[FLAG1_POS] = FLAG;
 	buffer[AF_POS] = adressField;
@@ -63,67 +70,131 @@ char* createControlMsg(char adressField, char controlField) {
 	return buffer;
 }
 
+/**
+ * Generates a Controll frame, corresponding to the given type. 
+ *
+ * @param type The type of control frame
+ * @return The frame generated.
+ */
+char* genControlFrame(ControlTypes type) {
+	int nrValue = (NR << 7);
 
-char* sendControlMsg(ControlTypes type) {
-	int nrValue = (NR << 7).
-
-	if (TRANSMITER)
+	if (TRANSMITER) {
 		switch(types) {
 			CASE SET:
-				return createControlMsg(AF1, C_SET);
+				return createControlFrame(AF1, C_SET);
 			CASE DISC:
-				return createControlMsg(AF1, C_DISC);
+				return createControlFrame(AF1, C_DISC);
 			CASE UA:
-				return createControlMsg(AF2, C_UA);
+				return createControlFrame(AF2, C_UA);
 			CASE RR:
-				return createControlMsg(AF2, (C_RR & nrValue;
+				return createControlFrame(AF2, (C_RR | nrValue));
 			CASE REJ:
-				return createControlMsg(AF2, (C_REJ & nrValue));
+				return createControlFrame(AF2, (C_REJ | nrValue));
 		}
+	}
 	else if (RECEIVER) {
 		switch(types) {
 			CASE SET:
-				return createControlMsg(AF2, C_SET);
+				return createControlFrame(AF2, C_SET);
 			CASE DISC:
-				return createControlMsg(AF2, C_DISC);
+				return createControlFrame(AF2, C_DISC);
 			CASE UA:
-				return createControlMsg(AF1, C_UA);
+				return createControlFrame(AF1, C_UA);
 			CASE RR:
-				return createControlMsg(AF1, (C_RR & nrValue));
+				return createControlFrame(AF1, (C_RR & nrValue));
 			CASE REJ:
-				return createControlMsg(AF1, (C_REJ & nrValue));
+				return createControlFrame(AF1, (C_REJ & nrValue));
 		}
 	}
 	return NULL;
 }
 
-int createInfMsg(char* package, char* length) {
-
-	int previousSize = (*length);
-	(*length) += INF_FORMAT_SIZE;
-
-	if ((package = realloc(package, (*length))) == NULL) {
-		printf("createInfMsg: Realloc error.\n");
+/**
+ * Evaluates if the Frame's header is wrong, being descarted if so.
+ *
+ * @param frame The frame to evaluated
+ * @param size The frame's size.
+ * @return Error if something went wrong, ok otherwise
+ */
+int evaluateFrameHeader(char* frame, char* size) {
+	//Checking the Flag field
+	if (frame[FLAG1_POS] != FLAG) {
+		printf("Error in received Frame Header: Flag Field\n");
 		return ERROR;
 	}
 
-	//Setting the trailer
-	package[(*length) + TRAIL_BCC_POS] = 0;
-	/* TODO: BCC (Block Check Character) – detecção de erros baseada na geração de
-um octeto (BCC) tal que exista um número par de 1s em cada posição
-(bit), considerando todos os octetos protegidos pelo BCC (cabeçalho ou
-dados, conforme os casos) e o próprio BCC (antes de stuffing) */
-	package[(*length) + TRAIL_FLAG_POS] = FLAG;
+	//Checking the Adress Field
+	if ((frame[AF_POS] != AF1) || (frame[AF_POS] != AF2)) {
+		printf("Error in received Frame Header: Adress Field\n");
+		return ERROR;
+	}
 
-	memmove(package + INF_HEAD_SIZE, package, previousSize + INF_TRAILER_SIZE);
-	package[FLAG1_POS] = FLAG;
-	package[AF_POS] = AF1;
-	package[CF_POS] = (C_INF & (NS << 6));
-	package[BCC_POS] = (AF1 ^ package[CF_POSF]);
+	//Checking the Control Field
+	if ((frame[CF_POS] != C_SET) ||
+		(frame[CF_POS] != C_DISK) ||
+		(frame[CF_POS] != C_UA) ||
+		(frame[CF_POS] != (C_RR | NR)) ||
+		(frame[CF_POS] != (C_RR | ~NR)) ||
+		(frame[CF_POS] != (C_REJ| NR)) ||
+		(frame[CF_POS] != (C_REJ| ~NR)) ||
+		(frame[CF_POS] != (C_INF| NS)) ||
+		(frame[CF_POS] != (C_INF| ~NS))) {		
+		printf("Error in received Frame Header: Control Field\n");
+		return ERROR;
+	}
+
+	//Checking the Protection Field
+	if ((frame[AF_POS] ^ frame[CF_POS]) != frame[BCC_POS]) {
+		printf("Error in received Frame Header: Protection Field\n");
+		return ERROR;
+	}
 
 	return OK;
 }
 
+/**
+ * Creates a Information Frame, according to the protocols.
+ * Final Frame and its size its retrivied in the function parameters.
+ *
+ * @param packet The packet to be framed.
+ * @param size The packet's size.
+ * @return Error if something went wrong, ok otherwise
+ */
+int createInfFrame(char* packet, uint* size) {
+
+	int previousSize = (*size);
+	(*size) += INF_FORMAT_SIZE;
+
+	if ((packet = realloc(packet, (*size))) == NULL) {
+		printf("createInfFrame: Realloc error.\n");
+		return ERROR;
+	}
+
+	//Setting the trailer
+	packet[(*size) + TRAIL_BCC_POS] = 0;
+	/* TODO: BCC (Block Check Character) – detecção de erros baseada na geração de
+um octeto (BCC) tal que exista um número par de 1s em cada posição
+(bit), considerando todos os octetos protegidos pelo BCC (cabeçalho ou
+dados, conforme os casos) e o próprio BCC (antes de stuffing) */
+	packet[(*size) + TRAIL_FLAG_POS] = FLAG;
+
+	memmove(packet + INF_HEAD_SIZE, packet, previousSize + INF_TRAILER_SIZE);
+	packet[FLAG1_POS] = FLAG;
+	packet[AF_POS] = AF1;
+	packet[CF_POS] = (C_INF | (NS << 6));
+	packet[BCC_POS] = (AF1 ^ packet[CF_POSF]);
+
+	return OK;
+}
+
+/**
+ * Applies byte stuffing to the given message according to the protocols, retriving the new message in the same buffer.
+ *
+ * @param buffer The buffer containing the message to be stuffed.
+ * @param size The buffer's size
+ * @return Error if something went wrong, ok otherwise
+ */
 int byteStuffing(char * buffer, uint * size) {
 	uint i;
 
@@ -145,6 +216,13 @@ int byteStuffing(char * buffer, uint * size) {
 	return OK;
 }
 
+/**
+ * Applies byte destuffing to the given message according to the protocols, retriving the new message in the same buffer.
+ *
+ * @param buffer The buffer containing the stuffed message.
+ * @param size The buffer's size
+ * @return Error if something went wrong, ok otherwise
+ */
 int byteDestuffing(char* buffer, int* size) {
 	uint i;
 
