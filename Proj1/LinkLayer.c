@@ -87,7 +87,7 @@ char* createControlFrame(char * buffer, char adressField, char controlField) {
 /**
  * Generates a Controll frame, corresponding to the given type.
  *
- * @param type The type of control frame
+ * @param type The type of control frame TODO - MUDAR ESTA FUNAÇÃO PARA DEIXAR DE DEPENDER DA CONNECTIONTYPE
  * @return The frame generated.
  */
 char * genControlFrame(ControlType controlType, ConnectionType connType) {
