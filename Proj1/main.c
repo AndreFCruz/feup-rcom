@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "ApplicationLayer.h"
+#include "utils.h"
 
 #define BAUDRATE B38400
 #define MODEMDEVICE "/dev/ttyS0"
@@ -18,10 +20,12 @@ void initReceiver();
 int main(int argc, char** argv)
 {
 	if ( (argc < 3) || 
-		((strcmp("/dev/ttyS0", argv[1])!=0) && (strcmp("/dev/ttyS1", argv[1])!=0)) ) {
+		((strcmp("0", argv[1])!=0) && (strcmp("1", argv[1])!=0)) ) {
 		printUsage(argv[0]);
 		exit(1);
 	}
+
+	ConnectionType type;
 
 	if ( strcmp("w", argv[2]) == 0 ) {
 		initSender();
@@ -37,11 +41,11 @@ int main(int argc, char** argv)
 
 
 void printUsage(char * progName) {
-	printf("Usage:\t%s SerialPort r/w\n\tex: %s /dev/ttyS1 w\n", progName, progName);
+	printf("Usage:\t%s SerialPort r/w\n\tex: %s 0 w\n", progName, progName);
 }
 
 void initSender() {
-
+	
 }
 
 void initReceiver() {

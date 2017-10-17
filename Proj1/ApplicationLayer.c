@@ -9,6 +9,16 @@
 
 static ApplicationLayer * al = NULL;
 
+int initApplicationLayer(const char * port, ConnectionType type, int baudrate,
+    int maxDataMsgSize, int numRetries, int timeout, char * file) {
+	if (al == NULL)
+		al = malloc(sizeof(ApplicationLayer));
+	else
+		return logError("ApplicationLayer already initialized");
+
+	initLinkLayer(atoi(port), baudrate, timeout, numRetries);
+}
+
 int sendFile() {
 	if (al == NULL)
 		return logError("AL not initialized");
