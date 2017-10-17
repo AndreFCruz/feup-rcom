@@ -1,4 +1,5 @@
 #include "Packets.h"
+#include "LinkLayer.h"
 
 void makeDataPacket(DataPacket * src, Packet * dest){
 	int packetSize = HEADER_SIZE + (src->size);

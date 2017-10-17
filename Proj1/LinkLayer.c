@@ -44,6 +44,10 @@
 #define MAX_PORT_NAME 		16
 #define PORT_NAME			"/dev/ttyS"
 
+typedef enum {
+	SET = 0x03, DISC = 0x0B, UA = 0x07, RR = 0x05, REJ = 0x01
+} ControlType;
+
 typedef struct {
 	char port[MAX_PORT_NAME];
 	int baudRate;
@@ -56,9 +60,7 @@ static LinkLayer * ll = NULL;
 
 static struct termios oldtio;
 
-typedef enum {
-	SET = 0x03, DISC = 0x0B, UA = 0x07, RR = 0x05, REJ = 0x01
-} ControlType;
+static ConnectionType connectionType;
 
 
 /**
@@ -211,6 +213,7 @@ int openSerialPort() {
 int llopen(ConnectionType type) {
 	int fd, c, res;
 	struct termios newtio;
+	connectionType = type;
 
 	ll->seqNumber = (type == TRANSMITTER ? 0 : 1);
 	fd = openSerialPort();
@@ -228,23 +231,30 @@ int llopen(ConnectionType type) {
 	else return logError("Unknow Connection Type");
 }
 
-int llclose(int fd, ConnectionType type) {
+int llclose(int fd) {
 
-	if (type == TRANSMITTER) {			//TODO, verificar o resultado das funções?
+	//TODO, verificar o resultado das funções?
+	switch (connectionType) {
+	case TRANSMITTER:
 		sendControlFrame(fd, DISC);
 		readControlFrameWAdress(fd, DISC, AF2);
 		sendControlFrame(fd, UA, AF2);
-	} else {
+		break;
+	case RECEIVER:
 		readControlFrame(fd, DISC);
 		sendControlFrame(fd, DISC, AF2);
 		readControlFrameWAdress(fd, UA, AF2);
+		break;
+	default:
+		logError("llclose failed");
+		return -1;
 	}
 
 
 	//Reset terminal to previous configuration
-	if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
+	if ( tcsetattr(fd,TCSANOW,&oldtio) == -1 ) {
 		perror("tcsetattr");
-		exit(-1);
+		return -1;
 	}
 
 	close(fd);
