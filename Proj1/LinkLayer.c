@@ -383,12 +383,13 @@ int readControlFrame(int fd, ControlType controlType) {
 	{
 		uchar seqNrToReceive =  (~(ll->seqNumber)) << 7;
 		printf("Current seqNr: %02X. Received seqNr: %02X. Modified seqNr: %02x\n", ll->seqNumber, controlFrame[CF_POS] && 0xA0, seqNrToReceive);
-		if ((controlType == RR) || (controlType == REJ) && controlFrame[CF_POS] == (controlType | seqNrToReceive)) {
-			ll->seqNumber = ~ll->seqNumber;
-			return OK;
-		}
-		else
+		if ((controlType == RR) || (controlType == REJ)) {
+			if (controlFrame[CF_POS] == (controlType | seqNrToReceive)) {
+				ll->seqNumber = ~ll->seqNumber;
+				return OK;
+			}
 			return logError("Sequence number not aligned");
+		}
 	} else {
 		return logError("Frame was not of the given type or Flags were not recognized");
 	}
