@@ -72,7 +72,7 @@ int receiveDataPacket(int fd, DataPacket * dest) {
 		return logError("failed to read packet");
 
 	if(data[CTRL_FIELD_IDX] != DATA)
-		return logError("type does not match any known type (START, END)");
+		return logError("type does not match any known type DATA");
 	
 	dest->seqNr = data[SEQ_NUM_IDX];
 	int size = data[DATA_PACKET_SIZE2_IDX] * SIZE2_MUL + data[DATA_PACKET_SIZE1_IDX];
@@ -114,9 +114,11 @@ int receiveControlPacket(int fd, ControlPacket * dest) {
 	
 	printf("llread succeeded\n");	
 
-	dest->type = data[CTRL_FIELD_IDX];
+	printArray(data, dataSize);
 
-	if(dest->type != START || dest->type != END)
+	dest->type = data[CTRL_FIELD_IDX];
+	
+	if(dest->type != START && dest->type != END)
 		return logError("type does not match any known type (START, END)");
 
 	int index = 1, argNr = 0, argSize;
@@ -125,7 +127,7 @@ int receiveControlPacket(int fd, ControlPacket * dest) {
 			return logError("wrong sequence of arguments");
 
 		argSize = data[index++];
-		if(fillControlPacketArg(data, dest, argNr, argSize, index))
+		if(!fillControlPacketArg(data, dest, argNr, argSize, index))
 			return logError("could not fill argument");
 		index += argSize;
 		argNr++;

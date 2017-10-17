@@ -277,6 +277,7 @@ int llread(int fd, char ** dest) {
 		return -1;
 	}
 
+	buffer[bufferIdx++] = FLAG;
 	do {
 		if (read(fd, buffer + bufferIdx, sizeof(char)) < 1) {
 			printf("llread error: Failed to read from SerialPort\n");
@@ -292,15 +293,21 @@ int llread(int fd, char ** dest) {
 			}
 		}
 	} while (buffer[bufferIdx - 1] != FLAG);
+
+printArray(buffer, RECEIVER_SIZE);
 	
 	// TODO ordem do framing e stuffing trocada
 	if (deframingInformation(buffer, &bufferIdx) != OK)
 		return logError("Failed to deframe information");
 
+	printArray(buffer, RECEIVER_SIZE);
+
 	if (byteDestuffing(buffer, &bufferIdx) == ERROR) {
 		printf("llread error: Failed byteDestuffing\n");
 		return -1;
 	}
+
+	printArray(buffer, RECEIVER_SIZE);
 
 	*dest = buffer;
 	
