@@ -75,7 +75,7 @@ int readFrameFlag(int fd);
  * @param controlField The Control field value.
  * @return OK if all went well, ERROR otherwise
  */
-void createControlFrame(char * buffer, char adressField, char controlField);
+void createControlFrame(char buffer[], char adressField, char controlField);
 
 /**
  * Sends a Control frame of the given type.
@@ -153,7 +153,7 @@ int openSerialPort() {
 		return logError("LinkLayer not initialized");
 
 	int fd = open(ll->port, O_RDWR | O_NOCTTY );
-	if (fd <0) { perror(ll->port); exit(-1); }
+	if (fd < 0) { perror(ll->port); exit(-1); }
 
 	if ( tcgetattr(fd,&oldtio) == -1 ) { /* save current port settings */
 		perror("tcgetattr");
@@ -312,9 +312,7 @@ int readFrameFlag(int fd) {
 }
 
 
-void createControlFrame(char * buffer, char adressField, char controlField) {
-	buffer = malloc(CONTROL_FRAME_SIZE);
-
+void createControlFrame(char buffer[], char adressField, char controlField) {
 	buffer[FLAG1_POS] = FLAG;
 	buffer[AF_POS] = adressField;
 	buffer[CF_POS] = controlField;
@@ -323,6 +321,7 @@ void createControlFrame(char * buffer, char adressField, char controlField) {
 }
 
 int sendControlFrame(int fd, ControlType controlType) {
+	char controlFrame[CONTROL_FRAME_SIZE];
 	uint nrValue = (ll->seqNumber << 7);
 	char afValue = AF1;
 
@@ -330,7 +329,6 @@ int sendControlFrame(int fd, ControlType controlType) {
 		((connectionType == TRANSMITTER) && (controlType == UA)))
 		afValue = AF2;
 
-	char * controlFrame = NULL;
 	if ((controlType == RR) || (controlType ==REJ)) {
 		createControlFrame(controlFrame, afValue, (controlType | nrValue));
 	} else {
@@ -342,13 +340,15 @@ int sendControlFrame(int fd, ControlType controlType) {
 		printf("senControlFrame error: Bad write: %d bytes\n", res);
 		return -1;
 	}
+
+	printf("Sent control frame: ");
+	printArray(controlFrame, CONTROL_FRAME_SIZE);
 	
-	free(controlFrame);
 	return res;
 }
 
 int readControlFrame(int fd, ControlType controlType) {
-	uchar * controlFrame = malloc(CONTROL_FRAME_SIZE);
+	uchar controlFrame[CONTROL_FRAME_SIZE];
 	uchar afValue = AF1;
 
 	if (((connectionType == RECEIVER) && (controlType == DISC)) ||
@@ -358,26 +358,27 @@ int readControlFrame(int fd, ControlType controlType) {
 	if (read(fd, controlFrame, CONTROL_FRAME_SIZE) < CONTROL_FRAME_SIZE)
 		return logError("Failed to read Control Frame");
 
+	printf("Read control frame: ");
+	printArray(controlFrame, CONTROL_FRAME_SIZE);
+
 	if ((controlFrame[FLAG1_POS] == FLAG) && 
 		(controlFrame[CF_POS] == controlType) && 
 		(controlFrame[AF_POS] == afValue) && 
 		(controlFrame[FLAG2_POS] == FLAG) && 
-		(controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS]))) 
+		(controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS])))
 	{
-		if ((controlType == RR) || (controlType == REJ)) {
-			if (controlFrame[CF_POS] == (controlType | (~(ll->seqNumber) << 7) )) {
-				ll->seqNumber = ~ll->seqNumber;
-				return OK;
-			}
-		} else {
-			if (controlFrame[CF_POS] == controlType) {
-				ll->seqNumber = ~ll->seqNumber;
-				return OK;
-			}
+		uchar receivedSeqNr =  (~(ll->seqNumber)) << 7;
+		if ((controlType == RR) || (controlType == REJ) && controlFrame[CF_POS] == (controlType | receivedSeqNr)) {
+			ll->seqNumber = ~ll->seqNumber;
+			return OK;
 		}
+		else
+			return logError("Sequence number not aligned");
+	} else {
+		return logError("Frame was not of the given type or Flags were not recognized");
 	}
-	free(controlFrame);
-	return logError("Frame was note of the given type or Flags were not recognized\n");
+
+	return OK;
 }
 
 int framingInformation(uchar* packet, uint* size) {
