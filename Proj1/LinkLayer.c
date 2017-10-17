@@ -269,7 +269,7 @@ int llwrite(int fd, char * buffer, int length) {
 
 
 int llread(int fd, char ** dest) {
-	char * buffer = malloc(RECEIVER_SIZE);
+	char * buffer = (char *) malloc(RECEIVER_SIZE);
 	int bufferIdx = 0;		//Number of bytes received
 
 	if (readFrameFlag(fd) < 1) {
@@ -277,21 +277,21 @@ int llread(int fd, char ** dest) {
 		return -1;
 	}
 
-	while (buffer[bufferIdx] != FLAG) {
-		printf("looped\n");
-
+	do {
 		if (read(fd, buffer + bufferIdx, sizeof(char)) < 1) {
 			printf("llread error: Failed to read from SerialPort\n");
 			return -1;
 		}
 
-		if ((++bufferIdx % RECEIVER_SIZE) == 0 ) {
+		printf("loop read: %02X\n", buffer[bufferIdx]);
+		++bufferIdx;
+		if ( (bufferIdx % RECEIVER_SIZE) == 0 ) {
 			if ((buffer = realloc(buffer, ((bufferIdx / RECEIVER_SIZE) + 1) * RECEIVER_SIZE )) == NULL) {
 				printf("llread error: Failed to realloc buffer\n");
 				return -1;
 			}
 		}
-	}
+	} while (buffer[bufferIdx - 1] != FLAG);
 	
 	// TODO ordem do framing e stuffing trocada
 	if (deframingInformation(buffer, &bufferIdx) != OK)
@@ -450,7 +450,7 @@ int deframingInformation(uchar* frame, uint* size) {
 		(frame[AF_POS] != AF1) ||
 		(frame[CF_POS] != (INF | (ll->seqNumber << 6))) ||		//TODO ll->receivedSeqNumber
 		((frame[AF_POS] ^ frame[CF_POS]) != frame[BCC_POS]))
-		logError("Received unexcpted head Information");
+		logError("Received unexpected head Information");
 
 	//Checking the Trailer
 	uint trailPos = (*size) - INF_TRAILER_SIZE;
