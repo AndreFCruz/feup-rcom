@@ -18,7 +18,7 @@ int initApplicationLayer(const char * port, int baudrate, int timeout, int numRe
 	initLinkLayer(atoi(port), baudrate, timeout, numRetries);
 
 	al->fd = openSerialPort();
-	al->fileName = file;
+	strncpy(al->fileName, file, MAX_FILE_NAME);
 	al->type = type;
 	al->maxDataMsgSize = maxDataMsgSize;
 	
