@@ -23,26 +23,21 @@
 #define TRAIL_FLAG_POS		1
 
 //Positions of Fields in the Control Message
-#define FLAG1_POS			1
-#define AF_POS				2
-#define CF_POS 				3
-#define BCC_POS 			4
-#define FLAG2_POS			5
+#define FLAG1_POS			0
+#define AF_POS				1
+#define CF_POS 				2
+#define BCC_POS 			3
+#define FLAG2_POS			4
 
 //Possible Adress Fields
 #define AF1					0x03
 #define AF2					0x01
 
-// Control Fields
-#define C_SET				0x03
-#define C_DISC				0x0B
-#define C_UA				0x07
-#define C_RR				0x05
-#define C_REJ				0x01
-#define C_INF				0x00
-
 #define MAX_PORT_NAME 		16
 #define PORT_NAME			"/dev/ttyS"
+
+// Control Fields
+#define C_INF				0x00
 
 typedef enum {
 	SET = 0x03, DISC = 0x0B, UA = 0x07, RR = 0x05, REJ = 0x01
@@ -195,7 +190,6 @@ int llopen(ConnectionType type) {
 	struct termios newtio;
 	connectionType = type;
 
-	ll->seqNumber = (type == TRANSMITTER ? 0 : 1);
 	fd = openSerialPort();
 
 	if (type == TRANSMITTER) {
@@ -370,12 +364,15 @@ int readControlFrame(int fd, ControlType controlType) {
 		(controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS]))) 
 	{
 		if ((controlType == RR) || (controlType == REJ)) {
-			if (controlFrame[CF_POS] == (controlType | (ll->seqNumber << 7) )) //TODO: ll->receivedSeqNumber
+			if (controlFrame[CF_POS] == (controlType | (~(ll->seqNumber) << 7) )) {
+				ll->seqNumber = ~ll->seqNumber;
 				return OK;
-		
+			}
 		} else {
-			if (controlFrame[CF_POS] == controlType)
+			if (controlFrame[CF_POS] == controlType) {
+				ll->seqNumber = ~ll->seqNumber;
 				return OK;
+			}
 		}
 	}
 	free(controlFrame);
@@ -384,7 +381,7 @@ int readControlFrame(int fd, ControlType controlType) {
 
 int framingInformation(uchar* packet, uint* size) {
 
-	int previousSize = (*size);
+	uint previousSize = (*size);
 	(*size) += INF_FORMAT_SIZE;
 
 	if ((packet = realloc(packet, (*size))) == NULL) {
@@ -394,10 +391,10 @@ int framingInformation(uchar* packet, uint* size) {
 
 	//Setting the trailer
 	uint i;
-	for (i = 0; i < (*size) - INF_FORMAT_SIZE; ++i)
-		packet[(*size) + TRAIL_BCC_POS] ^= packet[i];
+	for (i = 0; i < previousSize; ++i)
+		packet[previousSize + TRAIL_BCC_POS] ^= packet[i];
 
-	packet[(*size) + TRAIL_FLAG_POS] = FLAG;
+	packet[previousSize + TRAIL_FLAG_POS] = FLAG;
 
 	//Setting the Header
 	memmove(packet + INF_HEAD_SIZE, packet, previousSize + INF_TRAILER_SIZE);
@@ -420,12 +417,12 @@ int deframingInformation(uchar* frame, uint* size) {
 	//Checking the Trailer
 	uint trailPos = (*size) - INF_TRAILER_SIZE;
 	uint i;
-	char calcBCC = 0;
+	uchar calcBCC = 0;
 	for (i = INF_HEAD_SIZE; i < trailPos; ++i)
 		calcBCC ^= frame[i];
 
 	if ((frame[trailPos + TRAIL_BCC_POS] != calcBCC) || 
-		(frame[trailPos + TRAIL_FLAG_POS]) != FLAG)
+		(frame[trailPos + TRAIL_FLAG_POS] != FLAG))
 		logError("Received unexpected trailer Information");
 
 	//Remove the framing
@@ -477,3 +474,28 @@ int byteDestuffing(char* buffer, uint * size) {
 	}
 	return OK;
 }
+
+
+/*int main () {
+	int size = 4;
+	uchar * buffer = malloc(size);
+
+	initLinkLayer(0, 4, 3, 5);
+
+	buffer[0] = 0x7D;
+	buffer[1] = 0X02;
+	buffer[2] = 0x7E;
+	buffer[3] = 0xCC;
+
+	framingInformation(buffer, &size);
+	
+	byteStuffing(buffer, &size);
+
+	printArray(buffer,size);
+
+	byteDestuffing(buffer, &size);
+
+	deframingInformation(buffer, &size);
+
+	printArray(buffer,size);
+} */
