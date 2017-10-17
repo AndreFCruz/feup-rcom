@@ -257,7 +257,7 @@ int llwrite(int fd, char * buffer, int length) {
 	uint i = 0;
 	do {
 		printf("tentativa %d\n", i);
-		if ((res = write(fd, buffer, length) < length)) {
+		if ((res = write(fd, buffer, length)) < length) {
 			printf("llwrite error: Bad write: %d bytes\n", res);
 			return -1;
 		}
@@ -277,6 +277,8 @@ int llread(int fd, char ** dest) {
 	}
 
 	while (buffer[bufferIdx] != FLAG) {
+		printf("looped\n");
+
 		if (read(fd, buffer + bufferIdx, sizeof(char)) < 0) {
 			printf("llread error: Failed to read from SerialPort\n");
 			return -1;
@@ -288,8 +290,6 @@ int llread(int fd, char ** dest) {
 				return -1;
 			}
 		}
-
-		printf("looped\n");
 	}
 
 	if (byteDestuffing(buffer, &bufferIdx) == ERROR) {
@@ -309,17 +309,20 @@ int llread(int fd, char ** dest) {
 }
 
 int readFrameFlag(int fd) {
-	char tempChar;
-	int readBytes = 0;
+	char tempChar = 0;
+	int totalRead = 0;
+	int res;
 
 	while (tempChar != FLAG) {
-		if ( (tempChar = read(fd, &tempChar, sizeof(char))) < 0 ) {
+		if ( (res = read(fd, &tempChar, sizeof(char))) < sizeof(char) ) {
 			printf("readFrameFlag error: Failed to read from SerialPort\n");
 			return -1;
 		}
-		++readBytes;
+		++totalRead;
+
+		printf("Char read: %02X\n", tempChar);
 	}
-	return readBytes;
+	return totalRead;
 }
 
 
