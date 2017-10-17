@@ -199,6 +199,7 @@ int llopen(ConnectionType type) {
 		return fd;
 	} 
 	else if (type == RECEIVER) {
+		ll->seqNumber = 1; // TODO maybe not necessary
 		readControlFrame(fd,SET);
 		sendControlFrame(fd, UA);
 		return fd;
@@ -367,8 +368,9 @@ int readControlFrame(int fd, ControlType controlType) {
 		(controlFrame[FLAG2_POS] == FLAG) && 
 		(controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS])))
 	{
-		uchar receivedSeqNr =  (~(ll->seqNumber)) << 7;
-		if ((controlType == RR) || (controlType == REJ) && controlFrame[CF_POS] == (controlType | receivedSeqNr)) {
+		uchar seqNrToReceive =  (~(ll->seqNumber)) << 7;
+		printf("Current seqNr: %02X. Received seqNr: %02X. Modified seqNr: %02x\n", ll->seqNumber, controlFrame[CF_POS] && 0xA0, seqNrToReceive);
+		if ((controlType == RR) || (controlType == REJ) && controlFrame[CF_POS] == (controlType | seqNrToReceive)) {
 			ll->seqNumber = ~ll->seqNumber;
 			return OK;
 		}
