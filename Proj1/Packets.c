@@ -51,6 +51,7 @@ void makeControlPacket(ControlPacket * src, Packet * dest){
 int sendDataPacket(int fd, DataPacket * src) {
 	Packet packet;
 	makeDataPacket(src, &packet);
+	printArray(packet.data, packet.size);
 	int status = llwrite(fd, packet.data, packet.size);
 	free(packet.data);
 	return status;
@@ -59,6 +60,7 @@ int sendDataPacket(int fd, DataPacket * src) {
 int sendControlPacket(int fd, ControlPacket * src){
 	Packet packet;
 	makeControlPacket(src, &packet);
+	printArray(packet.data, packet.size);
 	int status = llwrite(fd, packet.data, packet.size);
 	free(packet.data);
 	return status;

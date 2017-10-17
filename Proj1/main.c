@@ -10,8 +10,12 @@
 #include "utils.h"
 
 #define BAUDRATE B38400
-#define MODEMDEVICE "/dev/ttyS0"
+#define MODEMDEVICE "/dev/ttyS0" //TODO: delete
 #define _IDXIX_SOURCE 1 /* POSIX compliant source */
+#define NUM_RETRIES 3
+#define TIMEOUT 	3
+#define FILE_NAME 	"pinguim.gif"
+#define MAX_DATA	32
 
 void printUsage();
 void initSender();
@@ -29,14 +33,14 @@ int main(int argc, char** argv)
 
 	if ( strcmp("w", argv[2]) == 0 ) {
 		type = TRANSMITTER;
-	} else if ( strcmp("r", argv[2]) != 0 ) {
+	} else if ( strcmp("r", argv[2]) == 0 ) {
 		type = RECEIVER;
 	} else {
 		printUsage(argv[0]);
 		exit(1);
 	}
 
-	initApplicationLayer(argv[1], type, BAUDRATE, , int numRetries, int timeout, char* file);
+	initApplicationLayer(argv[1], BAUDRATE, TIMEOUT, NUM_RETRIES, type, MAX_DATA, FILE_NAME);
 
 	return 0;
 }
