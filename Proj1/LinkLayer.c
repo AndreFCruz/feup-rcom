@@ -240,14 +240,15 @@ int llwrite(int fd, char * buffer, int length) {
 
 	printArray(buffer, length);
 	
-	if (framingInformation(buffer, &length) == ERROR) {
+	// TODO ordem do framing e stuffing trocada
+	if (byteStuffing(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}
 
 	printArray(buffer, length);
 
-	if (byteStuffing(buffer, &length) == ERROR) {
+	if (framingInformation(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}
@@ -271,7 +272,7 @@ int llread(int fd, char ** dest) {
 	char * buffer = malloc(RECEIVER_SIZE);
 	int bufferIdx = 0;		//Number of bytes received
 
-	if (readFrameFlag(fd) < 0) {
+	if (readFrameFlag(fd) < 1) {
 		printf("llread Error: read Frame flag error\n");
 		return -1;
 	}
@@ -279,7 +280,7 @@ int llread(int fd, char ** dest) {
 	while (buffer[bufferIdx] != FLAG) {
 		printf("looped\n");
 
-		if (read(fd, buffer + bufferIdx, sizeof(char)) < 0) {
+		if (read(fd, buffer + bufferIdx, sizeof(char)) < 1) {
 			printf("llread error: Failed to read from SerialPort\n");
 			return -1;
 		}
@@ -291,14 +292,15 @@ int llread(int fd, char ** dest) {
 			}
 		}
 	}
+	
+	// TODO ordem do framing e stuffing trocada
+	if (deframingInformation(buffer, &bufferIdx) != OK)
+		return logError("Failed to deframe information");
 
 	if (byteDestuffing(buffer, &bufferIdx) == ERROR) {
 		printf("llread error: Failed byteDestuffing\n");
 		return -1;
 	}
-
-	if (deframingInformation(buffer, &bufferIdx) != OK)
-		return logError("Failed to deframe information");
 
 	*dest = buffer;
 	
@@ -314,7 +316,7 @@ int readFrameFlag(int fd) {
 	int res;
 
 	while (tempChar != FLAG) {
-		if ( (res = read(fd, &tempChar, sizeof(char))) < sizeof(char) ) {
+		if ( (res = read(fd, &tempChar, sizeof(char))) < 1 ) {
 			printf("readFrameFlag error: Failed to read from SerialPort\n");
 			return -1;
 		}
