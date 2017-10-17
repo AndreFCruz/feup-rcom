@@ -97,7 +97,7 @@ int sendControlFrame(int fd, ControlType controlType);
  * @param adressField The adress field to be used
  * @return Number of written bytes, -1 if an error happened.
  */
-int sendControlFrameWAdress(int fd, ControlType controlType, char adressField);
+int sendControlFrame(int fd, ControlType controlType, char adressField);
 
 /**
  * Reads a frame and checks if it is of the given type.
@@ -233,10 +233,10 @@ int llclose(int fd, ConnectionType type) {
 	if (type == TRANSMITTER) {			//TODO, verificar o resultado das funções?
 		sendControlFrame(fd, DISC);
 		readControlFrameWAdress(fd, DISC, AF2);
-		sendControlFrameWAdress(fd, UA, AF2);
+		sendControlFrame(fd, UA, AF2);
 	} else {
 		readControlFrame(fd, DISC);
-		sendControlFrameWAdress(fd, DISC, AF2);
+		sendControlFrame(fd, DISC, AF2);
 		readControlFrameWAdress(fd, UA, AF2);
 	}
 
@@ -359,7 +359,7 @@ int sendControlFrame(int fd, ControlType controlType) {
 	return res;
 }
 
-int sendControlFrameWAdress(int fd, ControlType controlType, char adressField) {
+int sendControlFrame(int fd, ControlType controlType, char adressField) {
 	
 	if ((controlType != DISC) && (controlType != UA))
 		sendControlFrame(fd, controlType);
