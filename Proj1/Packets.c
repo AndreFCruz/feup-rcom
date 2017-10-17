@@ -65,8 +65,8 @@ int sendControlPacket(int fd, ControlPacket * src){
 }
 
 int receiveDataPacket(int fd, DataPacket * dest) {
-	uchar * data;
-	if(llread(fd, &data))
+	char * data;
+	if(llread(fd, &data) < 0)
 		return logError("failed to read packet");
 
 	if(data[CTRL_FIELD_IDX] != DATA)
@@ -105,9 +105,9 @@ int fillControlPacketArg(uchar * data, ControlPacket * dest, int argNr, int argS
 }
 
 int receiveControlPacket(int fd, ControlPacket * dest) {
-	uchar * data;
+	char * data;
 	int dataSize; 
-	if((dataSize = llread(fd, &data)) > 0)
+	if((dataSize = llread(fd, &data)) < 0)
 		return logError("failed to read packet");
 
 	dest->type = data[CTRL_FIELD_IDX];
