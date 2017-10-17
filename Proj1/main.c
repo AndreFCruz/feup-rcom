@@ -30,17 +30,22 @@ int main(int argc, char** argv)
 	}
 
 	ConnectionType type;
+	int (*functionPtr)(void);
 
 	if ( strcmp("w", argv[2]) == 0 ) {
 		type = TRANSMITTER;
+		functionPtr = &sendFile;
 	} else if ( strcmp("r", argv[2]) == 0 ) {
 		type = RECEIVER;
+		functionPtr = &receiveFile;
 	} else {
 		printUsage(argv[0]);
 		exit(1);
 	}
 
 	initApplicationLayer(argv[1], BAUDRATE, TIMEOUT, NUM_RETRIES, type, MAX_DATA, FILE_NAME);
+
+	(*functionPtr)();
 
 	return 0;
 }
@@ -50,10 +55,3 @@ void printUsage(char * progName) {
 	printf("Usage:\t%s SerialPort r/w\n\tex: %s 0 w\n", progName, progName);
 }
 
-void initSender() {
-	
-}
-
-void initReceiver() {
-	
-}
