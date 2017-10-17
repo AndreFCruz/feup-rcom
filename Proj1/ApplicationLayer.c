@@ -9,14 +9,20 @@
 
 static ApplicationLayer * al = NULL;
 
-int initApplicationLayer(const char * port, ConnectionType type, int baudrate,
-    int maxDataMsgSize, int numRetries, int timeout, char * file) {
+int initApplicationLayer(const char * port, int baudrate, int timeout, int numRetries, ConnectionType type, int maxDataMsgSize, char * file) {
 	if (al == NULL)
 		al = malloc(sizeof(ApplicationLayer));
 	else
 		return logError("ApplicationLayer already initialized");
 
 	initLinkLayer(atoi(port), baudrate, timeout, numRetries);
+
+	al->fd = openSerialPort();
+	al->fileName = file;
+	al->type = type;
+	al->maxDataMsgSize = maxDataMsgSize;
+	
+	return OK;
 }
 
 int sendFile() {

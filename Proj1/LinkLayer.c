@@ -48,7 +48,7 @@ typedef struct {
 	int baudRate;
 	uint seqNumber;
 	uint timeout;
-	uint numTrans;
+	uint numRetries;
 } LinkLayer;
 
 static LinkLayer * ll = NULL;
@@ -135,16 +135,17 @@ int byteDestuffing(char* buffer, uint * size);
 
 
 
-
-int initLinkLayer(int porta, int baudRate, uint timeout, uint numTransmissions) {
+int initLinkLayer(int porta, int baudRate, uint timeout, uint nRetries) {
 	ll = malloc(sizeof(LinkLayer));
 
 	snprintf(ll->port, MAX_PORT_NAME, "%s%d", PORT_NAME, porta);
 
 	ll->baudRate = baudRate;
 	ll->timeout = timeout;
-	ll->numTrans = numTransmissions;
+	ll->numRetries = nRetries; // TODO usar isto -> number of retries for transmission
 	ll->seqNumber = 0;
+
+	return OK;
 }
 
 int openSerialPort() {
@@ -168,7 +169,7 @@ int openSerialPort() {
 	/* set input mode (non-canonical, no echo,...) */
 	newtio.c_lflag = 0;
 
-	newtio.c_cc[VTIME]    = 30;   /* inter-character timer unused - in 0.1s*/
+	newtio.c_cc[VTIME]    = ll->timeout * 10;   /* inter-character timer unused - in 0.1s*/
 	newtio.c_cc[VMIN]     = 0;   /* blocking read until 5 chars received */
 /* 
 	VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
