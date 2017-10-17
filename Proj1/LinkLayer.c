@@ -8,9 +8,9 @@
 #include <unistd.h>
 #include "LinkLayer.h"
 
-#define FLAG 			0x7E
-#define ESC 			0x7D
-#define STUFFING 		0X20
+#define FLAG 				0x7E
+#define ESC 				0x7D
+#define STUFFING 			0X20
 
 #define CONTROL_FRAME_SIZE	5
 #define INF_FORMAT_SIZE		6
@@ -23,26 +23,26 @@
 #define TRAIL_FLAG_POS		1
 
 //Positions of Fields in the Control Message
-#define FLAG1_POS	1
-#define AF_POS		2
-#define CF_POS 			3
-#define BCC_POS 	4
-#define FLAG2_POS	5
+#define FLAG1_POS			1
+#define AF_POS				2
+#define CF_POS 				3
+#define BCC_POS 			4
+#define FLAG2_POS			5
 
 //Possible Adress Fields
-#define AF1		0x03
-#define AF2		0x01
+#define AF1					0x03
+#define AF2					0x01
 
 // Control Fields
-#define C_SET	0x03
-#define C_DISC	0x0B
-#define C_UA	0x07
-#define C_RR	0x05
-#define C_REJ	0x01
-#define C_INF	0x00
+#define C_SET				0x03
+#define C_DISC				0x0B
+#define C_UA				0x07
+#define C_RR				0x05
+#define C_REJ				0x01
+#define C_INF				0x00
 
-#define MAX_PORT_NAME 16
-#define PORT_NAME	"/dev/ttyS"
+#define MAX_PORT_NAME 		16
+#define PORT_NAME			"/dev/ttyS"
 
 typedef struct {
 	char port[MAX_PORT_NAME];
@@ -118,6 +118,16 @@ int readControlFrame(int fd, ControlType controlType);
  * @return OK if the frame was of the given type, ERROR otherwise.
  */ 
 int readControlFrameWAdress(int fd, ControlType controlType, char adressField);
+
+/**
+ * Creates a Information Frame, according to the protocols.
+ * Final Frame and its size its retrivied in the function parameters.
+ *
+ * @param packet The packet to be framed.
+ * @param size The packet's size.
+ * @return ERROR if something went wrong, OK otherwise
+ */ 
+int framingInformation(char* packet, uint* size);
 
 /**
  * Applies byte stuffing to the given message according to the protocols, retriving the new message in the same buffer.
@@ -234,7 +244,7 @@ int llclose(int fd, ConnectionType type) {
 int llwrite(int fd, char * buffer, int length) {
 	int res = 0;
 
-	/*if (createInfFrame(buffer, &length) == ERROR) {
+	/*if (framingInformation(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}*/
@@ -249,7 +259,7 @@ int llwrite(int fd, char * buffer, int length) {
 			printf("llwrite error: Bad write: %d bytes\n", res);
 			return -1;
 		}
-	} while (readControlFrame(fd, RR));
+	} while (readControlFrame(fd, RR) == OK);
 
 	return res;
 }
@@ -285,7 +295,7 @@ int llread(int fd, char ** dest) {
 	*dest = buffer;
 
 	//TODO: Retirar o head e o trailer
-	//write(fd, genControlFrame(RR), CONTROL_FRAME_SIZE);
+	sendControlFrame(fd, RR);
 	return bufferIdx;
 }
 
@@ -401,7 +411,7 @@ int readControlFrameWAdress(int fd, ControlType controlType, char adressField) {
  * @param size The frame's size.
  * @return ERROR if something went wrong, OK otherwise
  */ /*
-int evaluateFrameHeader(char* frame, char* size) {
+int deframeInformation(char* frame, char* size) {
 	//Checking the Flag field
 	if (frame[FLAG1_POS] != FLAG) {
 		printf("Error in received Frame Header: Flag Field\n");
@@ -439,40 +449,32 @@ int evaluateFrameHeader(char* frame, char* size) {
 } */
 
 
-/**
- * Creates a Information Frame, according to the protocols.
- * Final Frame and its size its retrivied in the function parameters.
- *
- * @param packet The packet to be framed.
- * @param size The packet's size.
- * @return ERROR if something went wrong, OK otherwise
- */ /*
-int createInfFrame(char* packet, uint* size) {
+int framingInformation(char* packet, uint* size) {
 
 	int previousSize = (*size);
 	(*size) += INF_FORMAT_SIZE;
 
 	if ((packet = realloc(packet, (*size))) == NULL) {
-		printf("createInfFrame: Realloc error.\n");
+		printf("framingInformation: Realloc error.\n");
 		return ERROR;
 	}
 
 	//Setting the trailer
-	packet[(*size) + TRAIL_BCC_POS] = 0; */
+	packet[(*size) + TRAIL_BCC_POS] = 0; 
 	/* TODO: BCC (Block Check Character) – detecção de erros baseada na geração de
-um octeto (BCC) tal que exista um número par de 1s em cada posição
-(bit), considerando todos os octetos protegidos pelo BCC (cabeçalho ou
-dados, conforme os casos) e o próprio BCC (antes de stuffing) */ /*
+	um octeto (BCC) tal que exista um número par de 1s em cada posição
+	(bit), considerando todos os octetos protegidos pelo BCC (cabeçalho ou
+	dados, conforme os casos) e o próprio BCC (antes de stuffing) */
 	packet[(*size) + TRAIL_FLAG_POS] = FLAG;
 
 	memmove(packet + INF_HEAD_SIZE, packet, previousSize + INF_TRAILER_SIZE);
 	packet[FLAG1_POS] = FLAG;
 	packet[AF_POS] = AF1;
-	packet[CF_POS] = (C_INF | (ns << 6));
-	packet[BCC_POS] = (AF1 ^ packet[CF_POSF]);
+	packet[CF_POS] = (C_INF | (ll->seqNumber << 6));
+	packet[BCC_POS] = (AF1 ^ packet[CF_POS]);
 
 	return OK;
-} */
+} 
 
 
 int byteStuffing(char * buffer, uint * size) {
@@ -516,37 +518,3 @@ int byteDestuffing(char* buffer, uint * size) {
 
 	return OK;
 }
-
-// int main() {
-
-// 	unsigned char* buffer = malloc(8);
-// 	buffer [0] = 0x01;
-// 	buffer [1] = 0x02;
-// 	buffer [2] = 0x03;
-// 	buffer [3] = 0x7E;
-// 	buffer [4] = 0x04;
-// 	buffer [5] = 0x05;
-// 	buffer [6] = 0x7D;
-// 	buffer [7] = 0x06;
-
-// 	uint len = sizeof(buffer);
-
-// 	printf("\n\ninitial size: %d\n", len);
-
-// 	byteStuffing(buffer, &len);
-
-// 	printf("\nmed size: %d\n", len);
-
-// 	uint i;
-// 	for (i = 0; i < len; ++i) {
-// 		printf("0x%x  ", (uint) buffer[i]);
-// 	}
-// 	printf("\n");
-// 	byteDestuffing(buffer, &len);
-
-// 	int j;
-// 	for (j = 0; j < len; ++j) {
-// 		printf("0x%x  ", buffer[j]);
-// 	}
-// 	printf("\n\nSize: %d\n", len);
-// }
