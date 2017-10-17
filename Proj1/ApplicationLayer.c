@@ -41,8 +41,6 @@ int sendFile() {
 	if (al->fd < 0)
 		return logError("Failed llopen");
 		
-	printf("depois de llopen\n");
-
 	ControlPacket ctrlPacket;
 	ctrlPacket.argNr = CTRL_PACKET_ARGS;
 	ctrlPacket.type = START;
@@ -88,6 +86,8 @@ int receiveFile() {
 	al->fd = llopen(al->type);
 	if (al->fd < 0)
 		return logError("Failed llopen");
+
+	printf("Receiving control packet...\n");
 
 	ControlPacket ctrlPacket;
 	if (receiveControlPacket(al->fd, &ctrlPacket) != OK || ctrlPacket.type != START) {

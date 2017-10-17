@@ -302,8 +302,6 @@ int llread(int fd, char ** dest) {
 
 	*dest = buffer;
 	
-	printf("sending control frame\n");
-
 	printf("sending control frame...\n");
 
 	sendControlFrame(fd, RR);
