@@ -130,6 +130,16 @@ int readControlFrameWAdress(int fd, ControlType controlType, char adressField);
 int framingInformation(char* packet, uint* size);
 
 /**
+ * Evaluates if the framing is wrong, being descarted if so.
+ * The deframed frame and its size are returned in the given arguments.
+ *
+ * @param frame The frame to be evaluated
+ * @param size The frame's size.
+ * @return ERROR if something went wrong, OK otherwise
+ */ 
+int deframingInformation(char * frame, uint* size);
+
+/**
  * Applies byte stuffing to the given message according to the protocols, retriving the new message in the same buffer.
  *
  * @param buffer The buffer containing the message to be stuffed.
@@ -244,10 +254,10 @@ int llclose(int fd, ConnectionType type) {
 int llwrite(int fd, char * buffer, int length) {
 	int res = 0;
 
-	/*if (framingInformation(buffer, &length) == ERROR) {
+	if (framingInformation(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
-	}*/
+	}
 
 	if (byteStuffing(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
@@ -292,9 +302,12 @@ int llread(int fd, char ** dest) {
 		printf("llread error: Failed byteDestuffing\n");
 		return -1;
 	}
+
+	if (deframingInformation(buffer, &bufferIdx) != OK)
+		return logError("Failed to deframe information");
+
 	*dest = buffer;
 
-	//TODO: Retirar o head e o trailer
 	sendControlFrame(fd, RR);
 	return bufferIdx;
 }
@@ -374,7 +387,7 @@ int readControlFrame(int fd, ControlType controlType) {
 		(controlFrame[FLAG2_POS] == FLAG) && (controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS]))) 
 	{
 		if ((controlType == RR) || (controlType == REJ)) {
-			if (controlFrame[CF_POS] == (controlType | (ll->seqNumber << 7) ))
+			if (controlFrame[CF_POS] == (controlType | (ll->seqNumber << 7) )) //TODO: ll->receivedSeqNumber
 				return OK;
 		
 		} else {
@@ -404,51 +417,6 @@ int readControlFrameWAdress(int fd, ControlType controlType, char adressField) {
 	return logError("Frame was note of the given type or Flags were not recognized\n");
 }
 
-/**
- * Evaluates if the Frame's header is wrong, being descarted if so.
- *
- * @param frame The frame to evaluated
- * @param size The frame's size.
- * @return ERROR if something went wrong, OK otherwise
- */ /*
-int deframeInformation(char* frame, char* size) {
-	//Checking the Flag field
-	if (frame[FLAG1_POS] != FLAG) {
-		printf("Error in received Frame Header: Flag Field\n");
-		return ERROR;
-	}
-
-	//Checking the Adress Field
-	if ((frame[AF_POS] != AF1) || (frame[AF_POS] != AF2)) {
-		printf("Error in received Frame Header: Adress Field\n");
-		return ERROR;
-	}
-
-//TODO puxar para outra funcao validFrame
-	//Checking the Control Field
-	if ((frame[CF_POS] != C_SET) ||
-		(frame[CF_POS] != C_DISK) ||
-		(frame[CF_POS] != C_UA) ||
-		(frame[CF_POS] != (C_RR | nr)) ||
-		(frame[CF_POS] != (C_RR | ~nr)) ||
-		(frame[CF_POS] != (C_REJ| nr)) ||
-		(frame[CF_POS] != (C_REJ| ~nr)) ||
-		(frame[CF_POS] != (C_INF| ns)) ||
-		(frame[CF_POS] != (C_INF| ~ns))) {
-		printf("Error in received Frame Header: Control Field\n");
-		return ERROR;
-	}
-
-	//Checking the Protection Field
-	if ((frame[AF_POS] ^ frame[CF_POS]) != frame[BCC_POS]) {
-		printf("Error in received Frame Header: Protection Field\n");
-		return ERROR;
-	}
-
-	return OK;
-} */
-
-
 int framingInformation(char* packet, uint* size) {
 
 	int previousSize = (*size);
@@ -467,6 +435,7 @@ int framingInformation(char* packet, uint* size) {
 	dados, conforme os casos) e o próprio BCC (antes de stuffing) */
 	packet[(*size) + TRAIL_FLAG_POS] = FLAG;
 
+	//Setting the Header
 	memmove(packet + INF_HEAD_SIZE, packet, previousSize + INF_TRAILER_SIZE);
 	packet[FLAG1_POS] = FLAG;
 	packet[AF_POS] = AF1;
@@ -474,8 +443,31 @@ int framingInformation(char* packet, uint* size) {
 	packet[BCC_POS] = (AF1 ^ packet[CF_POS]);
 
 	return OK;
-} 
+}
 
+int deframingInformation(char* frame, uint* size) {
+	//Checking the Header
+	if ((frame[FLAG1_POS] != FLAG) || 
+		(frame[AF_POS] != AF1) ||
+		(frame[CF_POS] != (C_INF | (ll->seqNumber << 6))) ||		//TODO ll->receivedSeqNumber
+		((frame[AF_POS] ^ frame[CF_POS]) != frame[BCC_POS]))
+		logError("Received unexcpted head Information");
+
+	//Checking the Trailer -> TODO change bcc accordingly to framingInformation
+	int trailPos = (*size) - INF_TRAILER_SIZE; 
+	if ((frame[trailPos + TRAIL_BCC_POS] != 0) || 
+		(frame[trailPos + TRAIL_FLAG_POS]) != FLAG)
+		logError("Received unexpected trailer Information");
+
+	//Remove the framing
+	(*size) -= INF_FORMAT_SIZE;
+
+	memmove(frame, frame + INF_HEAD_SIZE, (*size));
+	if ((frame = realloc(frame, (*size))) == NULL)
+		return logError("Realloc error in deframingInformation");
+
+	return OK;
+} 
 
 int byteStuffing(char * buffer, uint * size) {
 	uint i;
@@ -494,7 +486,6 @@ int byteStuffing(char * buffer, uint * size) {
 			i++;
 		}
 	}
-
 	return OK;
 }
 
@@ -515,6 +506,5 @@ int byteDestuffing(char* buffer, uint * size) {
 			buffer[i] = (buffer[i] ^ STUFFING);
 		}
 	}
-
 	return OK;
 }
