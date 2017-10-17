@@ -210,7 +210,15 @@ int llopen(ConnectionType type) {
 
 int llclose(int fd, ConnectionType type) {
 
-	//TODO mandar control message -> disc, que varia para read e writter
+	if (type == TRANSMITTER) {			//TODO, verificar o resultado das funções?
+		sendControlFrame(fd, DISC);
+		readControlFrameWAdress(fd, DISC, AF2);
+		sendControlFrameWAdress(fd, UA, AF2);
+	} else {
+		readControlFrame(fd, DISC);
+		sendControlFrameWAdress(fd, DISC, AF2);
+		readControlFrameWAdress(fd, UA, AF2);
+	}
 
 
 	//Reset terminal to previous configuration
