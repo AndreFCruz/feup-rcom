@@ -9,7 +9,7 @@ int openSerialPort();
 
 int llopen(ConnectionType type);
 
-int llclose(int fd, ConnectionType type);
+int llclose(int fd);
 
 int llwrite(int fd, char * buffer, int length);
 

@@ -63,6 +63,7 @@ static struct termios oldtio;
 static ConnectionType connectionType;
 
 
+
 /**
  * Keeps reading until a FRAME FLAG is found.
  *
@@ -91,17 +92,6 @@ void createControlFrame(char * buffer, char adressField, char controlField);
 int sendControlFrame(int fd, ControlType controlType);
 
 /**
- * Sends a Control frame of the given type, with the given adress field
- * For the special occasion of variating Adress Fields from Transmisser / Receiver
- *
- * @param fd The Serial Port filedescriptor
- * @param controlType The type of control frame
- * @param adressField The adress field to be used
- * @return Number of written bytes, -1 if an error happened.
- */
-int sendControlFrame(int fd, ControlType controlType, char adressField);
-
-/**
  * Reads a frame and checks if it is of the given type.
  *
  * @param The Serial Port's filedescriptor
@@ -111,17 +101,6 @@ int sendControlFrame(int fd, ControlType controlType, char adressField);
 int readControlFrame(int fd, ControlType controlType);
 
 /**
- * Reads a frame and checks if it is of the given type, and has the given adress field
- * For the special occasion of variating Adress Fields from Transmisser / Receiver
- *
- * @param The Serial Port's filedescriptor
- * @param controlType The type of control frame
- * @param adressField The adress field to be used
- * @return OK if the frame was of the given type, ERROR otherwise.
- */ 
-int readControlFrameWAdress(int fd, ControlType controlType, char adressField);
-
-/**
  * Creates a Information Frame, according to the protocols.
  * Final Frame and its size its retrivied in the function parameters.
  *
@@ -129,7 +108,7 @@ int readControlFrameWAdress(int fd, ControlType controlType, char adressField);
  * @param size The packet's size.
  * @return ERROR if something went wrong, OK otherwise
  */ 
-int framingInformation(char* packet, uint* size);
+int framingInformation(uchar* packet, uint* size);
 
 /**
  * Evaluates if the framing is wrong, being descarted if so.
@@ -139,7 +118,7 @@ int framingInformation(char* packet, uint* size);
  * @param size The frame's size.
  * @return ERROR if something went wrong, OK otherwise
  */ 
-int deframingInformation(char * frame, uint* size);
+int deframingInformation(uchar * frame, uint* size);
 
 /**
  * Applies byte stuffing to the given message according to the protocols, retriving the new message in the same buffer.
@@ -158,6 +137,7 @@ int byteStuffing(char * buffer, uint * size);
  * @return Error if something went wrong, ok otherwise
  */
 int byteDestuffing(char* buffer, uint * size);
+
 
 
 
@@ -237,13 +217,13 @@ int llclose(int fd) {
 	switch (connectionType) {
 	case TRANSMITTER:
 		sendControlFrame(fd, DISC);
-		readControlFrameWAdress(fd, DISC, AF2);
-		sendControlFrame(fd, UA, AF2);
+		readControlFrame(fd, DISC);
+		sendControlFrame(fd, UA);
 		break;
 	case RECEIVER:
 		readControlFrame(fd, DISC);
-		sendControlFrame(fd, DISC, AF2);
-		readControlFrameWAdress(fd, UA, AF2);
+		sendControlFrame(fd, DISC);
+		readControlFrame(fd, UA);
 		break;
 	default:
 		logError("llclose failed");
@@ -322,8 +302,6 @@ int llread(int fd, char ** dest) {
 	return bufferIdx;
 }
 
-
-
 int readFrameFlag(int fd) {
 	char tempChar;
 	int readBytes = 0;
@@ -350,13 +328,18 @@ void createControlFrame(char * buffer, char adressField, char controlField) {
 }
 
 int sendControlFrame(int fd, ControlType controlType) {
-	int nrValue = (ll->seqNumber << 7);
+	uint nrValue = (ll->seqNumber << 7);
+	char afValue = AF1;
+
+	if (((connectionType == RECEIVER) && (controlType == DISC)) ||
+		((connectionType == TRANSMITTER) && (controlType == UA)))
+		afValue = AF2;
 
 	char * controlFrame = NULL;
 	if ((controlType == RR) || (controlType ==REJ)) {
-		createControlFrame(controlFrame, AF1, (controlType | nrValue));
+		createControlFrame(controlFrame, afValue, (controlType | nrValue));
 	} else {
-		createControlFrame(controlFrame, AF1, controlType);
+		createControlFrame(controlFrame, afValue, controlType);
 	}
 
 	int res;
@@ -369,32 +352,22 @@ int sendControlFrame(int fd, ControlType controlType) {
 	return res;
 }
 
-int sendControlFrame(int fd, ControlType controlType, char adressField) {
-	
-	if ((controlType != DISC) && (controlType != UA))
-		sendControlFrame(fd, controlType);
-
-	char * controlFrame = NULL;
-	createControlFrame(controlFrame, adressField, controlType);
-
-	int res;
-	if ((res = write(fd, controlFrame, CONTROL_FRAME_SIZE)) < CONTROL_FRAME_SIZE) {
-		printf("senControlFrame (Disk) error: Bad write: %d bytes\n", res);
-		return -1;
-	}
-	
-	free(controlFrame);
-	return res;
-}
-
 int readControlFrame(int fd, ControlType controlType) {
-	char * controlFrame = malloc(CONTROL_FRAME_SIZE);
+	uchar * controlFrame = malloc(CONTROL_FRAME_SIZE);
+	uchar afValue = AF1;
+
+	if (((connectionType == RECEIVER) && (controlType == DISC)) ||
+		((connectionType == TRANSMITTER) && (controlType == UA)))
+		afValue = AF2;
 
 	if (read(fd, controlFrame, CONTROL_FRAME_SIZE) < CONTROL_FRAME_SIZE)
 		return logError("Failed to read Control Frame");
 
-	if ((controlFrame[FLAG1_POS] == FLAG) && (controlFrame[CF_POS] == controlType) && (controlFrame[AF_POS] == AF1) && 
-		(controlFrame[FLAG2_POS] == FLAG) && (controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS]))) 
+	if ((controlFrame[FLAG1_POS] == FLAG) && 
+		(controlFrame[CF_POS] == controlType) && 
+		(controlFrame[AF_POS] == afValue) && 
+		(controlFrame[FLAG2_POS] == FLAG) && 
+		(controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS]))) 
 	{
 		if ((controlType == RR) || (controlType == REJ)) {
 			if (controlFrame[CF_POS] == (controlType | (ll->seqNumber << 7) )) //TODO: ll->receivedSeqNumber
@@ -409,25 +382,7 @@ int readControlFrame(int fd, ControlType controlType) {
 	return logError("Frame was note of the given type or Flags were not recognized\n");
 }
 
-int readControlFrameWAdress(int fd, ControlType controlType, char adressField) {
-	if ((controlType != DISC) && (controlType != UA))
-		readControlFrame(fd, controlType);
-
-	char * controlFrame = malloc(CONTROL_FRAME_SIZE);
-
-	if (read(fd, controlFrame, CONTROL_FRAME_SIZE) < CONTROL_FRAME_SIZE)
-		return logError("Failed to read Control Frame");
-
-	if ((controlFrame[FLAG1_POS] == FLAG) && (controlFrame[CF_POS] == controlType) && (controlFrame[AF_POS] == adressField) && 
-		(controlFrame[FLAG2_POS] == FLAG) && (controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS])))
-		return OK;
-
-
-	free(controlFrame);
-	return logError("Frame was note of the given type or Flags were not recognized\n");
-}
-
-int framingInformation(char* packet, uint* size) {
+int framingInformation(uchar* packet, uint* size) {
 
 	int previousSize = (*size);
 	(*size) += INF_FORMAT_SIZE;
@@ -438,11 +393,10 @@ int framingInformation(char* packet, uint* size) {
 	}
 
 	//Setting the trailer
-	packet[(*size) + TRAIL_BCC_POS] = 0; 
-	/* TODO: BCC (Block Check Character) – detecção de erros baseada na geração de
-	um octeto (BCC) tal que exista um número par de 1s em cada posição
-	(bit), considerando todos os octetos protegidos pelo BCC (cabeçalho ou
-	dados, conforme os casos) e o próprio BCC (antes de stuffing) */
+	uint i;
+	for (i = 0; i < (*size) - INF_FORMAT_SIZE; ++i)
+		packet[(*size) + TRAIL_BCC_POS] ^= packet[i];
+
 	packet[(*size) + TRAIL_FLAG_POS] = FLAG;
 
 	//Setting the Header
@@ -455,7 +409,7 @@ int framingInformation(char* packet, uint* size) {
 	return OK;
 }
 
-int deframingInformation(char* frame, uint* size) {
+int deframingInformation(uchar* frame, uint* size) {
 	//Checking the Header
 	if ((frame[FLAG1_POS] != FLAG) || 
 		(frame[AF_POS] != AF1) ||
@@ -463,9 +417,14 @@ int deframingInformation(char* frame, uint* size) {
 		((frame[AF_POS] ^ frame[CF_POS]) != frame[BCC_POS]))
 		logError("Received unexcpted head Information");
 
-	//Checking the Trailer -> TODO change bcc accordingly to framingInformation
-	int trailPos = (*size) - INF_TRAILER_SIZE; 
-	if ((frame[trailPos + TRAIL_BCC_POS] != 0) || 
+	//Checking the Trailer
+	uint trailPos = (*size) - INF_TRAILER_SIZE;
+	uint i;
+	char calcBCC = 0;
+	for (i = INF_HEAD_SIZE; i < trailPos; ++i)
+		calcBCC ^= frame[i];
+
+	if ((frame[trailPos + TRAIL_BCC_POS] != calcBCC) || 
 		(frame[trailPos + TRAIL_FLAG_POS]) != FLAG)
 		logError("Received unexpected trailer Information");
 

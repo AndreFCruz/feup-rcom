@@ -52,7 +52,7 @@ int sendFile() {
 	if (sendControlPacket(al->fd, &ctrlPacket) != OK)
 		return logError("Error sending control packet");
 
-	if (llclose(al->fd, al->type) != OK)
+	if (llclose(al->fd) != OK)
 		return ERROR;
 
 	return OK;
@@ -101,7 +101,7 @@ int receiveFile() {
 		return logError("Error receiving control packet");
 	}
 
-	if (!llclose(al->fd, al->type))
+	if (!llclose(al->fd))
 		return logError("llclose failed");
 
 	printf("File received successfully.\n");
