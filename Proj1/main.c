@@ -28,13 +28,15 @@ int main(int argc, char** argv)
 	ConnectionType type;
 
 	if ( strcmp("w", argv[2]) == 0 ) {
-		initSender();
+		type = TRANSMITTER;
 	} else if ( strcmp("r", argv[2]) != 0 ) {
-		initReceiver();
+		type = RECEIVER;
 	} else {
 		printUsage(argv[0]);
 		exit(1);
 	}
+
+	initApplicationLayer(argv[1], type, BAUDRATE, , int numRetries, int timeout, char* file);
 
 	return 0;
 }
