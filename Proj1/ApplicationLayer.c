@@ -40,6 +40,8 @@ int sendFile() {
 	al->fd = llopen(al->type);
 	if (al->fd < 0)
 		return logError("Failed llopen");
+		
+	printf("depois de llopen\n");
 
 	ControlPacket ctrlPacket;
 	ctrlPacket.argNr = CTRL_PACKET_ARGS;

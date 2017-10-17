@@ -238,22 +238,30 @@ int llclose(int fd) {
 int llwrite(int fd, char * buffer, int length) {
 	int res = 0;
 
+	printArray(buffer, length);
+	
 	if (framingInformation(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}
+
+	printArray(buffer, length);
 
 	if (byteStuffing(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}
 
+	printArray(buffer, length);
+
+	uint i = 0;
 	do {
+		printf("tentativa %d\n", i);
 		if ((res = write(fd, buffer, length) < length)) {
 			printf("llwrite error: Bad write: %d bytes\n", res);
 			return -1;
 		}
-	} while (readControlFrame(fd, RR) == OK);
+	} while (++i < ll->numRetries && readControlFrame(fd, RR) != OK);
 
 	return res;
 }
@@ -293,6 +301,8 @@ int llread(int fd, char ** dest) {
 		return logError("Failed to deframe information");
 
 	*dest = buffer;
+	
+	printf("sending control frame\n");
 
 	printf("sending control frame...\n");
 
@@ -369,9 +379,13 @@ int readControlFrame(int fd, ControlType controlType) {
 	default:
 		return logError("Bad serial port");
 	}
-
-	if (read(fd, controlFrame, CONTROL_FRAME_SIZE) < CONTROL_FRAME_SIZE)
-		return logError("Failed to read Control Frame");
+	
+	int res;
+	if ((res = read(fd, controlFrame, CONTROL_FRAME_SIZE)) < CONTROL_FRAME_SIZE){
+		printArray(controlFrame, res);
+		return logError("Failed to read Control Frame");//barracaTODO
+	}
+	
 
 	printf("Read control frame: ");
 	printArray(controlFrame, CONTROL_FRAME_SIZE);
