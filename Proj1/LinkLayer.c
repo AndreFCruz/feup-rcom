@@ -36,11 +36,9 @@
 #define MAX_PORT_NAME 		16
 #define PORT_NAME			"/dev/ttyS"
 
-// Control Fields
-#define C_INF				0x00
 
 typedef enum {
-	SET = 0x03, DISC = 0x0B, UA = 0x07, RR = 0x05, REJ = 0x01
+	INF = 0x00, SET = 0x03, DISC = 0x0B, UA = 0x07, RR = 0x05, REJ = 0x01
 } ControlType;
 
 typedef struct {
@@ -199,7 +197,7 @@ int llopen(ConnectionType type) {
 		return fd;
 	} 
 	else if (type == RECEIVER) {
-		ll->seqNumber = 1; // TODO maybe not necessary
+		//ll->seqNumber = 1; // TODO maybe not necessary
 		readControlFrame(fd,SET);
 		sendControlFrame(fd, UA);
 		return fd;
@@ -350,17 +348,32 @@ int sendControlFrame(int fd, ControlType controlType) {
 
 int readControlFrame(int fd, ControlType controlType) {
 	uchar controlFrame[CONTROL_FRAME_SIZE];
-	uchar afValue = AF1;
+	uchar afValue;
 
-	if (((connectionType == RECEIVER) && (controlType == DISC)) ||
-		((connectionType == TRANSMITTER) && (controlType == UA)))
-		afValue = AF2;
+	switch (controlType) {
+	// Comandos
+	case SET:
+	case INF:
+	case DISC:
+		afValue = connectionType == TRANSMITTER ? AF2 : AF1;
+		break;
+	// Respostas
+	case UA:
+	case REJ:
+	case RR:
+		afValue = connectionType == TRANSMITTER ? AF1 : AF2;
+		break;
+	default:
+		return logError("Bad serial port");
+	}
 
 	if (read(fd, controlFrame, CONTROL_FRAME_SIZE) < CONTROL_FRAME_SIZE)
 		return logError("Failed to read Control Frame");
 
 	printf("Read control frame: ");
 	printArray(controlFrame, CONTROL_FRAME_SIZE);
+
+	printf("\n%02X, %02X, %02X, %02X, %02X\n", FLAG, controlType, afValue, FLAG, (controlFrame[AF_POS] ^ controlFrame[CF_POS]));
 
 	if ((controlFrame[FLAG1_POS] == FLAG) && 
 		(controlFrame[CF_POS] == controlType) && 
@@ -404,7 +417,7 @@ int framingInformation(uchar* packet, uint* size) {
 	memmove(packet + INF_HEAD_SIZE, packet, previousSize + INF_TRAILER_SIZE);
 	packet[FLAG1_POS] = FLAG;
 	packet[AF_POS] = AF1;
-	packet[CF_POS] = (C_INF | (ll->seqNumber << 6));
+	packet[CF_POS] = (INF | (ll->seqNumber << 6));
 	packet[BCC_POS] = (AF1 ^ packet[CF_POS]);
 
 	return OK;
@@ -414,7 +427,7 @@ int deframingInformation(uchar* frame, uint* size) {
 	//Checking the Header
 	if ((frame[FLAG1_POS] != FLAG) || 
 		(frame[AF_POS] != AF1) ||
-		(frame[CF_POS] != (C_INF | (ll->seqNumber << 6))) ||		//TODO ll->receivedSeqNumber
+		(frame[CF_POS] != (INF | (ll->seqNumber << 6))) ||		//TODO ll->receivedSeqNumber
 		((frame[AF_POS] ^ frame[CF_POS]) != frame[BCC_POS]))
 		logError("Received unexcpted head Information");
 
