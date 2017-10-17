@@ -67,7 +67,7 @@ int sendControlPacket(int fd, ControlPacket * src){
 }
 
 int receiveDataPacket(int fd, DataPacket * dest) {
-	char * data;
+	uchar * data;
 	if(llread(fd, &data) < 0)
 		return logError("failed to read packet");
 
@@ -82,8 +82,6 @@ int receiveDataPacket(int fd, DataPacket * dest) {
 	return OK;
 }
 
-
-// mudar nome da função para algo maix explicativo
 int fillControlPacketArg(uchar * data, ControlPacket * dest, int argNr, int argSize, int offset) {
 	if(argNr == 0){
 		uint size = convertBytesToInt(data+offset);
@@ -107,12 +105,12 @@ int fillControlPacketArg(uchar * data, ControlPacket * dest, int argNr, int argS
 }
 
 int receiveControlPacket(int fd, ControlPacket * dest) {
-	char * data;
+	uchar * data;
 	int dataSize;
 	if((dataSize = llread(fd, &data)) < 0)
 		return logError("failed to read packet");
 	
-	printf("llread succeeded\n");	
+	printf("llread succeeded\ndataSize: %d\n", dataSize);	
 
 	printArray(data, dataSize);
 
