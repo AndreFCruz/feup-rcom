@@ -37,6 +37,8 @@ int sendFile() {
 	al->fd = llopen(al->type);
 	if (al->fd < 0)
 		return ERROR;
+		
+	printf("depois de llopen\n");
 
 	ControlPacket ctrlPacket;
 	ctrlPacket.argNr = CTRL_PACKET_ARGS;
