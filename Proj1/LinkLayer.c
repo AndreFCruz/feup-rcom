@@ -275,11 +275,13 @@ int llread(int fd, char ** dest) {
 		}
 
 		if ((++bufferIdx % RECEIVER_SIZE) == 0 ) {
-			if ((buffer = realloc(buffer, ((bufferIdx / RECEIVER_SIZE)+1) * RECEIVER_SIZE )) == NULL) {
+			if ((buffer = realloc(buffer, ((bufferIdx / RECEIVER_SIZE) + 1) * RECEIVER_SIZE )) == NULL) {
 				printf("llread error: Failed to realloc buffer\n");
 				return -1;
 			}
 		}
+
+		printf("looped\n");
 	}
 
 	if (byteDestuffing(buffer, &bufferIdx) == ERROR) {
@@ -291,6 +293,8 @@ int llread(int fd, char ** dest) {
 		return logError("Failed to deframe information");
 
 	*dest = buffer;
+
+	printf("sending control frame...\n");
 
 	sendControlFrame(fd, RR);
 	return bufferIdx;
@@ -340,7 +344,6 @@ int sendControlFrame(int fd, ControlType controlType) {
 		return -1;
 	}
 
-	printf("Sent control frame: ");
 	printArray(controlFrame, CONTROL_FRAME_SIZE);
 	
 	return res;

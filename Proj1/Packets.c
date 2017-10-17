@@ -108,9 +108,11 @@ int fillControlPacketArg(uchar * data, ControlPacket * dest, int argNr, int argS
 
 int receiveControlPacket(int fd, ControlPacket * dest) {
 	char * data;
-	int dataSize; 
+	int dataSize;
 	if((dataSize = llread(fd, &data)) < 0)
 		return logError("failed to read packet");
+	
+	printf("llread succeeded\n");	
 
 	dest->type = data[CTRL_FIELD_IDX];
 

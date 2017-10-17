@@ -15,9 +15,12 @@ int initApplicationLayer(const char * port, int baudrate, int timeout, int numRe
 	else
 		return logError("ApplicationLayer already initialized");
 
-	initLinkLayer(atoi(port), baudrate, timeout, numRetries);
+	if (initLinkLayer(atoi(port), baudrate, timeout, numRetries) != OK)
+		return logError("Failed LL initialization");
 
-	al->fd = openSerialPort();
+	if ((al->fd = openSerialPort()) == -1)
+		return logError("Failed open serial port");
+
 	strncpy(al->fileName, file, MAX_FILE_NAME);
 	al->type = type;
 	al->maxDataMsgSize = maxDataMsgSize;
@@ -36,12 +39,14 @@ int sendFile() {
 	// establish connection
 	al->fd = llopen(al->type);
 	if (al->fd < 0)
-		return ERROR;
+		return logError("Failed llopen");
 
 	ControlPacket ctrlPacket;
 	ctrlPacket.argNr = CTRL_PACKET_ARGS;
 	ctrlPacket.type = START;
 	ctrlPacket.fileSize = getFileSize(file);
+
+	printf("Sending control packet...\n");
 
 	if (sendControlPacket(al->fd, &ctrlPacket) != OK)
 		return logError("Error sending control packet");
@@ -79,8 +84,8 @@ int receiveFile() {
 		return logError("AL not initialized");
 
 	al->fd = llopen(al->type);
-	if (al->fd <= 0)
-		return 0;
+	if (al->fd < 0)
+		return logError("Failed llopen");
 
 	ControlPacket ctrlPacket;
 	if (receiveControlPacket(al->fd, &ctrlPacket) != OK || ctrlPacket.type != START) {
