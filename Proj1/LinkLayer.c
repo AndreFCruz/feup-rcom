@@ -446,6 +446,15 @@ int framingInformation(uchar* packet, uint* size) {
 	return OK;
 }
 
+uchar calcBCC(uchar * buffer, size_t length) {
+	uint i;
+	uchar bcc = 0;
+	for (i = 0; i < length; ++i)
+		bcc ^= buffer[i];
+
+	return bcc;
+}
+
 int deframingInformation(uchar* frame, uint* size) {
 	//Checking the Header
 	if ((frame[FLAG1_POS] != FLAG) ||
@@ -461,16 +470,13 @@ int deframingInformation(uchar* frame, uint* size) {
 
 	//Checking the Trailer
 	uint trailPos = (*size) - INF_TRAILER_SIZE;
-	uint i;
-	uchar calcBCC = 0;
-	for (i = INF_HEAD_SIZE; i < trailPos; ++i)
-		calcBCC ^= frame[i];
+	uchar bcc = calcBCC(frame + INF_HEAD_SIZE, trailPos - INF_HEAD_SIZE);
 
-	/*if ((frame[trailPos + TRAIL_BCC_POS] != calcBCC) ||
+	if ((frame[trailPos + TRAIL_BCC_POS] != bcc) ||
 		(frame[trailPos + TRAIL_FLAG_POS] != FLAG)) {	//TODO: bcc ta mal
-		printf("trailpos + trailbccpos: %02X, calbcc: %02X\n", frame[trailPos + TRAIL_BCC_POS],calcBCC);
+		printf("trailpos + trailbccpos: %02X, calbcc: %02X\n", frame[trailPos + TRAIL_BCC_POS], bcc);
 		logError("Received unexpected trailer Information");
-	}*/
+	}
 
 	//Remove the framing
 	(*size) -= INF_FORMAT_SIZE;
