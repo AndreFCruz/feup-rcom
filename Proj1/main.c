@@ -14,7 +14,7 @@
 #define _IDXIX_SOURCE 1 /* POSIX compliant source */
 #define NUM_RETRIES 3
 #define TIMEOUT 	3
-#define FILE_NAME 	"pinguim.gif"
+#define FILE_NAME "pinguim.gif"
 #define MAX_DATA	32
 
 void printUsage();
@@ -23,7 +23,7 @@ void initReceiver();
 
 int main(int argc, char** argv)
 {
-	if ( (argc < 3) || 
+	if ( (argc < 3) ||
 		((strcmp("0", argv[1])!=0) && (strcmp("1", argv[1])!=0)) ) {
 		printUsage(argv[0]);
 		exit(1);
@@ -54,4 +54,3 @@ int main(int argc, char** argv)
 void printUsage(char * progName) {
 	printf("Usage:\t%s SerialPort r/w\n\tex: %s 0 w\n", progName, progName);
 }
-

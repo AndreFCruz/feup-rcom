@@ -90,7 +90,7 @@ int sendControlFrame(int fd, ControlType controlType);
  * @param The Serial Port's filedescriptor
  * @param controlType The type of control frame
  * @return OK if the frame was of the given type, ERROR otherwise.
- */ 
+ */
 int readControlFrame(int fd, ControlType controlType);
 
 /**
@@ -100,7 +100,7 @@ int readControlFrame(int fd, ControlType controlType);
  * @param packet The packet to be framed.
  * @param size The packet's size.
  * @return ERROR if something went wrong, OK otherwise
- */ 
+ */
 int framingInformation(uchar* packet, uint* size);
 
 /**
@@ -110,7 +110,7 @@ int framingInformation(uchar* packet, uint* size);
  * @param frame The frame to be evaluated
  * @param size The frame's size.
  * @return ERROR if something went wrong, OK otherwise
- */ 
+ */
 int deframingInformation(uchar * frame, uint* size);
 
 /**
@@ -169,8 +169,8 @@ int openSerialPort() {
 
 	newtio.c_cc[VTIME]    = ll->timeout * 10;   /* inter-character timer unused - in 0.1s*/
 	newtio.c_cc[VMIN]     = 0;   /* blocking read until 5 chars received */
-/* 
-	VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
+/*
+	VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
 	leitura do(s) proximo(s) caracter(es)
 */
 
@@ -195,13 +195,13 @@ int llopen(ConnectionType type) {
 		sendControlFrame(fd, SET);
 		readControlFrame(fd, UA);
 		return fd;
-	} 
+	}
 	else if (type == RECEIVER) {
 		//ll->seqNumber = 1; // TODO maybe not necessary
 		readControlFrame(fd,SET);
 		sendControlFrame(fd, UA);
 		return fd;
-	} 
+	}
 	else return logError("Unknow Connection Type");
 }
 
@@ -238,15 +238,15 @@ int llclose(int fd) {
 int llwrite(int fd, char * buffer, int length) {
 	int res = 0;
 
-	printArray(buffer, length);
-	
+	//printArray(buffer, length);
+
 	// TODO ordem do framing e stuffing trocada
 	if (byteStuffing(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}
 
-	printArray(buffer, length);
+	//printArray(buffer, length);
 
 	if (framingInformation(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
@@ -295,7 +295,7 @@ int llread(int fd, char ** dest) {
 	} while (buffer[bufferIdx - 1] != FLAG);
 
 printArray(buffer, RECEIVER_SIZE);
-	
+
 	// TODO ordem do framing e stuffing trocada
 	if (deframingInformation(buffer, &bufferIdx) != OK)
 		return logError("Failed to deframe information");
@@ -310,7 +310,7 @@ printArray(buffer, RECEIVER_SIZE);
 	printArray(buffer, RECEIVER_SIZE);
 
 	*dest = buffer;
-	
+
 	printf("sending control frame...\n");
 
 	sendControlFrame(fd, RR);
@@ -365,7 +365,7 @@ int sendControlFrame(int fd, ControlType controlType) {
 	}
 
 	printArray(controlFrame, CONTROL_FRAME_SIZE);
-	
+
 	return res;
 }
 
@@ -389,23 +389,23 @@ int readControlFrame(int fd, ControlType controlType) {
 	default:
 		return logError("Bad serial port");
 	}
-	
+
 	int res;
 	if ((res = read(fd, controlFrame, CONTROL_FRAME_SIZE)) < CONTROL_FRAME_SIZE){
 		printArray(controlFrame, res);
 		return logError("Failed to read Control Frame");//barracaTODO
 	}
-	
+
 
 	printf("Read control frame: ");
 	printArray(controlFrame, CONTROL_FRAME_SIZE);
 
 	printf("\n%02X, %02X, %02X, %02X, %02X\n", FLAG, controlType, afValue, FLAG, (controlFrame[AF_POS] ^ controlFrame[CF_POS]));
 
-	if ((controlFrame[FLAG1_POS] == FLAG) && 
-		(controlFrame[CF_POS] == controlType) && 
-		(controlFrame[AF_POS] == afValue) && 
-		(controlFrame[FLAG2_POS] == FLAG) && 
+	if ((controlFrame[FLAG1_POS] == FLAG) &&
+		(controlFrame[CF_POS] == controlType) &&
+		(controlFrame[AF_POS] == afValue) &&
+		(controlFrame[FLAG2_POS] == FLAG) &&
 		(controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS])))
 	{
 		uchar seqNrToReceive =  (~(ll->seqNumber)) << 7;
@@ -453,7 +453,7 @@ int framingInformation(uchar* packet, uint* size) {
 
 int deframingInformation(uchar* frame, uint* size) {
 	//Checking the Header
-	if ((frame[FLAG1_POS] != FLAG) || 
+	if ((frame[FLAG1_POS] != FLAG) ||
 		(frame[AF_POS] != AF1) ||
 		(frame[CF_POS] != (INF | (ll->seqNumber << 6))) ||		//TODO ll->receivedSeqNumber
 		((frame[AF_POS] ^ frame[CF_POS]) != frame[BCC_POS]))
@@ -466,7 +466,7 @@ int deframingInformation(uchar* frame, uint* size) {
 	for (i = INF_HEAD_SIZE; i < trailPos; ++i)
 		calcBCC ^= frame[i];
 
-	if ((frame[trailPos + TRAIL_BCC_POS] != calcBCC) || 
+	if ((frame[trailPos + TRAIL_BCC_POS] != calcBCC) ||
 		(frame[trailPos + TRAIL_FLAG_POS] != FLAG))
 		logError("Received unexpected trailer Information");
 
@@ -478,7 +478,7 @@ int deframingInformation(uchar* frame, uint* size) {
 		return logError("Realloc error in deframingInformation");
 
 	return OK;
-} 
+}
 
 int byteStuffing(char * buffer, uint * size) {
 	uint i;
@@ -533,7 +533,7 @@ int byteDestuffing(char* buffer, uint * size) {
 	buffer[3] = 0xCC;
 
 	framingInformation(buffer, &size);
-	
+
 	byteStuffing(buffer, &size);
 
 	printArray(buffer,size);

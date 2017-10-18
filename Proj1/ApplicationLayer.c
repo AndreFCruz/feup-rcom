@@ -22,9 +22,10 @@ int initApplicationLayer(const char * port, int baudrate, int timeout, int numRe
 		return logError("Failed open serial port");
 
 	strncpy(al->fileName, file, MAX_FILE_NAME);
+	//printf("Filename: %s\n", al->fileName);
 	al->type = type;
 	al->maxDataMsgSize = maxDataMsgSize;
-	
+
 	return OK;
 }
 
@@ -40,11 +41,12 @@ int sendFile() {
 	al->fd = llopen(al->type);
 	if (al->fd < 0)
 		return logError("Failed llopen");
-		
+
 	ControlPacket ctrlPacket;
-	ctrlPacket.argNr = CTRL_PACKET_ARGS;
 	ctrlPacket.type = START;
+	strcpy(ctrlPacket.fileName, al->fileName);
 	ctrlPacket.fileSize = getFileSize(file);
+	ctrlPacket.argNr = CTRL_PACKET_ARGS;
 
 	printf("Sending control packet...\n");
 

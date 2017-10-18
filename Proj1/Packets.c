@@ -17,6 +17,7 @@ void makeDataPacket(DataPacket * src, Packet * dest){
 }
 
 void makeControlPacket(ControlPacket * src, Packet * dest){
+	//printf("Filename: %s\n", src->fileName);
 	int fileNameSize = strnlen(src->fileName, MAX_FILE_NAME);
 	int packetSize = 1 + 2 * (src->argNr) + fileNameSize + FILE_SIZE_LENGTH;
 	//printf("packetSize: %d, fileNameSize: %d\n", packetSize, (unsigned char) fileNameSize);
@@ -28,7 +29,7 @@ void makeControlPacket(ControlPacket * src, Packet * dest){
 	int index = 1;
 	data[index++] = FILE_SIZE_ARG;
 	data[index++] = sizeof(int);
-	
+
 	unsigned char fileSize[sizeof(int)]; // TODO delete convertIntToBytes
 	convertIntToBytes(fileSize, src->fileSize);
 	memcpy(&data[index], fileSize, FILE_SIZE_LENGTH);
@@ -67,13 +68,13 @@ int sendControlPacket(int fd, ControlPacket * src){
 }
 
 int receiveDataPacket(int fd, DataPacket * dest) {
-	uchar * data;
+	char * data;
 	if(llread(fd, &data) < 0)
 		return logError("failed to read packet");
 
 	if(data[CTRL_FIELD_IDX] != DATA)
 		return logError("type does not match any known type DATA");
-	
+
 	dest->seqNr = data[SEQ_NUM_IDX];
 	int size = data[DATA_PACKET_SIZE2_IDX] * SIZE2_MUL + data[DATA_PACKET_SIZE1_IDX];
 	dest->data = (uchar *) malloc(size);
@@ -85,7 +86,7 @@ int receiveDataPacket(int fd, DataPacket * dest) {
 int fillControlPacketArg(uchar * data, ControlPacket * dest, int argNr, int argSize, int offset) {
 	if(argNr == 0){
 		uint size = convertBytesToInt(data+offset);
-			
+
 		/*
 		uint size = *(uint*) (data+1);
 		printf("Val: %0X\n", size);
@@ -96,7 +97,8 @@ int fillControlPacketArg(uchar * data, ControlPacket * dest, int argNr, int argS
 		dest->fileSize = size;
 	}
 	else if(argNr == 1){
-		strcpy(dest->fileName, (char *) (data+offset));
+		//strcpy(dest->fileName, (char *) (data+offset));  //TODO: VER PORQUE NAO RESULTA
+		memcpy(dest->fileName, (data+offset), argSize);
 	}
 	else
 		return ERROR;
@@ -105,17 +107,17 @@ int fillControlPacketArg(uchar * data, ControlPacket * dest, int argNr, int argS
 }
 
 int receiveControlPacket(int fd, ControlPacket * dest) {
-	uchar * data;
+	char * data;
 	int dataSize;
 	if((dataSize = llread(fd, &data)) < 0)
 		return logError("failed to read packet");
-	
-	printf("llread succeeded\ndataSize: %d\n", dataSize);	
+
+	printf("llread succeeded\ndataSize: %d\n", dataSize);
 
 	printArray(data, dataSize);
 
 	dest->type = data[CTRL_FIELD_IDX];
-	
+
 	if(dest->type != START && dest->type != END)
 		return logError("type does not match any known type (START, END)");
 
@@ -133,6 +135,6 @@ int receiveControlPacket(int fd, ControlPacket * dest) {
 
 	dest->argNr = argNr;
 
-	printf("Size: %d, Name: %s\n",dest->fileSize,dest->fileName);
+	//printf("Size: %d, Name: %s\n",dest->fileSize,dest->fileName);
 	return OK;
 }
