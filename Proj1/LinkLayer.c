@@ -253,7 +253,7 @@ int llwrite(int fd, char * buffer, int length) {
 		return -1;
 	}
 
-	printArray(buffer, length);
+	//printArray(buffer, length);
 
 	uint i = 0;
 	do {
@@ -297,8 +297,8 @@ int llread(int fd, char ** dest) {
 
 	printf("\nEnding reading loop\n");
 
-	printArray(buffer, bufferIdx);
-	printf("\n");
+	//printArray(buffer, bufferIdx);
+	//printf("\n");
 
 	// TODO ordem do framing e stuffing trocada
 	if (deframingInformation(buffer, &bufferIdx) != OK)

@@ -18,8 +18,6 @@
 #define MAX_DATA	32
 
 void printUsage();
-void initSender();
-void initReceiver();
 
 int main(int argc, char** argv)
 {

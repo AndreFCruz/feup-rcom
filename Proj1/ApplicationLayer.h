@@ -8,7 +8,7 @@ typedef struct {
     int fd; // serial port's file descriptor
     char fileName[MAX_FILE_NAME];
     ConnectionType type;
-	int maxDataMsgSize;
+    int maxDataMsgSize;
 } ApplicationLayer;
 
 
