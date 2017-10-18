@@ -55,10 +55,10 @@ int sendDataPacket(int fd, DataPacket * src) {
 	printArray(packet.data, packet.size);
 	int written = llwrite(fd, packet.data, packet.size);
 	free(packet.data);
-	if (written == (int) packet.size)
+	if (written >= (int) packet.size)
 		return OK;	//TODO METER BONITINHO
 
-	printf("Sent DATA packet with size %d/%d", written, (int) packet.size);
+	printf("Sent DATA packet with size %d/%d\n", written, (int) packet.size);
 	return ERROR;
 }
 
@@ -68,10 +68,10 @@ int sendControlPacket(int fd, ControlPacket * src){
 	printf("Sending control packet: "); printArray(packet.data, packet.size);
 	int written = llwrite(fd, packet.data, packet.size);
 	free(packet.data);
-	if (written == (int) packet.size)
+	if (written >= (int) packet.size)
 		return OK;
 
-	printf("Sent CONTROL packet with size %d/%d", written, (int) packet.size);
+	printf("Sent CONTROL packet with size %d/%d\n", written, (int) packet.size);
 	return ERROR;
 }
 
@@ -87,7 +87,7 @@ int receiveDataPacket(int fd, DataPacket * dest) {
 
 	dest->seqNr = data[SEQ_NUM_IDX];
 	dest->size = (uchar) data[DATA_PACKET_SIZE2_IDX] * SIZE2_MUL + (uchar) data[DATA_PACKET_SIZE1_IDX];
-	printf("Received data packet size: %02X\n", dest->size);
+	printf("Received data packet size: %d\n", (int) dest->size);
 	dest->data = (uchar *) malloc(dest->size);
 	memcpy(dest->data, &data[HEADER_SIZE], dest->size);
 	return OK;

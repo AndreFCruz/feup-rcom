@@ -110,9 +110,9 @@ int receiveFile() {
 	uint res, progress = 0, totalPackets = 0;
 	while (progress < ctrlPacket.fileSize) {
 		receiveDataPacket(al->fd, &dataPacket);
-		progress += dataPacket.size;
+		progress += (uint) dataPacket.size;
 
-		printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: %02X\n", progress, ctrlPacket.fileSize, dataPacket.size);
+		printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: 0x%02X\n", progress, ctrlPacket.fileSize, dataPacket.size);
 
 		if (fwrite(dataPacket.data, sizeof(char), dataPacket.size, outputFile) == 0) {
 			printf("fwrite returned 0\n");

@@ -238,20 +238,18 @@ int llclose(int fd) {
 int llwrite(int fd, char * buffer, int length) {
 	int res = 0;
 
-	//printArray(buffer, length);
-
-	// TODO ordem do framing e stuffing trocada
-	if (byteStuffing(buffer, &length) == ERROR) {
-		printf("llwrite error: Failed to create Information Frame.\n");
-		return -1;
-	}
-	//printArray(buffer, length);
+	printf("Pre stuffing: ");
+	printArray(buffer, length);
 
 	if (framingInformation(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}
-	//printArray(buffer, length);
+
+	if (byteStuffing(buffer, &length) == ERROR) {
+		printf("llwrite error: Failed to create Information Frame.\n");
+		return -1;
+	}
 
 	uint i = 0;
 	do {
@@ -298,24 +296,13 @@ int llread(int fd, char ** dest) {
 	//printArray(buffer, bufferIdx);
 	//printf("\n");
 
-	// TODO ordem do framing e stuffing trocada
-	if (deframingInformation(buffer, &bufferIdx) != OK)
-		return logError("Failed to deframe information");
-
-	/*
-	printArray(buffer, bufferIdx);
-	printf("\n");
-	*/
-
 	if (byteDestuffing(buffer, &bufferIdx) == ERROR) {
 		printf("llread error: Failed byteDestuffing\n");
 		return -1;
 	}
 
-	/*
-	printArray(buffer, bufferIdx);
-	printf("\n");
-	*/
+	if (deframingInformation(buffer, &bufferIdx) != OK)
+		return logError("Failed to deframe information");
 
 	*dest = buffer;
 
@@ -464,8 +451,10 @@ int deframingInformation(uchar* frame, uint* size) {
 	if ((frame[FLAG1_POS] != FLAG) ||
 		(frame[AF_POS] != AF1) ||
 		(frame[CF_POS] != (INF | (ll->seqNumber << 6))) ||		//TODO ll->receivedSeqNumber
-		((frame[AF_POS] ^ frame[CF_POS]) != frame[BCC_POS]))
+		((frame[AF_POS] ^ frame[CF_POS]) != frame[BCC_POS])) {
 		logError("Received unexpected head Information");
+		printArray(frame, *size);
+	}
 
   // read's Nr is negative of sender's Ns
 	ll->seqNumber = (frame[CF_POS] >> 6) & 0b01 ? 0 : 1;
@@ -496,7 +485,7 @@ int deframingInformation(uchar* frame, uint* size) {
 int byteStuffing(char * buffer, uint * size) {
 	uint i;
 
-	for (i = 0; i < (*size); ++i) {
+	for (i = BCC_POS; i < (*size) - 1; ++i) {
 		if ((buffer[i] == (char) FLAG) || (buffer[i] == (char) ESC))
 		{
 			if ((buffer = realloc(buffer, (*size)++)) == NULL) {
@@ -517,7 +506,7 @@ int byteStuffing(char * buffer, uint * size) {
 int byteDestuffing(char* buffer, uint * size) {
 	uint i;
 
-	for (i = 0; i < (*size); ++i) {
+	for (i = BCC_POS; i < (*size) - 1; ++i) {
 		if (buffer[i] == (char) ESC)
 		{
 			memmove(buffer+i, buffer+i+1, (*size)-i);
