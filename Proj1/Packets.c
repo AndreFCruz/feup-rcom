@@ -48,26 +48,30 @@ void makeControlPacket(ControlPacket * src, Packet * dest){
 	dest->size = packetSize;
 }
 
-
+// TODO funcao generica sendPacket que recebe a funcao makePacket (of correct type)
 int sendDataPacket(int fd, DataPacket * src) {
 	Packet packet;
 	makeDataPacket(src, &packet);
 	printArray(packet.data, packet.size);
-	int status = llwrite(fd, packet.data, packet.size);
+	int written = llwrite(fd, packet.data, packet.size);
 	free(packet.data);
-	if (status == (int) packet.size)
+	if (written == (int) packet.size)
 		return OK;	//TODO METER BONITINHO
+
+	printf("Sent DATA packet with size %d/%d", written, (int) packet.size);
 	return ERROR;
 }
 
 int sendControlPacket(int fd, ControlPacket * src){
 	Packet packet;
 	makeControlPacket(src, &packet);
-	printArray(packet.data, packet.size);
-	int status = llwrite(fd, packet.data, packet.size);
+	printf("Sending control packet: "); printArray(packet.data, packet.size);
+	int written = llwrite(fd, packet.data, packet.size);
 	free(packet.data);
-	if (status == (int) packet.size)
+	if (written == (int) packet.size)
 		return OK;
+
+	printf("Sent CONTROL packet with size %d/%d", written, (int) packet.size);
 	return ERROR;
 }
 

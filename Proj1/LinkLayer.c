@@ -245,14 +245,12 @@ int llwrite(int fd, char * buffer, int length) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}
-
 	//printArray(buffer, length);
 
 	if (framingInformation(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}
-
 	//printArray(buffer, length);
 
 	uint i = 0;
@@ -413,7 +411,7 @@ int readControlFrame(int fd, ControlType controlType) {
 	printf("\n%02X, %02X, %02X, %02X, %02X\n", FLAG, controlType, afValue, FLAG, (controlFrame[AF_POS] ^ controlFrame[CF_POS]));
 
 	if ((controlFrame[FLAG1_POS] == FLAG) &&
-		(controlFrame[CF_POS] == controlType) &&
+		((controlFrame[CF_POS] & 0x7F) == controlType) &&
 		(controlFrame[AF_POS] == afValue) &&
 		(controlFrame[FLAG2_POS] == FLAG) &&
 		(controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS])))
