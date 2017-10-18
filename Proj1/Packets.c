@@ -55,10 +55,9 @@ int sendDataPacket(int fd, DataPacket * src) {
 	printArray(packet.data, packet.size);
 	int status = llwrite(fd, packet.data, packet.size);
 	free(packet.data);
-	if (status)
+	if (status == (int) packet.size)
 		return OK;	//TODO METER BONITINHO
-	else
-		return ERROR;
+	return ERROR;
 }
 
 int sendControlPacket(int fd, ControlPacket * src){
@@ -67,8 +66,9 @@ int sendControlPacket(int fd, ControlPacket * src){
 	printArray(packet.data, packet.size);
 	int status = llwrite(fd, packet.data, packet.size);
 	free(packet.data);
-	if (status)
-		return OK;	//TODO METER BONITINHO
+	if (status == (int) packet.size)
+		return OK;
+	return ERROR;
 }
 
 int receiveDataPacket(int fd, DataPacket * dest) {

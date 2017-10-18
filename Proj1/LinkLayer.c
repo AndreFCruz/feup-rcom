@@ -419,7 +419,7 @@ int readControlFrame(int fd, ControlType controlType) {
 		(controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS])))
 	{
 		uchar seqNrToReceive =  (~(ll->seqNumber)) << 7;
-		printf("Current seqNr: %02X. Received seqNr: %02X. Modified seqNr: %02x\n", ll->seqNumber, controlFrame[CF_POS] && 0xA0, seqNrToReceive);
+		printf("Current seqNr: %02X. Received seqNr: %02X. Modified seqNr: %02x\n", ll->seqNumber, controlFrame[CF_POS] & 0xA0, seqNrToReceive);
 		if ((controlType == RR) || (controlType == REJ)) {
 			if (controlFrame[CF_POS] == (controlType | seqNrToReceive)) {
 				ll->seqNumber = ll->seqNumber ? 0 : 1;
@@ -468,6 +468,9 @@ int deframingInformation(uchar* frame, uint* size) {
 		(frame[CF_POS] != (INF | (ll->seqNumber << 6))) ||		//TODO ll->receivedSeqNumber
 		((frame[AF_POS] ^ frame[CF_POS]) != frame[BCC_POS]))
 		logError("Received unexpected head Information");
+
+  // read's Nr is negative of sender's Ns
+	ll->seqNumber = ll->seqNumber ? 0 : 1;
 
 	//Checking the Trailer
 	uint trailPos = (*size) - INF_TRAILER_SIZE;
