@@ -76,8 +76,10 @@ int receiveDataPacket(int fd, DataPacket * dest) {
 	if(llread(fd, &data) < 0)
 		return logError("failed to read packet");
 
-	if(data[CTRL_FIELD_IDX] != DATA)
-		return logError("type does not match any known type DATA");
+	if(data[CTRL_FIELD_IDX] != DATA) {
+		printf("type does not match any known type DATA, was %02X\n", data[CTRL_FIELD_IDX]);
+		return ERROR;
+	}
 
 	dest->seqNr = data[SEQ_NUM_IDX];
 	dest->size = (uchar) data[DATA_PACKET_SIZE2_IDX] * SIZE2_MUL + (uchar) data[DATA_PACKET_SIZE1_IDX];

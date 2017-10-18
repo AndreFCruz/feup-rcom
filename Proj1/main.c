@@ -17,7 +17,11 @@
 #define FILE_NAME "pinguim.gif"
 #define MAX_DATA	32
 
-void printUsage();
+int DEBUG = FALSE; // TODO
+
+void printUsage(char * progName) {
+	printf("Usage:\t%s SerialPort r/w\n\tex: %s 0 w\n", progName, progName);
+}
 
 int main(int argc, char** argv)
 {
@@ -46,9 +50,4 @@ int main(int argc, char** argv)
 	(*functionPtr)();
 
 	return 0;
-}
-
-
-void printUsage(char * progName) {
-	printf("Usage:\t%s SerialPort r/w\n\tex: %s 0 w\n", progName, progName);
 }

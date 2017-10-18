@@ -421,13 +421,12 @@ int readControlFrame(int fd, ControlType controlType) {
 		uchar seqNrToReceive =  (~(ll->seqNumber)) << 7;
 		printf("Current seqNr: %02X. Received seqNr: %02X. Modified seqNr: %02x\n", ll->seqNumber, controlFrame[CF_POS] && 0xA0, seqNrToReceive);
 		if ((controlType == RR) || (controlType == REJ)) {
-		/*	if (controlFrame[CF_POS] == (controlType | seqNrToReceive)) {
-				//ll->seqNumber = ~ll->seqNumber;
+			if (controlFrame[CF_POS] == (controlType | seqNrToReceive)) {
+				ll->seqNumber = ll->seqNumber ? 0 : 1;
 				return OK;
 			}
 			return logError("Sequence number not aligned");
-		*/
-			return OK;}
+		}
 	} else {
 		return logError("Frame was not of the given type or Flags were not recognized");
 	}
