@@ -14,8 +14,8 @@
 #define _IDXIX_SOURCE 1 /* POSIX compliant source */
 #define NUM_RETRIES 3
 #define TIMEOUT 	3
-#define FILE_NAME "pinguim.gif"
-#define MAX_DATA	32
+#define FILE_NAME "song.mp3"
+#define MAX_DATA	256
 
 int DEBUG = FALSE; // TODO
 

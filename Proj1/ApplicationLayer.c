@@ -60,8 +60,10 @@ int sendFile() {
 		dataPacket.seqNr = i++;
 		dataPacket.size = res;
 		dataPacket.data = fileBuffer;
-		if (!sendDataPacket(al->fd, &dataPacket))
-			return logError("Error sending data packet");
+		if (sendDataPacket(al->fd, &dataPacket) != OK) {
+			logError("Error sending data packet");
+			break;
+		}
 
 		progress += res;
 	}
@@ -109,7 +111,10 @@ int receiveFile() {
 	DataPacket dataPacket;
 	uint res, progress = 0, totalPackets = 0;
 	while (progress < ctrlPacket.fileSize) {
-		receiveDataPacket(al->fd, &dataPacket);
+		if (receiveDataPacket(al->fd, &dataPacket) != OK) {
+			logError("Error sending data packet");
+			break;
+		}
 		progress += (uint) dataPacket.size;
 
 		printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: 0x%02X\n", progress, ctrlPacket.fileSize, dataPacket.size);
@@ -120,7 +125,6 @@ int receiveFile() {
 		}
 
 	}
-
 	printf("OUT OF DATA PACKETS \n");
 
 	if (fclose(outputFile)) {
