@@ -191,18 +191,18 @@ int llopen(ConnectionType type) {
 
 	fd = openSerialPort();
 
-	if (type == TRANSMITTER) {
-		sendControlFrame(fd, SET);
-		readControlFrame(fd, UA);
-		return fd;
+	switch (type) {
+	case TRANSMITTER:
+		if (sendControlFrame(fd, SET) > 0 && readControlFrame(fd, UA) == OK)
+			return fd;
+		break;
+	case RECEIVER:
+		if (readControlFrame(fd, SET) == OK && sendControlFrame(fd, UA) > 0)
+			return fd;
+		break;
 	}
-	else if (type == RECEIVER) {
-		//ll->seqNumber = 1; // TODO maybe not necessary
-		readControlFrame(fd,SET);
-		sendControlFrame(fd, UA);
-		return fd;
-	}
-	else return logError("Unknow Connection Type");
+
+	return logError("Failed llopen");
 }
 
 int llclose(int fd) {
@@ -450,7 +450,7 @@ int deframingInformation(uchar* frame, uint* size) {
 	//Checking the Header
 	if ((frame[FLAG1_POS] != FLAG) ||
 		(frame[AF_POS] != AF1) ||
-		(frame[CF_POS] != (INF | (ll->seqNumber << 6))) ||		//TODO ll->receivedSeqNumber
+		(frame[CF_POS] != (INF | (ll->seqNumber << 6))) ||
 		((frame[AF_POS] ^ frame[CF_POS]) != frame[BCC_POS])) {
 		logError("Received unexpected head Information");
 		printArray(frame, *size);
