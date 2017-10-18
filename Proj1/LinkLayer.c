@@ -426,7 +426,7 @@ int readControlFrame(int fd, ControlType controlType) {
 				return OK;
 			}
 			return logError("Sequence number not aligned");
-		*/ 
+		*/
 			return OK;}
 	} else {
 		return logError("Frame was not of the given type or Flags were not recognized");

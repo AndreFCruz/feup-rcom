@@ -79,9 +79,9 @@ int receiveDataPacket(int fd, DataPacket * dest) {
 
 	dest->seqNr = data[SEQ_NUM_IDX];
 	dest->size = data[DATA_PACKET_SIZE2_IDX] * SIZE2_MUL + data[DATA_PACKET_SIZE1_IDX];
+	printf("Received data packet size: %d\n", dest->size);
 	dest->data = (uchar *) malloc(dest->size);
 	memcpy(dest->data, &data[HEADER_SIZE], dest->size);
-	free(dest->data);
 	return OK;
 }
 

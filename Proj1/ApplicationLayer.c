@@ -54,9 +54,9 @@ int sendFile() {
 		return logError("Error sending control packet");
 
 	DataPacket dataPacket;
-	unsigned char fileBuffer[FILE_BUFFER_SIZE];
+	uchar * fileBuffer = (uchar *) malloc(al->maxDataMsgSize * sizeof(char));
 	uint res, progress = 0, i = 0;
-	while ( (res = fread(fileBuffer, sizeof(char), FILE_BUFFER_SIZE, file)) > 0 ) {
+	while ( (res = fread(fileBuffer, sizeof(char), al->maxDataMsgSize, file)) > 0 ) {
 		dataPacket.seqNr = i++;
 		dataPacket.size = res;
 		dataPacket.data = fileBuffer;
@@ -65,6 +65,7 @@ int sendFile() {
 
 		progress += res;
 	}
+	free(fileBuffer);
 
 	if (fclose(file)) {
 		perror("Error while closing file");
@@ -113,12 +114,12 @@ int receiveFile() {
 
 		printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: %d\n", progress, ctrlPacket.fileSize, dataPacket.size);
 
-		
+
 		if (fwrite(dataPacket.data, sizeof(char), dataPacket.size, outputFile) == 0) {
 			printf("fwrite returned 0\n");
 			return OK;
 		}
-		
+
 	}
 
 	printf("OUT OF DATA PACKETS \n");
