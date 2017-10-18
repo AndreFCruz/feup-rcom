@@ -470,7 +470,7 @@ int deframingInformation(uchar* frame, uint* size) {
 		logError("Received unexpected head Information");
 
   // read's Nr is negative of sender's Ns
-	ll->seqNumber = ll->seqNumber ? 0 : 1;
+	ll->seqNumber = (frame[CF_POS] >> 6) & 0b01 ? 0 : 1;
 
 	//Checking the Trailer
 	uint trailPos = (*size) - INF_TRAILER_SIZE;
