@@ -277,6 +277,7 @@ int llread(int fd, char ** dest) {
 		return -1;
 	}
 
+	printf("\nStarting reading loop\n");
 	buffer[bufferIdx++] = FLAG;
 	do {
 		if (read(fd, buffer + bufferIdx, sizeof(char)) < 1) {
@@ -284,7 +285,7 @@ int llread(int fd, char ** dest) {
 			return -1;
 		}
 
-		printf("loop read: %02X\n", buffer[bufferIdx]);
+		//printf("%02X - ", buffer[bufferIdx]);
 		++bufferIdx;
 		if ( (bufferIdx % RECEIVER_SIZE) == 0 ) {
 			if ((buffer = realloc(buffer, ((bufferIdx / RECEIVER_SIZE) + 1) * RECEIVER_SIZE )) == NULL) {
@@ -294,20 +295,29 @@ int llread(int fd, char ** dest) {
 		}
 	} while (buffer[bufferIdx - 1] != FLAG);
 
-printArray(buffer, RECEIVER_SIZE);
+	printf("\nEnding reading loop\n");
+
+	printArray(buffer, bufferIdx);
+	printf("\n");
 
 	// TODO ordem do framing e stuffing trocada
 	if (deframingInformation(buffer, &bufferIdx) != OK)
 		return logError("Failed to deframe information");
 
-	printArray(buffer, RECEIVER_SIZE);
+	/*
+	printArray(buffer, bufferIdx);
+	printf("\n");
+	*/
 
 	if (byteDestuffing(buffer, &bufferIdx) == ERROR) {
 		printf("llread error: Failed byteDestuffing\n");
 		return -1;
 	}
 
-	printArray(buffer, RECEIVER_SIZE);
+	/*
+	printArray(buffer, bufferIdx);
+	printf("\n");
+	*/
 
 	*dest = buffer;
 
@@ -323,7 +333,7 @@ int readFrameFlag(int fd) {
 	int res;
 
 	while (tempChar != FLAG) {
-		if ( (res = read(fd, &tempChar, sizeof(char))) < 1 ) {
+		if ( (res = read(fd, &tempChar, sizeof(char))) < 0 ) {
 			printf("readFrameFlag error: Failed to read from SerialPort\n");
 			return -1;
 		}
@@ -411,12 +421,13 @@ int readControlFrame(int fd, ControlType controlType) {
 		uchar seqNrToReceive =  (~(ll->seqNumber)) << 7;
 		printf("Current seqNr: %02X. Received seqNr: %02X. Modified seqNr: %02x\n", ll->seqNumber, controlFrame[CF_POS] && 0xA0, seqNrToReceive);
 		if ((controlType == RR) || (controlType == REJ)) {
-			if (controlFrame[CF_POS] == (controlType | seqNrToReceive)) {
-				ll->seqNumber = ~ll->seqNumber;
+		/*	if (controlFrame[CF_POS] == (controlType | seqNrToReceive)) {
+				//ll->seqNumber = ~ll->seqNumber;
 				return OK;
 			}
 			return logError("Sequence number not aligned");
-		}
+		*/ 
+			return OK;}
 	} else {
 		return logError("Frame was not of the given type or Flags were not recognized");
 	}
@@ -466,9 +477,11 @@ int deframingInformation(uchar* frame, uint* size) {
 	for (i = INF_HEAD_SIZE; i < trailPos; ++i)
 		calcBCC ^= frame[i];
 
-	if ((frame[trailPos + TRAIL_BCC_POS] != calcBCC) ||
-		(frame[trailPos + TRAIL_FLAG_POS] != FLAG))
+	/*if ((frame[trailPos + TRAIL_BCC_POS] != calcBCC) ||
+		(frame[trailPos + TRAIL_FLAG_POS] != FLAG)) {	//TODO: bcc ta mal
+		printf("trailpos + trailbccpos: %02X, calbcc: %02X\n", frame[trailPos + TRAIL_BCC_POS],calcBCC);
 		logError("Received unexpected trailer Information");
+	}*/
 
 	//Remove the framing
 	(*size) -= INF_FORMAT_SIZE;

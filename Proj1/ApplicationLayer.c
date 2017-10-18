@@ -66,7 +66,7 @@ int sendFile() {
 		progress += res;
 	}
 
-	if (fclose(file) != OK) {
+	if (fclose(file)) {
 		perror("Error while closing file");
 		return ERROR;
 	}
@@ -111,13 +111,19 @@ int receiveFile() {
 		receiveDataPacket(al->fd, &dataPacket);
 		progress += dataPacket.size;
 
+		printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: %d\n", progress, ctrlPacket.fileSize, dataPacket.size);
+
+		
 		if (fwrite(dataPacket.data, sizeof(char), dataPacket.size, outputFile) == 0) {
 			printf("fwrite returned 0\n");
 			return OK;
 		}
+		
 	}
 
-	if (fclose(outputFile) != 0) {
+	printf("OUT OF DATA PACKETS \n");
+
+	if (fclose(outputFile)) {
 		perror("fclose failed");
 		return ERROR;
 	}

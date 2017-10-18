@@ -24,7 +24,7 @@ void makeControlPacket(ControlPacket * src, Packet * dest){
 
 	unsigned char * data = (unsigned char *) malloc(packetSize);
 
-	data[CTRL_FIELD_IDX] = START;
+	data[CTRL_FIELD_IDX] = src->type;
 
 	int index = 1;
 	data[index++] = FILE_SIZE_ARG;
@@ -55,7 +55,8 @@ int sendDataPacket(int fd, DataPacket * src) {
 	printArray(packet.data, packet.size);
 	int status = llwrite(fd, packet.data, packet.size);
 	free(packet.data);
-	return status;
+	if (status)
+		return OK;	//TODO METER BONITINHO
 }
 
 int sendControlPacket(int fd, ControlPacket * src){
@@ -64,7 +65,8 @@ int sendControlPacket(int fd, ControlPacket * src){
 	printArray(packet.data, packet.size);
 	int status = llwrite(fd, packet.data, packet.size);
 	free(packet.data);
-	return status;
+	if (status)
+		return OK;	//TODO METER BONITINHO
 }
 
 int receiveDataPacket(int fd, DataPacket * dest) {
@@ -76,9 +78,9 @@ int receiveDataPacket(int fd, DataPacket * dest) {
 		return logError("type does not match any known type DATA");
 
 	dest->seqNr = data[SEQ_NUM_IDX];
-	int size = data[DATA_PACKET_SIZE2_IDX] * SIZE2_MUL + data[DATA_PACKET_SIZE1_IDX];
-	dest->data = (uchar *) malloc(size);
-	memcpy(dest->data, &data[HEADER_SIZE], size);
+	dest->size = data[DATA_PACKET_SIZE2_IDX] * SIZE2_MUL + data[DATA_PACKET_SIZE1_IDX];
+	dest->data = (uchar *) malloc(dest->size);
+	memcpy(dest->data, &data[HEADER_SIZE], dest->size);
 	free(dest->data);
 	return OK;
 }
