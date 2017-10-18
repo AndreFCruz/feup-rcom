@@ -431,6 +431,7 @@ int framingInformation(uchar* packet, uint* size) {
 
 	//Setting the trailer
 	uint i;
+	packet[previous + TRAIL_BCC_POS] = 0; //Assuring the BCC doesnt start with garbage from realloc
 	for (i = 0; i < previousSize; ++i)
 		packet[previousSize + TRAIL_BCC_POS] ^= packet[i];
 
