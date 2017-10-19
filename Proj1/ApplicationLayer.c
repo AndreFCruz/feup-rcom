@@ -29,6 +29,7 @@ int initApplicationLayer(const char * port, int baudrate, int timeout, int numRe
 	return OK;
 }
 
+
 int sendFile() {
 	if (al == NULL)
 		return logError("AL not initialized");
@@ -83,6 +84,7 @@ int sendFile() {
 
 	return OK;
 }
+
 
 int receiveFile() {
 	if (al == NULL)
@@ -143,3 +145,5 @@ int receiveFile() {
 
 	return OK;
 }
+
+

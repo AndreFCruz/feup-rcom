@@ -14,18 +14,32 @@
 #define _IDXIX_SOURCE 1 /* POSIX compliant source */
 #define NUM_RETRIES 3
 #define TIMEOUT 	3
-#define FILE_NAME "pinguim.gif"
-#define MAX_DATA	10
+#define DATA_BYTES	32 // TODO test with 1
 
 int DEBUG = FALSE; // TODO
 
 void printUsage(char * progName) {
-	printf("Usage:\t%s SerialPort r/w\n\tex: %s 0 w\n", progName, progName);
+	printf("Usage:\t%s <SerialPort> <r/w> <FILE_NAME> [DATA_BYTES] [BAUDRATE] [NUM_RETRIES] [TIMEOUT]\n", progName);
+	printf("\tex: %s 0 w pinguim.gif\n", progName);
+	printf("Arguments between '[' ']' are optional\n");
 }
+
+void printSettings(const char * port, int baudrate, int timeout, int numRetries, ConnectionType type, int dataBytes, const char * fileName) {
+	printf("\n\t** Settings: **\n");
+	printf("\tType: %s\n", type == TRANSMITTER ? "TRANSMITTER" : "RECEIVER");
+	printf("\tFile name: %s\n", fileName);
+	printf("\tNumber of retries: %d\n", numRetries);
+	printf("\tTimeout (in seconds): %d\n", timeout);
+	printf("\tData bytes: %d\n", dataBytes);
+	printf("\tBaud rate: %d\n", baudrate);
+	printf("\tPort used: %s\n", port);
+	printf("\t\t* * *\n\n");
+}
+
 
 int main(int argc, char** argv)
 {
-	if ( (argc < 3) ||
+	if ( (argc < 4) ||
 		((strcmp("0", argv[1])!=0) && (strcmp("1", argv[1])!=0)) ) {
 		printUsage(argv[0]);
 		exit(1);
@@ -45,7 +59,27 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	initApplicationLayer(argv[1], BAUDRATE, TIMEOUT, NUM_RETRIES, type, MAX_DATA, FILE_NAME);
+	char * fileName = argv[3];
+	int dataBytes = DATA_BYTES;
+	if (argc > 4)
+		dataBytes = strtol(argv[4], NULL, 10);
+
+	int baudRate = BAUDRATE;
+	if (argc > 5)
+		baudRate = strtol(argv[5], NULL, 10);
+
+	int numRetries = NUM_RETRIES;
+	if (argc > 6)
+		numRetries = strtol(argv[6], NULL, 10);
+
+	int timeout = TIMEOUT;
+	if (argc > 7)
+		timeout = strtol(argv[7], NULL, 10);
+
+
+	printSettings(argv[1], baudRate, timeout, numRetries, type, dataBytes, fileName);
+
+	initApplicationLayer(argv[1], baudRate, timeout, numRetries, type, dataBytes, fileName);
 
 	(*functionPtr)();
 
