@@ -26,13 +26,13 @@ void printUsage(char * progName) {
 
 void printSettings(const char * port, int baudrate, int timeout, int numRetries, ConnectionType type, int dataBytes, const char * fileName) {
 	printf("\n\t** Settings: **\n");
-	printf("\tType: %s\n", type == TRANSMITTER ? "TRANSMITTER" : "RECEIVER");
-	printf("\tFile name: %s\n", fileName);
+	printf("\tType: %16s\n", type == TRANSMITTER ? "TRANSMITTER" : "RECEIVER");
+	printf("\tFile name: %10s\n", fileName);
 	printf("\tNumber of retries: %d\n", numRetries);
 	printf("\tTimeout (in seconds): %d\n", timeout);
-	printf("\tData bytes: %d\n", dataBytes);
-	printf("\tBaud rate: %d\n", baudrate);
-	printf("\tPort used: %s\n", port);
+	printf("\tData bytes: %4d\n", dataBytes);
+	printf("\tBaud rate: %5d\n", baudrate);
+	printf("\tPort used: %5s\n", port);
 	printf("\t\t* * *\n\n");
 }
 
