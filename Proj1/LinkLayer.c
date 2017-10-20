@@ -111,7 +111,7 @@ uchar calcBCC(uchar * buffer, size_t length);
  * @param size The packet's size.
  * @return ERROR if something went wrong, OK otherwise
  */
-int framingInformation(uchar* packet, uint* size);
+int framingInformation(uchar ** packet, uint* size);
 
 /**
  * Evaluates if the framing is wrong, being descarted if so.
@@ -121,7 +121,7 @@ int framingInformation(uchar* packet, uint* size);
  * @param size The frame's size.
  * @return ERROR if something went wrong, OK otherwise
  */
-int deframingInformation(uchar * frame, uint* size);
+int deframingInformation(uchar ** frame, uint* size);
 
 /**
  * Applies byte stuffing to the given message according to the protocols, retriving the new message in the same buffer.
@@ -130,7 +130,7 @@ int deframingInformation(uchar * frame, uint* size);
  * @param size The buffer's size
  * @return ERROR if something went wrong, OK otherwise
  */
-int byteStuffing(char * buffer, uint * size);
+int byteStuffing(char ** buffer, uint * size);
 
 /**
  * Applies byte destuffing to the given message according to the protocols, retriving the new message in the same buffer.
@@ -139,7 +139,7 @@ int byteStuffing(char * buffer, uint * size);
  * @param size The buffer's size
  * @return Error if something went wrong, ok otherwise
  */
-int byteDestuffing(char* buffer, uint * size);
+int byteDestuffing(char * buffer, uint * size);
 
 
 
@@ -248,12 +248,12 @@ int llclose(int fd) {
 int llwrite(int fd, char * buffer, int length) {
 	int res = 0;
 
-	if (framingInformation(buffer, &length) == ERROR) {
+	if (framingInformation((uchar** )&buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}
 
-	if (byteStuffing(buffer, &length) == ERROR) {
+	if (byteStuffing(&buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}
@@ -275,7 +275,7 @@ int llwrite(int fd, char * buffer, int length) {
 
 
 int readFromSerialPort(int fd, char ** dest) {
-	char * buffer = (char *) malloc(RECEIVER_SIZE);
+	uchar * buffer = (uchar *) malloc(RECEIVER_SIZE);
 	int bufferIdx = 0;		//Number of bytes received
 
 	if (readFrameFlag(fd) < 1) {
@@ -305,7 +305,7 @@ int readFromSerialPort(int fd, char ** dest) {
 		return -1;
 	}
 
-	if (deframingInformation(buffer, &bufferIdx) != OK) {
+	if (deframingInformation(&buffer, &bufferIdx) != OK) {
 		logError("Failed to deframe information");
 		return -1;
 	}
@@ -442,77 +442,77 @@ uchar calcBCC(uchar * buffer, size_t length) {
 	return bcc;
 }
 
-int framingInformation(uchar* packet, uint* size) {
+int framingInformation(uchar ** packet, uint* size) {
 
 	uint previousSize = (*size);
 	(*size) += INF_FORMAT_SIZE;
 
-	if ((packet = realloc(packet, (*size))) == NULL) {
+	if ((*packet = realloc(*packet, (*size))) == NULL) {
 		printf("framingInformation: Realloc error.\n");
 		return ERROR;
 	}
 
-	packet[previousSize + TRAIL_BCC_POS] = calcBCC(packet, previousSize);
-	packet[previousSize + TRAIL_FLAG_POS] = FLAG;
+	(*packet)[previousSize + TRAIL_BCC_POS] = calcBCC((*packet), previousSize);
+	(*packet)[previousSize + TRAIL_FLAG_POS] = FLAG;
 
 	//Setting the Header
-	memmove(packet + INF_HEAD_SIZE, packet, previousSize + INF_TRAILER_SIZE);
-	packet[FLAG1_POS] = FLAG;
-	packet[AF_POS] = AF1;
-	packet[CF_POS] = (INF | (ll->seqNumber << 6));
-	packet[BCC_POS] = (AF1 ^ packet[CF_POS]);
+	memmove((*packet) + INF_HEAD_SIZE, *packet, previousSize + INF_TRAILER_SIZE);
+	(*packet)[FLAG1_POS] = FLAG;
+	(*packet)[AF_POS] = AF1;
+	(*packet)[CF_POS] = (INF | (ll->seqNumber << 6));
+	(*packet)[BCC_POS] = (AF1 ^ (*packet)[CF_POS]);
 
 	return OK;
 }
 
-int deframingInformation(uchar* frame, uint* size) {
+int deframingInformation(uchar ** frame, uint* size) {
 	//Checking the Header
-	if ((frame[FLAG1_POS] != FLAG) ||
-		(frame[AF_POS] != AF1) ||
-		(frame[CF_POS] != (INF | (ll->seqNumber << 6))) ||
-		((frame[AF_POS] ^ frame[CF_POS]) != frame[BCC_POS])) {
-			printArray(frame, *size);
+	if (((*frame)[FLAG1_POS] != FLAG) ||
+		((*frame)[AF_POS] != AF1) ||
+		((*frame)[CF_POS] != (INF | (ll->seqNumber << 6))) ||
+		(((*frame)[AF_POS] ^ (*frame)[CF_POS]) != (*frame)[BCC_POS])) {
+			printArray((*frame), *size);
 			return logError("Received unexpected head Information");
 	}
 
 	//read's Nr is negative of sender's Ns
-	ll->seqNumber = (frame[CF_POS] >> 6) & 0b01 ? 0 : 1;
+	ll->seqNumber = ((*frame)[CF_POS] >> 6) & 0b01 ? 0 : 1;
 
 	//Checking the Trailer
 	uint trailPos = (*size) - INF_TRAILER_SIZE;
-	uchar bcc = calcBCC(frame + INF_HEAD_SIZE, trailPos - INF_HEAD_SIZE);
+	uchar bcc = calcBCC((*frame) + INF_HEAD_SIZE, trailPos - INF_HEAD_SIZE);
 
-	if (frame[trailPos + TRAIL_BCC_POS] != bcc) {
+	if ((*frame)[trailPos + TRAIL_BCC_POS] != bcc) {
 		//sendControlFrame(REJ);	//O que faz ele na receção de um BCC? ver protocolo
 		return logError("received unexpected Data Field BCC\n"); //TODO: Retornar diferente de OK?
 	}
-	if (frame[trailPos + TRAIL_FLAG_POS] != FLAG)
+	if ((*frame)[trailPos + TRAIL_FLAG_POS] != FLAG)
 		return logError("Received unexpected value instead of trailer FLAGn");  //TODO: Retornar diferente de OK?
 
 	//Remove the framing
 	(*size) -= INF_FORMAT_SIZE;
 
-	memmove(frame, frame + INF_HEAD_SIZE, (*size));
-	if ((frame = realloc(frame, (*size))) == NULL)
+	memmove((*frame), (*frame) + INF_HEAD_SIZE, (*size));
+	if (((*frame) = realloc(*frame, (*size))) == NULL)
 		return logError("Realloc error in deframingInformation");
 
 	return OK;
 }
 
-int byteStuffing(char * buffer, uint * size) {
+int byteStuffing(char ** buffer, uint * size) {
 	uint i;
 
 	for (i = BCC_POS; i < (*size) - 1; ++i) {
-		if ((buffer[i] == (char) FLAG) || (buffer[i] == (char) ESC))
+		if (((*buffer)[i] == (char) FLAG) || ((*buffer)[i] == (char) ESC))
 		{
-			if ((buffer = realloc(buffer, (*size)++)) == NULL) {
+			if (((*buffer) = realloc((*buffer), (*size)++)) == NULL) {
 				printf("ByteStuffing: Realloc error.\n");
 				return ERROR;
 			}
 
-			memmove(buffer+i+1, buffer+i, (*size)-i);
-			buffer[i] = ESC;
-			buffer[i+1] = (buffer[i+1] ^ STUFFING);
+			memmove((*buffer)+i+1, (*buffer)+i, (*size)-i);
+			(*buffer)[i] = ESC;
+			(*buffer)[i+1] = ((*buffer)[i+1] ^ STUFFING);
 			i++;
 		}
 	}
@@ -520,18 +520,14 @@ int byteStuffing(char * buffer, uint * size) {
 }
 
 
-int byteDestuffing(char* buffer, uint * size) {
+int byteDestuffing(char * buffer, uint * size) {
 	uint i;
 
 	for (i = BCC_POS; i < (*size) - 1; ++i) {
 		if (buffer[i] == (char) ESC)
 		{
 			memmove(buffer+i, buffer+i+1, (*size)-i);
-			buffer = realloc(buffer, (*size)--);
-			if (buffer == NULL) {
-				printf("ByteDestuffing: Realloc error.\n");
-				return ERROR;
-			}
+			--(*size);
 
 			buffer[i] = (buffer[i] ^ STUFFING);
 		}
