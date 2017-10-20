@@ -10,7 +10,6 @@
 #include "utils.h"
 
 #define BAUDRATE B38400
-#define MODEMDEVICE "/dev/ttyS0" //TODO: delete
 #define _IDXIX_SOURCE 1 /* POSIX compliant source */
 #define NUM_RETRIES 3
 #define TIMEOUT 	3
@@ -27,7 +26,7 @@ void printUsage(char * progName) {
 void printSettings(const char * port, int baudrate, int timeout, int numRetries, ConnectionType type, int dataBytes, const char * fileName) {
 	printf("\n\t** Settings: **\n");
 	printf("\tType: %16s\n", type == TRANSMITTER ? "TRANSMITTER" : "RECEIVER");
-	printf("\tFile name: %10s\n", fileName);
+	printf("\tFile name: %10s\n", fileName == NULL ? " ** not set ** " : fileName);
 	printf("\tNumber of retries: %d\n", numRetries);
 	printf("\tTimeout (in seconds): %d\n", timeout);
 	printf("\tData bytes: %4d\n", dataBytes);
@@ -48,10 +47,10 @@ int main(int argc, char** argv)
 	ConnectionType type;
 	int (*functionPtr)(void);
 
-	if ( strcmp("w", argv[2]) == 0 ) {
+	if ( strcmp("w", argv[2]) == 0 && argc > 3 ) {
 		type = TRANSMITTER;
 		functionPtr = &sendFile;
-	} else if ( strcmp("r", argv[2]) == 0 ) {
+	} else if ( strcmp("r", argv[2]) == 0 && argc > 2 ) {
 		type = RECEIVER;
 		functionPtr = &receiveFile;
 	} else {
@@ -59,7 +58,8 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	char * fileName = argv[3];
+	char * fileName = argc > 3 ? argv[3] : NULL;
+
 	int dataBytes = DATA_BYTES;
 	if (argc > 4)
 		dataBytes = strtol(argv[4], NULL, 10);

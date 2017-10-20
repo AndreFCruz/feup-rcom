@@ -483,7 +483,7 @@ int deframingInformation(uchar* frame, uint* size) {
 	uchar bcc = calcBCC(frame + INF_HEAD_SIZE, trailPos - INF_HEAD_SIZE);
 
 	if (frame[trailPos + TRAIL_BCC_POS] != bcc) {
-		sendControlFrame(REJ);	//O que faz ele na receção de um BCC? ver protocolo
+		//sendControlFrame(REJ);	//O que faz ele na receção de um BCC? ver protocolo
 		return logError("received unexpected Data Field BCC\n"); //TODO: Retornar diferente de OK?
 	}
 	if (frame[trailPos + TRAIL_FLAG_POS] != FLAG)

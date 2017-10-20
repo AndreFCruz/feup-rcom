@@ -21,12 +21,24 @@ int initApplicationLayer(const char * port, int baudrate, int timeout, int numRe
 	if ((al->fd = openSerialPort()) == -1)
 		return logError("Failed open serial port");
 
-	strncpy(al->fileName, file, MAX_FILE_NAME);
-	//printf("Filename: %s\n", al->fileName);
+  if (file == NULL)
+		al->fileName = NULL;
+	else {
+		al->fileName = (char *) malloc(sizeof(char) * MAX_FILE_NAME);
+		strncpy(al->fileName, file, MAX_FILE_NAME);
+	}
+
 	al->type = type;
 	al->maxDataMsgSize = maxDataMsgSize;
 
 	return OK;
+}
+
+void destroyApplicationLayer() {
+	free(al->fileName);
+	free(al);
+
+	al = NULL;
 }
 
 
@@ -101,7 +113,8 @@ int receiveFile() {
 		return logError("Error receiving control packet");
 	}
 
-	strncpy(al->fileName, ctrlPacket.fileName, MAX_FILE_NAME);
+	if (al->fileName == NULL)
+		strncpy(al->fileName, ctrlPacket.fileName, MAX_FILE_NAME);
 
 	FILE * outputFile = fopen(al->fileName, "wb");
 	if (outputFile == NULL)
@@ -145,5 +158,3 @@ int receiveFile() {
 
 	return OK;
 }
-
-
