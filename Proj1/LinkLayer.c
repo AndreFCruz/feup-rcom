@@ -55,6 +55,9 @@ static struct termios oldtio;
 
 static ConnectionType connectionType;
 
+
+int readFromSerialPort(int fd, char ** dest);
+
 /**
  * Keeps reading until a FRAME FLAG is found.
  *
@@ -271,7 +274,7 @@ int llwrite(int fd, char * buffer, int length) {
 }
 
 
-int llread(int fd, char ** dest) {
+int readFromSerialPort(int fd, char ** dest) {
 	char * buffer = (char *) malloc(RECEIVER_SIZE);
 	int bufferIdx = 0;		//Number of bytes received
 
@@ -302,8 +305,10 @@ int llread(int fd, char ** dest) {
 		return -1;
 	}
 
-	if (deframingInformation(buffer, &bufferIdx) != OK)
-		return logError("Failed to deframe information");
+	if (deframingInformation(buffer, &bufferIdx) != OK) {
+		logError("Failed to deframe information");
+		return -1;
+	}
 
 	*dest = buffer;
 
@@ -326,6 +331,17 @@ int readFrameFlag(int fd) {
 		printf("Char read: %02X\n", tempChar);
 	}
 	return totalRead;
+}
+
+int llread(int fd, char ** dest) {
+	uint tries = 0;
+	int ret;
+	while (tries < ll->numRetries){
+		if ( (ret = readFromSerialPort(fd, dest)) > 0) {
+			return ret;
+		}
+	}
+	return -1;
 }
 
 
@@ -455,8 +471,8 @@ int deframingInformation(uchar* frame, uint* size) {
 		(frame[AF_POS] != AF1) ||
 		(frame[CF_POS] != (INF | (ll->seqNumber << 6))) ||
 		((frame[AF_POS] ^ frame[CF_POS]) != frame[BCC_POS])) {
-		logError("Received unexpected head Information");
-		printArray(frame, *size);
+			printArray(frame, *size);
+			return logError("Received unexpected head Information");
 	}
 
 	//read's Nr is negative of sender's Ns

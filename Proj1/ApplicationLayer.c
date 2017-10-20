@@ -127,7 +127,7 @@ int receiveFile() {
 	uint res, progress = 0, currentSeqNr = 0;
 	while (progress < ctrlPacket.fileSize) {
 		if (receiveDataPacket(al->fd, &dataPacket) != OK) {
-			logError("Error sending data packet");
+			logError("Error receiving data packet");
 			break;
 		}
 

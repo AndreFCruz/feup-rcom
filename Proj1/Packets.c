@@ -77,7 +77,7 @@ int sendControlPacket(int fd, ControlPacket * src){
 
 int receiveDataPacket(int fd, DataPacket * dest) {
 	char * data;
-	if(llread(fd, &data) < 0)
+	if(llread(fd, &data) <= 0)
 		return logError("failed to read packet");
 
 	if(data[CTRL_FIELD_IDX] != DATA) {
