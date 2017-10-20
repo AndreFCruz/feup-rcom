@@ -311,6 +311,7 @@ int readFromSerialPort(int fd, char ** dest) {
 	}
 
 	if (deframingInformation(&buffer, &bufferIdx) != OK) {
+		// enviar REJ aqui para antecipar TIMEOUT ?
 		logError("Failed to deframe information");
 		return -1;
 	}
@@ -342,7 +343,7 @@ int llread(int fd, char ** dest) {
 	uint tries = 0;
 	int ret;
 	while (tries++ < ll->numRetries){
-		if ( (ret = readFromSerialPort(fd, dest)) > 0) {
+		if ( (ret = readFromSerialPort(fd, dest)) > 0 ) {
 			return ret;
 		}
 	}
@@ -415,7 +416,7 @@ int readControlFrame(int fd, ControlType controlType) {
 	printArray(controlFrame, CONTROL_FRAME_SIZE);
 	printf("%02X, %02X, %02X, %02X, %02X\n", FLAG, afValue, controlType, (controlFrame[AF_POS] ^ controlFrame[CF_POS]), FLAG);
 
-	// TODO BARRACA AQUI
+	// TODO BARRACA AQUI no receiver
 
 	if ((controlFrame[FLAG1_POS] == FLAG) &&
 		((controlFrame[CF_POS] & 0x7F) == controlType) &&
@@ -435,8 +436,6 @@ int readControlFrame(int fd, ControlType controlType) {
 	} else {
 		return logError("Frame was not of the given type or Flags were not recognized");
 	}
-
-	// TODO BARRACA ATE AQUI
 
 	return OK;
 }
@@ -492,10 +491,10 @@ int deframingInformation(uchar ** frame, uint* size) {
 
 	if ((*frame)[trailPos + TRAIL_BCC_POS] != bcc) {
 		//sendControlFrame(REJ);	//O que faz ele na receção de um BCC? ver protocolo
-		return logError("received unexpected Data Field BCC\n"); //TODO: Retornar diferente de OK?
+		return logError("received unexpected Data Field BCC\n");
 	}
 	if ((*frame)[trailPos + TRAIL_FLAG_POS] != FLAG)
-		return logError("Received unexpected value instead of trailer FLAGn");  //TODO: Retornar diferente de OK?
+		return logError("Received unexpected value instead of trailer FLAG\n");
 
 	//Remove the framing
 	(*size) -= INF_FORMAT_SIZE;
