@@ -70,7 +70,8 @@ int sendFile() {
 	uchar * fileBuffer = (uchar *) malloc(al->maxDataMsgSize * sizeof(char));
 	uint res, progress = 0, currentSeqNr = 0;
 	while ( (res = fread(fileBuffer, sizeof(char), al->maxDataMsgSize, file)) > 0 ) {
-		dataPacket.seqNr = (currentSeqNr + 1) % 256;
+		dataPacket.seqNr = currentSeqNr;
+		currentSeqNr = (currentSeqNr + 1) % 256;
 		dataPacket.size = res;
 		dataPacket.data = fileBuffer;
 		if (sendDataPacket(al->fd, &dataPacket) != OK) {
@@ -131,13 +132,13 @@ int receiveFile() {
 		}
 
 		if (dataPacket.seqNr < currentSeqNr) {
-			logError("Received duplicated packet");
+			printf("\tReceived duplicate packet: %d. Current: %d\n", dataPacket.seqNr, currentSeqNr);
 			continue;
 		}
 		currentSeqNr = (currentSeqNr + 1) % 256;
 		progress += (uint) dataPacket.size;
 
-		printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: 0x%02X\n", progress, ctrlPacket.fileSize, dataPacket.size);
+		//printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: 0x%02X\n", progress, ctrlPacket.fileSize, dataPacket.size);
 
 		if (fwrite(dataPacket.data, sizeof(char), dataPacket.size, outputFile) == 0) {
 			printf("fwrite returned 0\n");
