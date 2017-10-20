@@ -91,12 +91,12 @@ int sendControlFrame(int fd, ControlType controlType);
  */
 int readControlFrame(int fd, ControlType controlType);
 
-/** 
+/**
  * The Data Field BCC calculator
  *
  * @param buffer The adress containing the first data byte
  * @param length The data field length
- * @return The calculated bcc 
+ * @return The calculated bcc
  */
 uchar calcBCC(uchar * buffer, size_t length);
 
@@ -245,9 +245,6 @@ int llclose(int fd) {
 int llwrite(int fd, char * buffer, int length) {
 	int res = 0;
 
-	printf("Pre stuffing: ");
-	printArray(buffer, length);
-
 	if (framingInformation(buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
@@ -267,7 +264,7 @@ int llwrite(int fd, char * buffer, int length) {
 		}
 	} while ((++i < ll->numRetries) && (readControlFrame(fd, RR) != OK));
 
-	//TODO: Fazer alguma coisa quando as tentativas ultrapassarem? é que nao esta a afazer nada, 
+	//TODO: Fazer alguma coisa quando as tentativas ultrapassarem? é que nao esta a afazer nada,
 	//dai de certo reiniciar... Ver o que acontece ao reader. Fica infinitamente a espera?
 
 	return res;
@@ -291,7 +288,6 @@ int llread(int fd, char ** dest) {
 			return -1;
 		}
 
-		//printf("%02X - ", buffer[bufferIdx]);
 		++bufferIdx;
 		if ( (bufferIdx % RECEIVER_SIZE) == 0 ) {
 			if ((buffer = realloc(buffer, ((bufferIdx / RECEIVER_SIZE) + 1) * RECEIVER_SIZE )) == NULL) {
@@ -300,11 +296,6 @@ int llread(int fd, char ** dest) {
 			}
 		}
 	} while (buffer[bufferIdx - 1] != FLAG);
-
-	printf("\nEnding reading loop\n");
-
-	//printArray(buffer, bufferIdx);
-	//printf("\n");
 
 	if (byteDestuffing(buffer, &bufferIdx) == ERROR) {
 		printf("llread error: Failed byteDestuffing\n");
@@ -399,7 +390,6 @@ int readControlFrame(int fd, ControlType controlType) {
 		return logError("Failed to read Control Frame");//barracaTODO
 	}
 
-
 	printf("Read control frame: ");
 	printArray(controlFrame, CONTROL_FRAME_SIZE);
 
@@ -445,12 +435,6 @@ int framingInformation(uchar* packet, uint* size) {
 		printf("framingInformation: Realloc error.\n");
 		return ERROR;
 	}
-
-	//Setting the trailer
-	/* uint i; // TODO use calcBCC function
-	packet[previousSize + TRAIL_BCC_POS] = 0; //Assuring the BCC doesnt start with garbage from realloc
-	for (i = 0; i < previousSize; ++i)
-		packet[previousSize + TRAIL_BCC_POS] ^= packet[i]; */
 
 	packet[previousSize + TRAIL_BCC_POS] = calcBCC(packet, previousSize);
 	packet[previousSize + TRAIL_FLAG_POS] = FLAG;
