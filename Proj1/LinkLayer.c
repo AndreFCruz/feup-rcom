@@ -215,25 +215,26 @@ int llopen(ConnectionType type) {
 	return logError("Failed llopen");
 }
 
+int llcloseTransmitter(int fd) {
+	sendControlFrame(fd, DISC);
+	readControlFrame(fd, DISC);
+	sendControlFrame(fd, UA);
+}
+
+int llcloseReceiver(int fd) {
+	readControlFrame(fd, DISC);
+	sendControlFrame(fd, DISC);
+	readControlFrame(fd, UA);
+}
+
 int llclose(int fd) {
 
-	//TODO, verificar o resultado das funções?
-	switch (connectionType) {
-	case TRANSMITTER:
-		sendControlFrame(fd, DISC);
-		readControlFrame(fd, DISC);
-		sendControlFrame(fd, UA);
-		break;
-	case RECEIVER:
-		readControlFrame(fd, DISC);
-		sendControlFrame(fd, DISC);
-		readControlFrame(fd, UA);
-		break;
-	default:
-		logError("llclose failed");
-		return -1;
-	}
-
+	if (TRANSMITTER == connectionType)
+		llcloseTransmitter(fd);
+	else if (RECEIVER == connectionType)
+		llcloseReceiver(fd);
+	else
+		logError("llclose: no connection type set");
 
 	//Reset terminal to previous configuration
 	if ( tcsetattr(fd,TCSANOW,&oldtio) == -1 ) {
@@ -241,7 +242,11 @@ int llclose(int fd) {
 		return -1;
 	}
 
-	close(fd);
+	if (close(fd) < 0) {
+		perror("failed close(fd)");
+		return -1;
+	}
+
 	return OK;
 }
 
@@ -400,9 +405,10 @@ int readControlFrame(int fd, ControlType controlType) {
 	}
 
 	int res;
-	if ((res = read(fd, controlFrame, CONTROL_FRAME_SIZE)) < CONTROL_FRAME_SIZE){
+	if ((res = read(fd, controlFrame, CONTROL_FRAME_SIZE)) < CONTROL_FRAME_SIZE) {
+		printf("Failed to read control frame. Read %d. Ctrl type: %02X", res, controlType);
 		printArray(controlFrame, res);
-		return logError("Failed to read Control Frame");//barracaTODO
+		return ERROR;//barracaTODO
 	}
 
 	printf("Read control frame: ");
