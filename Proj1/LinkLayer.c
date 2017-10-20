@@ -55,12 +55,10 @@ static struct termios oldtio;
 
 static ConnectionType connectionType;
 
-
-
 /**
  * Keeps reading until a FRAME FLAG is found.
  *
- * @param The Serial Port's filedescriptor
+ * @param fd The Serial Port's filedescriptor
  * @returned Number of bytes read, -1 if an error ocurred.
  */
 int readFrameFlag(int fd);
@@ -87,11 +85,20 @@ int sendControlFrame(int fd, ControlType controlType);
 /**
  * Reads a frame and checks if it is of the given type.
  *
- * @param The Serial Port's filedescriptor
+ * @param fd The Serial Port's filedescriptor
  * @param controlType The type of control frame
  * @return OK if the frame was of the given type, ERROR otherwise.
  */
 int readControlFrame(int fd, ControlType controlType);
+
+/** 
+ * The Data Field BCC calculator
+ *
+ * @param buffer The adress containing the first data byte
+ * @param length The data field length
+ * @return The calculated bcc 
+ */
+uchar calcBCC(uchar * buffer, size_t length);
 
 /**
  * Creates a Information Frame, according to the protocols.
@@ -258,7 +265,10 @@ int llwrite(int fd, char * buffer, int length) {
 			printf("llwrite error: Bad write: %d bytes\n", res);
 			return -1;
 		}
-	} while (++i < ll->numRetries && readControlFrame(fd, RR) != OK);
+	} while ((++i < ll->numRetries) && (readControlFrame(fd, RR) != OK));
+
+	//TODO: Fazer alguma coisa quando as tentativas ultrapassarem? é que nao esta a afazer nada, 
+	//dai de certo reiniciar... Ver o que acontece ao reader. Fica infinitamente a espera?
 
 	return res;
 }
@@ -305,8 +315,6 @@ int llread(int fd, char ** dest) {
 		return logError("Failed to deframe information");
 
 	*dest = buffer;
-
-	printf("sending control frame...\n");
 
 	sendControlFrame(fd, RR);
 	return bufferIdx;
@@ -419,6 +427,15 @@ int readControlFrame(int fd, ControlType controlType) {
 	return OK;
 }
 
+uchar calcBCC(uchar * buffer, size_t length) {
+	uint i;
+	uchar bcc = 0;
+	for (i = 0; i < length; ++i)
+		bcc ^= buffer[i];
+
+	return bcc;
+}
+
 int framingInformation(uchar* packet, uint* size) {
 
 	uint previousSize = (*size);
@@ -430,11 +447,12 @@ int framingInformation(uchar* packet, uint* size) {
 	}
 
 	//Setting the trailer
-	uint i; // TODO use calcBCC function
-	packet[previous + TRAIL_BCC_POS] = 0; //Assuring the BCC doesnt start with garbage from realloc
+	/* uint i; // TODO use calcBCC function
+	packet[previousSize + TRAIL_BCC_POS] = 0; //Assuring the BCC doesnt start with garbage from realloc
 	for (i = 0; i < previousSize; ++i)
-		packet[previousSize + TRAIL_BCC_POS] ^= packet[i];
+		packet[previousSize + TRAIL_BCC_POS] ^= packet[i]; */
 
+	packet[previousSize + TRAIL_BCC_POS] = calcBCC(packet, previousSize);
 	packet[previousSize + TRAIL_FLAG_POS] = FLAG;
 
 	//Setting the Header
@@ -447,15 +465,6 @@ int framingInformation(uchar* packet, uint* size) {
 	return OK;
 }
 
-uchar calcBCC(uchar * buffer, size_t length) {
-	uint i;
-	uchar bcc = 0;
-	for (i = 0; i < length; ++i)
-		bcc ^= buffer[i];
-
-	return bcc;
-}
-
 int deframingInformation(uchar* frame, uint* size) {
 	//Checking the Header
 	if ((frame[FLAG1_POS] != FLAG) ||
@@ -466,18 +475,19 @@ int deframingInformation(uchar* frame, uint* size) {
 		printArray(frame, *size);
 	}
 
-  // read's Nr is negative of sender's Ns
+	//read's Nr is negative of sender's Ns
 	ll->seqNumber = (frame[CF_POS] >> 6) & 0b01 ? 0 : 1;
 
 	//Checking the Trailer
 	uint trailPos = (*size) - INF_TRAILER_SIZE;
 	uchar bcc = calcBCC(frame + INF_HEAD_SIZE, trailPos - INF_HEAD_SIZE);
 
-	if ((frame[trailPos + TRAIL_BCC_POS] != bcc) ||
-		(frame[trailPos + TRAIL_FLAG_POS] != FLAG)) {	//TODO: bcc ta mal
-		printf("trailpos + trailbccpos: %02X, calbcc: %02X\n", frame[trailPos + TRAIL_BCC_POS], bcc);
-		logError("Received unexpected trailer Information");
+	if (frame[trailPos + TRAIL_BCC_POS] != bcc) {
+		sendControlFrame(REJ);	//O que faz ele na receção de um BCC? ver protocolo
+		return logError("received unexpected Data Field BCC\n"); //TODO: Retornar diferente de OK?
 	}
+	if (frame[trailPos + TRAIL_FLAG_POS] != FLAG)
+		return logError("Received unexpected value instead of trailer FLAGn");  //TODO: Retornar diferente de OK?
 
 	//Remove the framing
 	(*size) -= INF_FORMAT_SIZE;
@@ -528,28 +538,3 @@ int byteDestuffing(char* buffer, uint * size) {
 	}
 	return OK;
 }
-
-
-/*int main () {
-	int size = 4;
-	uchar * buffer = malloc(size);
-
-	initLinkLayer(0, 4, 3, 5);
-
-	buffer[0] = 0x7D;
-	buffer[1] = 0X02;
-	buffer[2] = 0x7E;
-	buffer[3] = 0xCC;
-
-	framingInformation(buffer, &size);
-
-	byteStuffing(buffer, &size);
-
-	printArray(buffer,size);
-
-	byteDestuffing(buffer, &size);
-
-	deframingInformation(buffer, &size);
-
-	printArray(buffer,size);
-} */
