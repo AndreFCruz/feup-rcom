@@ -14,6 +14,8 @@ typedef struct {
 
 int initApplicationLayer(const char * port, int baudrate, int timeout, int numRetries, ConnectionType type, int maxDataMsgSize, char * file);
 
+void destroyApplicationLayer();
+
 int sendFile();
 
 int receiveFile();

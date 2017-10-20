@@ -83,5 +83,7 @@ int main(int argc, char** argv)
 
 	(*functionPtr)();
 
+	destroyApplicationLayer();
+
 	return 0;
 }

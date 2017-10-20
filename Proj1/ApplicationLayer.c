@@ -120,16 +120,21 @@ int receiveFile() {
 	if (outputFile == NULL)
 		return logError("Could not create output file");
 
-	// TODO create function to print **pretty** messages :)
 	printf("Created file %s with expected size %d.\n", al->fileName, ctrlPacket.fileSize);
 
 	DataPacket dataPacket;
-	uint res, progress = 0, totalPackets = 0;
+	uint res, progress = 0, currentSeqNr = 0;
 	while (progress < ctrlPacket.fileSize) {
 		if (receiveDataPacket(al->fd, &dataPacket) != OK) {
 			logError("Error sending data packet");
 			break;
 		}
+
+		if (dataPacket.seqNr < currentSeqNr) {
+			logError("Received duplicated packet");
+			continue;
+		}
+		++currentSeqNr;
 		progress += (uint) dataPacket.size;
 
 		printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: 0x%02X\n", progress, ctrlPacket.fileSize, dataPacket.size);
