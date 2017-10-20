@@ -408,13 +408,14 @@ int readControlFrame(int fd, ControlType controlType) {
 	if ((res = read(fd, controlFrame, CONTROL_FRAME_SIZE)) < CONTROL_FRAME_SIZE) {
 		printf("Failed to read control frame. Read %d. Ctrl type: %02X", res, controlType);
 		printArray(controlFrame, res);
-		return ERROR;//barracaTODO
+		return ERROR;
 	}
 
 	printf("Read control frame: ");
 	printArray(controlFrame, CONTROL_FRAME_SIZE);
+	printf("%02X, %02X, %02X, %02X, %02X\n", FLAG, afValue, controlType, (controlFrame[AF_POS] ^ controlFrame[CF_POS]), FLAG);
 
-	printf("\n%02X, %02X, %02X, %02X, %02X\n", FLAG, controlType, afValue, FLAG, (controlFrame[AF_POS] ^ controlFrame[CF_POS]));
+	// TODO BARRACA AQUI
 
 	if ((controlFrame[FLAG1_POS] == FLAG) &&
 		((controlFrame[CF_POS] & 0x7F) == controlType) &&
@@ -434,6 +435,8 @@ int readControlFrame(int fd, ControlType controlType) {
 	} else {
 		return logError("Frame was not of the given type or Flags were not recognized");
 	}
+
+	// TODO BARRACA ATE AQUI
 
 	return OK;
 }
