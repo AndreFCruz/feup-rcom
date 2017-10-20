@@ -13,7 +13,7 @@
 #define _IDXIX_SOURCE 1 /* POSIX compliant source */
 #define NUM_RETRIES 3
 #define TIMEOUT 	3
-#define DATA_BYTES	32 // TODO test with 1
+#define DATA_BYTES	22 // TODO test with 1
 
 int DEBUG = FALSE; // TODO
 

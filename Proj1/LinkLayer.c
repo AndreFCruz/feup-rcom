@@ -322,7 +322,7 @@ int readFrameFlag(int fd) {
 	int res;
 
 	while (tempChar != FLAG) {
-		if ( (res = read(fd, &tempChar, sizeof(char))) < 0 ) {
+		if ( (res = read(fd, &tempChar, sizeof(char))) < 1) {
 			printf("readFrameFlag error: Failed to read from SerialPort\n");
 			return -1;
 		}
@@ -336,14 +336,13 @@ int readFrameFlag(int fd) {
 int llread(int fd, char ** dest) {
 	uint tries = 0;
 	int ret;
-	while (tries < ll->numRetries){
+	while (tries++ < ll->numRetries){
 		if ( (ret = readFromSerialPort(fd, dest)) > 0) {
 			return ret;
 		}
 	}
 	return -1;
 }
-
 
 void createControlFrame(char buffer[], char adressField, char controlField) {
 	buffer[FLAG1_POS] = FLAG;
@@ -518,7 +517,6 @@ int byteStuffing(char ** buffer, uint * size) {
 	}
 	return OK;
 }
-
 
 int byteDestuffing(char * buffer, uint * size) {
 	uint i;
