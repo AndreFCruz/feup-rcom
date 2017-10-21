@@ -35,6 +35,7 @@
 
 #define MAX_PORT_NAME 		16
 #define PORT_NAME			"/dev/ttyS"
+// #define PORT_NAME			"/dev/ttys" // for MacOS
 
 
 typedef enum {
@@ -150,7 +151,7 @@ int initLinkLayer(int porta, int baudRate, uint timeout, uint nRetries) {
 
 	ll->baudRate = baudRate;
 	ll->timeout = timeout;
-	ll->numRetries = nRetries; // TODO usar isto -> number of retries for transmission
+	ll->numRetries = nRetries;
 	ll->seqNumber = 0;
 
 	return OK;
