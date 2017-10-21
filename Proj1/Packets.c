@@ -1,7 +1,7 @@
 #include "Packets.h"
 #include "LinkLayer.h"
 
-void makeDataPacket(DataPacket * src, Packet * dest){
+void makeDataPacket(DataPacket * src, Packet * dest) {
 	int packetSize = HEADER_SIZE + (src->size);
 	uchar * data = (uchar *) malloc(packetSize);
 
@@ -16,11 +16,11 @@ void makeDataPacket(DataPacket * src, Packet * dest){
 	dest->size = packetSize;
 }
 
-void makeControlPacket(ControlPacket * src, Packet * dest){
-	//printf("Filename: %s\n", src->fileName);
+void makeControlPacket(ControlPacket * src, Packet * dest) {
+	printf(" ... making control packet ... \n");
+
 	int fileNameSize = strnlen(src->fileName, MAX_FILE_NAME);
 	int packetSize = 1 + 2 * (src->argNr) + fileNameSize + FILE_SIZE_LENGTH;
-	//printf("packetSize: %d, fileNameSize: %d\n", packetSize, (unsigned char) fileNameSize);
 
 	uchar * data = (uchar *) malloc(packetSize);
 
@@ -30,7 +30,7 @@ void makeControlPacket(ControlPacket * src, Packet * dest){
 	data[index++] = FILE_SIZE_ARG;
 	data[index++] = sizeof(int);
 
-	uchar fileSize[sizeof(int)]; // TODO delete convertIntToBytes
+	uchar fileSize[sizeof(int)];
 	convertIntToBytes(fileSize, src->fileSize);
 	memcpy(&data[index], fileSize, FILE_SIZE_LENGTH);
 
@@ -48,7 +48,6 @@ void makeControlPacket(ControlPacket * src, Packet * dest){
 	dest->size = packetSize;
 }
 
-// TODO funcao generica sendPacket que recebe a funcao makePacket (of correct type)
 int sendDataPacket(int fd, DataPacket * src) {
 	Packet packet;
 	makeDataPacket(src, &packet);
@@ -56,7 +55,7 @@ int sendDataPacket(int fd, DataPacket * src) {
 	int written = llwrite(fd, packet.data, packet.size);
 	free(packet.data);
 	if (written >= (int) packet.size)
-		return OK;	//TODO METER BONITINHO
+		return OK;
 
 	printf("Sent DATA packet with size %d/%d\n", written, (int) packet.size);
 	return ERROR;
