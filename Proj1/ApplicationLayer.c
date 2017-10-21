@@ -124,7 +124,7 @@ int receiveFile() {
 	printf("Created file %s with expected size %d.\n", al->fileName, ctrlPacket.fileSize);
 
 	DataPacket dataPacket;
-	uint res, progress = 0, currentSeqNr = 0;
+	uint progress = 0, currentSeqNr = 0;
 	while (progress < ctrlPacket.fileSize) {
 		if (receiveDataPacket(al->fd, &dataPacket) != OK) {
 			logError("Error receiving data packet");

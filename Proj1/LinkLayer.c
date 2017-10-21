@@ -42,7 +42,7 @@ typedef enum {
 } ControlType;
 
 typedef struct {
-	char port[MAX_PORT_NAME];
+	uchar port[MAX_PORT_NAME];
 	int baudRate;
 	uint seqNumber;
 	uint timeout;
@@ -56,7 +56,7 @@ static struct termios oldtio;
 static ConnectionType connectionType;
 
 
-int readFromSerialPort(int fd, char ** dest);
+int readFromSerialPort(int fd, uchar ** dest);
 
 /**
  * Keeps reading until a FRAME FLAG is found.
@@ -74,7 +74,7 @@ int readFrameFlag(int fd);
  * @param controlField The Control field value.
  * @return OK if all went well, ERROR otherwise
  */
-void createControlFrame(char buffer[], char adressField, char controlField);
+void createControlFrame(uchar buffer[], uchar adressField, uchar controlField);
 
 /**
  * Sends a Control frame of the given type.
@@ -111,7 +111,7 @@ uchar calcBCC(uchar * buffer, size_t length);
  * @param size The packet's size.
  * @return ERROR if something went wrong, OK otherwise
  */
-int framingInformation(uchar ** packet, uint* size);
+int framingInformation(uchar ** packet, int* size);
 
 /**
  * Evaluates if the framing is wrong, being descarted if so.
@@ -121,7 +121,7 @@ int framingInformation(uchar ** packet, uint* size);
  * @param size The frame's size.
  * @return ERROR if something went wrong, OK otherwise
  */
-int deframingInformation(uchar ** frame, uint* size);
+int deframingInformation(uchar ** frame, int* size);
 
 /**
  * Applies byte stuffing to the given message according to the protocols, retriving the new message in the same buffer.
@@ -130,7 +130,7 @@ int deframingInformation(uchar ** frame, uint* size);
  * @param size The buffer's size
  * @return ERROR if something went wrong, OK otherwise
  */
-int byteStuffing(char ** buffer, uint * size);
+int byteStuffing(uchar ** buffer, int * size);
 
 /**
  * Applies byte destuffing to the given message according to the protocols, retriving the new message in the same buffer.
@@ -139,7 +139,7 @@ int byteStuffing(char ** buffer, uint * size);
  * @param size The buffer's size
  * @return Error if something went wrong, ok otherwise
  */
-int byteDestuffing(char * buffer, uint * size);
+int byteDestuffing(uchar * buffer, int * size);
 
 
 
@@ -177,8 +177,8 @@ int openSerialPort() {
 	/* set input mode (non-canonical, no echo,...) */
 	newtio.c_lflag = 0;
 
-	newtio.c_cc[VTIME]    = ll->timeout * 10;   /* inter-character timer unused - in 0.1s*/
-	newtio.c_cc[VMIN]     = 0;   /* blocking read until 5 chars received */
+	newtio.c_cc[VTIME]    = ll->timeout * 10;   /* inter-ucharacter timer unused - in 0.1s*/
+	newtio.c_cc[VMIN]     = 0;   /* blocking read until 5 uchars received */
 /*
 	VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
 	leitura do(s) proximo(s) caracter(es)
@@ -195,11 +195,9 @@ int openSerialPort() {
 }
 
 int llopen(ConnectionType type) {
-	int fd, c, res;
-	struct termios newtio;
 	connectionType = type;
 
-	fd = openSerialPort();
+	int fd = openSerialPort();
 
 	switch (type) {
 	case TRANSMITTER:
@@ -215,19 +213,20 @@ int llopen(ConnectionType type) {
 	return logError("Failed llopen");
 }
 
-int llcloseTransmitter(int fd) {
+void llcloseTransmitter(int fd) {
 	sendControlFrame(fd, DISC);
 	readControlFrame(fd, DISC);
 	sendControlFrame(fd, UA);
 }
 
-int llcloseReceiver(int fd) {
+void llcloseReceiver(int fd) {
 	readControlFrame(fd, DISC);
 	sendControlFrame(fd, DISC);
 	readControlFrame(fd, UA);
 }
 
 int llclose(int fd) {
+	printf("** llclose called **");
 
 	if (TRANSMITTER == connectionType)
 		llcloseTransmitter(fd);
@@ -250,10 +249,10 @@ int llclose(int fd) {
 	return OK;
 }
 
-int llwrite(int fd, char * buffer, int length) {
+int llwrite(int fd, uchar * buffer, int length) {
 	int res = 0;
 
-	if (framingInformation((uchar** )&buffer, &length) == ERROR) {
+	if (framingInformation((uchar**) &buffer, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}
@@ -279,7 +278,7 @@ int llwrite(int fd, char * buffer, int length) {
 }
 
 
-int readFromSerialPort(int fd, char ** dest) {
+int readFromSerialPort(int fd, uchar ** dest) {
 	uchar * buffer = (uchar *) malloc(RECEIVER_SIZE);
 	int bufferIdx = 0;		//Number of bytes received
 
@@ -291,7 +290,7 @@ int readFromSerialPort(int fd, char ** dest) {
 	printf("\nStarting reading loop\n");
 	buffer[bufferIdx++] = FLAG;
 	do {
-		if (read(fd, buffer + bufferIdx, sizeof(char)) < 1) {
+		if (read(fd, buffer + bufferIdx, sizeof(uchar)) < 1) {
 			printf("llread error: Failed to read from SerialPort\n");
 			return -1;
 		}
@@ -323,23 +322,23 @@ int readFromSerialPort(int fd, char ** dest) {
 }
 
 int readFrameFlag(int fd) {
-	char tempChar = 0;
+	uchar tempuchar = 0;
 	int totalRead = 0;
 	int res;
 
-	while (tempChar != FLAG) {
-		if ( (res = read(fd, &tempChar, sizeof(char))) < 1) {
+	while (tempuchar != FLAG) {
+		if ( (res = read(fd, &tempuchar, sizeof(uchar))) < 1) {
 			printf("readFrameFlag error: Failed to read from SerialPort\n");
 			return -1;
 		}
 		++totalRead;
 
-		printf("Char read: %02X\n", tempChar);
+		printf("uchar read: %02X\n", tempuchar);
 	}
 	return totalRead;
 }
 
-int llread(int fd, char ** dest) {
+int llread(int fd, uchar ** dest) {
 	uint tries = 0;
 	int ret;
 	while (tries++ < ll->numRetries){
@@ -350,7 +349,7 @@ int llread(int fd, char ** dest) {
 	return -1;
 }
 
-void createControlFrame(char buffer[], char adressField, char controlField) {
+void createControlFrame(uchar buffer[], uchar adressField, uchar controlField) {
 	buffer[FLAG1_POS] = FLAG;
 	buffer[AF_POS] = adressField;
 	buffer[CF_POS] = controlField;
@@ -359,9 +358,9 @@ void createControlFrame(char buffer[], char adressField, char controlField) {
 }
 
 int sendControlFrame(int fd, ControlType controlType) {
-	char controlFrame[CONTROL_FRAME_SIZE];
+	uchar controlFrame[CONTROL_FRAME_SIZE];
 	uint nrValue = (ll->seqNumber << 7);
-	char afValue = AF1;
+	uchar afValue = AF1;
 
 	if (((connectionType == RECEIVER) && (controlType == DISC)) ||
 		((connectionType == TRANSMITTER) && (controlType == UA)))
@@ -449,7 +448,7 @@ uchar calcBCC(uchar * buffer, size_t length) {
 	return bcc;
 }
 
-int framingInformation(uchar ** packet, uint* size) {
+int framingInformation(uchar ** packet, int* size) {
 
 	uint previousSize = (*size);
 	(*size) += INF_FORMAT_SIZE;
@@ -472,7 +471,7 @@ int framingInformation(uchar ** packet, uint* size) {
 	return OK;
 }
 
-int deframingInformation(uchar ** frame, uint* size) {
+int deframingInformation(uchar ** frame, int* size) {
 	//Checking the Header
 	if (((*frame)[FLAG1_POS] != FLAG) ||
 		((*frame)[AF_POS] != AF1) ||
@@ -506,13 +505,13 @@ int deframingInformation(uchar ** frame, uint* size) {
 	return OK;
 }
 
-int byteStuffing(char ** buffer, uint * size) {
+int byteStuffing(uchar ** buffer, int * size) {
 	uint i;
 
 	for (i = BCC_POS; i < (*size) - 1; ++i) {
-		if (((*buffer)[i] == (char) FLAG) || ((*buffer)[i] == (char) ESC))
+		if (((*buffer)[i] == (uchar) FLAG) || ((*buffer)[i] == (uchar) ESC))
 		{
-			if (((*buffer) = realloc((*buffer), (*size)++)) == NULL) {
+			if (((*buffer) = realloc((*buffer), ++(*size))) == NULL) {
 				printf("ByteStuffing: Realloc error.\n");
 				return ERROR;
 			}
@@ -526,11 +525,11 @@ int byteStuffing(char ** buffer, uint * size) {
 	return OK;
 }
 
-int byteDestuffing(char * buffer, uint * size) {
+int byteDestuffing(uchar * buffer, int * size) {
 	uint i;
 
 	for (i = BCC_POS; i < (*size) - 1; ++i) {
-		if (buffer[i] == (char) ESC)
+		if (buffer[i] == (uchar) ESC)
 		{
 			memmove(buffer+i, buffer+i+1, (*size)-i);
 			--(*size);

@@ -3,12 +3,12 @@
 
 void makeDataPacket(DataPacket * src, Packet * dest){
 	int packetSize = HEADER_SIZE + (src->size);
-	unsigned char * data = (unsigned char *) malloc(packetSize);
+	uchar * data = (uchar *) malloc(packetSize);
 
 	data[CTRL_FIELD_IDX] = DATA;
 	data[SEQ_NUM_IDX] = src->seqNr;
-	data[DATA_PACKET_SIZE2_IDX] = (unsigned char) (src->size / SIZE2_MUL);
-	data[DATA_PACKET_SIZE1_IDX] = (unsigned char) (src->size % SIZE2_MUL);
+	data[DATA_PACKET_SIZE2_IDX] = (uchar) (src->size / SIZE2_MUL);
+	data[DATA_PACKET_SIZE1_IDX] = (uchar) (src->size % SIZE2_MUL);
 
 	memcpy(&data[HEADER_SIZE], src->data, src->size);
 
@@ -22,7 +22,7 @@ void makeControlPacket(ControlPacket * src, Packet * dest){
 	int packetSize = 1 + 2 * (src->argNr) + fileNameSize + FILE_SIZE_LENGTH;
 	//printf("packetSize: %d, fileNameSize: %d\n", packetSize, (unsigned char) fileNameSize);
 
-	unsigned char * data = (unsigned char *) malloc(packetSize);
+	uchar * data = (uchar *) malloc(packetSize);
 
 	data[CTRL_FIELD_IDX] = src->type;
 
@@ -30,7 +30,7 @@ void makeControlPacket(ControlPacket * src, Packet * dest){
 	data[index++] = FILE_SIZE_ARG;
 	data[index++] = sizeof(int);
 
-	unsigned char fileSize[sizeof(int)]; // TODO delete convertIntToBytes
+	uchar fileSize[sizeof(int)]; // TODO delete convertIntToBytes
 	convertIntToBytes(fileSize, src->fileSize);
 	memcpy(&data[index], fileSize, FILE_SIZE_LENGTH);
 
@@ -41,7 +41,7 @@ void makeControlPacket(ControlPacket * src, Packet * dest){
 	index += FILE_SIZE_LENGTH;
 
 	data[index++] = FILE_NAME_ARG;
-	data[index++] = (unsigned char) fileNameSize;
+	data[index++] = (uchar) fileNameSize;
 	memcpy(&data[index], src->fileName, fileNameSize);
 
 	dest->data = data;
@@ -76,7 +76,7 @@ int sendControlPacket(int fd, ControlPacket * src){
 }
 
 int receiveDataPacket(int fd, DataPacket * dest) {
-	char * data;
+	uchar * data;
 	if(llread(fd, &data) <= 0)
 		return logError("failed to read packet");
 
@@ -96,18 +96,9 @@ int receiveDataPacket(int fd, DataPacket * dest) {
 int fillControlPacketArg(uchar * data, ControlPacket * dest, int argNr, int argSize, int offset) {
 	if(argNr == 0){
 		uint size = convertBytesToInt(data+offset);
-
-		/*
-		uint size = *(uint*) (data+1);
-		printf("Val: %0X\n", size);
-		memcpy(&size, data+4, sizeof(int));			//ESTAS FORMAS TROCAM OS BYTES - FICA O REVERSO DO ORIGINAL
-		printf("Val: %0X\n", size);
-		*/
-
 		dest->fileSize = size;
 	}
 	else if(argNr == 1){
-		//strcpy(dest->fileName, (char *) (data+offset));  //TODO: VER PORQUE NAO RESULTA
 		memcpy(dest->fileName, (data+offset), argSize);
 	}
 	else
@@ -117,7 +108,7 @@ int fillControlPacketArg(uchar * data, ControlPacket * dest, int argNr, int argS
 }
 
 int receiveControlPacket(int fd, ControlPacket * dest) {
-	char * data;
+	uchar * data;
 	int dataSize;
 	if((dataSize = llread(fd, &data)) < 0)
 		return logError("failed to read packet");
