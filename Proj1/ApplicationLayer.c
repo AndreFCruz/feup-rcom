@@ -90,11 +90,9 @@ int sendFile() {
 		return ERROR;
 	}
 
-	if(state == OK)	{
-		ctrlPacket.type = END;
-		if (sendControlPacket(al->fd, &ctrlPacket) != OK)
-			return logError("Error sending control packet");
-	}
+	ctrlPacket.type = END;
+	if ((state == OK) && sendControlPacket(al->fd, &ctrlPacket) != OK)
+		return logError("Error sending control packet");
 
 	if (llclose(al->fd) != OK)
 		return ERROR;
@@ -160,7 +158,7 @@ int receiveFile() {
 		return ERROR;
 	}
 
-	if (receiveControlPacket(al->fd, &ctrlPacket) != OK || ctrlPacket.type != END) {
+	if ((state == OK) && (receiveControlPacket(al->fd, &ctrlPacket) != OK || ctrlPacket.type != END)) {
 		return logError("Error receiving control packet");
 	}
 
