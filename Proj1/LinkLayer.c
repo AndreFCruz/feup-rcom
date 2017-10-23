@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "LinkLayer.h"
+#include "Alarm.h"
 
 #define FLAG 				0x7E
 #define ESC 				0x7D
@@ -155,6 +156,8 @@ int initLinkLayer(int porta, int baudRate, uint timeout, uint nRetries) {
 	ll->timeout = timeout;
 	ll->numRetries = nRetries;
 	ll->seqNumber = 0;
+
+	setAlarmTimeout(timeout);
 
 	return OK;
 }
@@ -310,7 +313,7 @@ int readFromSerialPort(int fd, uchar ** dest) {
 				return -1;
 			}
 		}
-	} while (buffer[bufferIdx - 1] != FLAG);
+	} while (buffer[bufferIdx - 1] != FLAG && alarmWentOff == FALSE);
 
 	if (byteDestuffing(buffer, &bufferIdx) == ERROR) {
 		printf("llread error: Failed byteDestuffing\n");
