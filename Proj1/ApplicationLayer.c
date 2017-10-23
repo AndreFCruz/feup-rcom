@@ -35,7 +35,8 @@ int initApplicationLayer(const char * port, int baudrate, int timeout, int numRe
 }
 
 void destroyApplicationLayer() {
-	free(al->fileName);
+	if (al->fileName != NULL)
+		free(al->fileName);
 	free(al);
 
 	al = NULL;
@@ -114,8 +115,10 @@ int receiveFile() {
 		return logError("Error receiving control packet");
 	}
 
-	if (al->fileName == NULL)
-		al->fileName = ctrlPacket.fileName;
+	if (al->fileName == NULL) {
+		al->fileName = malloc(sizeof(char) * MAX_FILE_NAME);
+		strncpy(al->fileName, ctrlPacket.fileName, MAX_FILE_NAME);
+	}
 
 	FILE * outputFile = fopen(al->fileName, "wb");
 	if (outputFile == NULL)

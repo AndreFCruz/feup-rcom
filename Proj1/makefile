@@ -1,7 +1,7 @@
 all: app
 
 app: ApplicationLayer.c LinkLayer.c Packets.c utils.c main.c
-	gcc -Wall ApplicationLayer.c LinkLayer.c Packets.c utils.c main.c -o app
+	gcc -g -Wall ApplicationLayer.c LinkLayer.c Packets.c utils.c main.c -o app
 
-clean: 
+clean:
 	rm -f app
