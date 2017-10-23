@@ -422,8 +422,6 @@ int readControlFrame(int fd, ControlType controlType) {
 	printArray(controlFrame, CONTROL_FRAME_SIZE);
 	printf("%02X, %02X, %02X, %02X, %02X\n", FLAG, afValue, controlType, (controlFrame[AF_POS] ^ controlFrame[CF_POS]), FLAG);
 
-	// TODO BARRACA AQUI no receiver
-
 	if ((controlFrame[FLAG1_POS] == FLAG) &&
 		((controlFrame[CF_POS] & 0x7F) == controlType) &&
 		(controlFrame[AF_POS] == afValue) &&

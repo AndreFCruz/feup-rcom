@@ -81,7 +81,8 @@ int main(int argc, char** argv)
 
 	printSettings(argv[1], baudRate, timeout, numRetries, type, dataBytes, fileName);
 
-	initApplicationLayer(argv[1], baudRate, timeout, numRetries, type, dataBytes, fileName);
+	if (initApplicationLayer(argv[1], baudRate, timeout, numRetries, type, dataBytes, fileName) == ERROR)
+		return logError("main.c: failed ApplicationLayer initialization");
 
 	(*functionPtr)();
 
