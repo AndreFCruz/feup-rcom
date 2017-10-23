@@ -51,7 +51,6 @@ void makeControlPacket(ControlPacket * src, Packet * dest) {
 int sendDataPacket(int fd, DataPacket * src) {
 	Packet packet;
 	makeDataPacket(src, &packet);
-	printArray(packet.data, packet.size);
 	int written = llwrite(fd, &(packet.data), packet.size);
 	free(packet.data);
 	if (written >= (int) packet.size)

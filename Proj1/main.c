@@ -14,6 +14,7 @@
 #define NUM_RETRIES 3
 #define TIMEOUT 	3
 #define DATA_BYTES	32 // TODO test with 1
+#define MAX_DATA_BYTES	(256*256 - 1)
 
 const int DEBUG = FALSE; // TODO
 
@@ -62,6 +63,8 @@ int main(int argc, char** argv)
 	int dataBytes = DATA_BYTES;
 	if (argc > 4)
 		dataBytes = strtol(argv[4], NULL, 10);
+	if (dataBytes > MAX_DATA_BYTES)
+		dataBytes = MAX_DATA_BYTES;
 
 	int baudRate = BAUDRATE;
 	if (argc > 5)

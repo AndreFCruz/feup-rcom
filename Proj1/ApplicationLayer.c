@@ -70,13 +70,14 @@ int sendFile() {
 	DataPacket dataPacket;
 	uchar * fileBuffer = (uchar *) malloc(al->maxDataMsgSize * sizeof(char));
 	uint res, progress = 0, currentSeqNr = 0;
+	int state = OK;
 	while ( (res = fread(fileBuffer, sizeof(char), al->maxDataMsgSize, file)) > 0 ) {
 		dataPacket.seqNr = currentSeqNr;
 		currentSeqNr = (currentSeqNr + 1) % 256;
 		dataPacket.size = res;
 		dataPacket.data = fileBuffer;
 		if (sendDataPacket(al->fd, &dataPacket) != OK) {
-			logError("Error sending data packet");
+			state = logError("Error sending data packet");
 			break;
 		}
 
@@ -89,9 +90,11 @@ int sendFile() {
 		return ERROR;
 	}
 
-	ctrlPacket.type = END;
-	if (sendControlPacket(al->fd, &ctrlPacket) != OK)
-		return logError("Error sending control packet");
+	if(state == OK)	{
+		ctrlPacket.type = END;
+		if (sendControlPacket(al->fd, &ctrlPacket) != OK)
+			return logError("Error sending control packet");
+	}
 
 	if (llclose(al->fd) != OK)
 		return ERROR;
@@ -128,8 +131,9 @@ int receiveFile() {
 
 	DataPacket dataPacket;
 	uint progress = 0, currentSeqNr = 0;
+	int state = OK;
 	while (progress < ctrlPacket.fileSize) {
-		if (receiveDataPacket(al->fd, &dataPacket) != OK) {
+		if ( (state = receiveDataPacket(al->fd, &dataPacket)) != OK) {
 			logError("Error receiving data packet");
 			break;
 		}

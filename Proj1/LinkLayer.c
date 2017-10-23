@@ -255,6 +255,8 @@ int llclose(int fd) {
 int llwrite(int fd, uchar ** bufferPtr, int length) {
 	int res = 0;
 
+	printf("**llwrite called**");
+
 	if (framingInformation(bufferPtr, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
@@ -265,15 +267,17 @@ int llwrite(int fd, uchar ** bufferPtr, int length) {
 		return -1;
 	}
 
-	uint i = 0;
+	uint tries = 0;
 	do {
-		printf("tentativa %d\n", i);
+		printf("llwrite: tentativa %d\n", tries);
 		if ((res = write(fd, *bufferPtr, length)) < length) {
 			printf("llwrite error: Bad write: %d bytes\n", res);
 			return -1;
 		}
-	} while ((++i < ll->numRetries) && (readControlFrame(fd, RR) != OK));
+	} while ((++tries < (ll->numRetries)) && (readControlFrame(fd, RR) != OK));
 
+	if (tries >= ll->numRetries)
+		return ERROR;
 	//TODO: Fazer alguma coisa quando as tentativas ultrapassarem? é que nao esta a afazer nada,
 	//dai de certo reiniciar... Ver o que acontece ao reader. Fica infinitamente a espera?
 
@@ -509,22 +513,29 @@ int deframingInformation(uchar ** frame, int* size) {
 }
 
 int byteStuffing(uchar ** buffer, int * size) {
-	uint i;
+	uint i, cnt = 0;
+
+	// Number of bytes needed to be stuffed
+	for (i = BCC_POS; i < (*size) - 1; ++i) {
+		if (((*buffer)[i] == (uchar) FLAG) || ((*buffer)[i] == (uchar) ESC))
+			++cnt;
+	}
+	*size = (*size) + cnt;
+
+	if (((*buffer) = realloc((*buffer), *size)) == NULL) { // may abort
+		return logError("ByteStuffing: Realloc error.");
+	}
 
 	for (i = BCC_POS; i < (*size) - 1; ++i) {
 		if (((*buffer)[i] == (uchar) FLAG) || ((*buffer)[i] == (uchar) ESC))
 		{
-			if (((*buffer) = realloc((*buffer), ++(*size))) == NULL) {
-				printf("ByteStuffing: Realloc error.\n");
-				return ERROR;
-			}
-
-			memmove((*buffer)+i+1, (*buffer)+i, (*size)-i);
+			memmove((*buffer) + i + 1, (*buffer) + i, (*size) - i);
 			(*buffer)[i] = ESC;
 			(*buffer)[i+1] = ((*buffer)[i+1] ^ STUFFING);
 			i++;
 		}
 	}
+
 	return OK;
 }
 
