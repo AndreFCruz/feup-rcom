@@ -11,7 +11,7 @@ int llopen(ConnectionType type);
 
 int llclose(int fd);
 
-int llwrite(int fd, uchar * buffer, int length);
+int llwrite(int fd, uchar ** buffer, int length);
 
 int llread(int fd, uchar ** buffer);
 

@@ -52,7 +52,7 @@ int sendDataPacket(int fd, DataPacket * src) {
 	Packet packet;
 	makeDataPacket(src, &packet);
 	printArray(packet.data, packet.size);
-	int written = llwrite(fd, packet.data, packet.size);
+	int written = llwrite(fd, &(packet.data), packet.size);
 	free(packet.data);
 	if (written >= (int) packet.size)
 		return OK;
@@ -61,11 +61,11 @@ int sendDataPacket(int fd, DataPacket * src) {
 	return ERROR;
 }
 
-int sendControlPacket(int fd, ControlPacket * src){
+int sendControlPacket(int fd, ControlPacket * src) {
 	Packet packet;
 	makeControlPacket(src, &packet);
 	printf("Sending control packet: "); printArray(packet.data, packet.size);
-	int written = llwrite(fd, packet.data, packet.size);
+	int written = llwrite(fd, &(packet.data), packet.size);
 	free(packet.data);
 	if (written >= (int) packet.size)
 		return OK;

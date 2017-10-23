@@ -252,15 +252,15 @@ int llclose(int fd) {
 	return OK;
 }
 
-int llwrite(int fd, uchar * buffer, int length) {
+int llwrite(int fd, uchar ** bufferPtr, int length) {
 	int res = 0;
 
-	if (framingInformation((uchar**) &buffer, &length) == ERROR) {
+	if (framingInformation(bufferPtr, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}
 
-	if (byteStuffing(&buffer, &length) == ERROR) {
+	if (byteStuffing(bufferPtr, &length) == ERROR) {
 		printf("llwrite error: Failed to create Information Frame.\n");
 		return -1;
 	}
@@ -268,7 +268,7 @@ int llwrite(int fd, uchar * buffer, int length) {
 	uint i = 0;
 	do {
 		printf("tentativa %d\n", i);
-		if ((res = write(fd, buffer, length)) < length) {
+		if ((res = write(fd, *bufferPtr, length)) < length) {
 			printf("llwrite error: Bad write: %d bytes\n", res);
 			return -1;
 		}
@@ -324,6 +324,17 @@ int readFromSerialPort(int fd, uchar ** dest) {
 	return bufferIdx;
 }
 
+int llread(int fd, uchar ** dest) {
+	uint tries = 0;
+	int ret;
+	while (tries++ < ll->numRetries){
+		if ( (ret = readFromSerialPort(fd, dest)) > 0 ) {
+			return ret;
+		}
+	}
+	return -1;
+}
+
 int readFrameFlag(int fd) {
 	uchar tempuchar = 0;
 	int totalRead = 0;
@@ -339,17 +350,6 @@ int readFrameFlag(int fd) {
 		printf("uchar read: %02X\n", tempuchar);
 	}
 	return totalRead;
-}
-
-int llread(int fd, uchar ** dest) {
-	uint tries = 0;
-	int ret;
-	while (tries++ < ll->numRetries){
-		if ( (ret = readFromSerialPort(fd, dest)) > 0 ) {
-			return ret;
-		}
-	}
-	return -1;
 }
 
 void createControlFrame(uchar buffer[], uchar adressField, uchar controlField) {
