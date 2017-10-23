@@ -13,9 +13,9 @@
 #define _IDXIX_SOURCE 1 /* POSIX compliant source */
 #define NUM_RETRIES 3
 #define TIMEOUT 	3
-#define DATA_BYTES	22 // TODO test with 1
+#define DATA_BYTES	32 // TODO test with 1
 
-int DEBUG = FALSE; // TODO
+const int DEBUG = FALSE; // TODO
 
 void printUsage(char * progName) {
 	printf("Usage:\t%s <SerialPort> <r/w> <FILE_NAME> [DATA_BYTES] [BAUDRATE] [NUM_RETRIES] [TIMEOUT]\n", progName);
@@ -38,8 +38,7 @@ void printSettings(const char * port, int baudrate, int timeout, int numRetries,
 
 int main(int argc, char** argv)
 {
-	if ( (argc < 4) ||
-		((strcmp("0", argv[1])!=0) && (strcmp("1", argv[1])!=0)) ) {
+	if ( (strcmp("0", argv[1])!=0) && (strcmp("1", argv[1])!=0) ) {
 		printUsage(argv[0]);
 		exit(1);
 	}

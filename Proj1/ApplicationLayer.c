@@ -115,7 +115,7 @@ int receiveFile() {
 	}
 
 	if (al->fileName == NULL)
-		strncpy(al->fileName, ctrlPacket.fileName, MAX_FILE_NAME);
+		al->fileName = ctrlPacket.fileName;
 
 	FILE * outputFile = fopen(al->fileName, "wb");
 	if (outputFile == NULL)

@@ -43,7 +43,7 @@ typedef enum {
 } ControlType;
 
 typedef struct {
-	uchar port[MAX_PORT_NAME];
+	char port[MAX_PORT_NAME];
 	int baudRate;
 	uint seqNumber;
 	uint timeout;
@@ -145,7 +145,9 @@ int byteDestuffing(uchar * buffer, int * size);
 
 
 int initLinkLayer(int porta, int baudRate, uint timeout, uint nRetries) {
-	ll = malloc(sizeof(LinkLayer));
+	if (ll == NULL)
+		ll = malloc(sizeof(LinkLayer));
+	else return logError("LinkLayer already initialized");
 
 	snprintf(ll->port, MAX_PORT_NAME, "%s%d", PORT_NAME, porta);
 
