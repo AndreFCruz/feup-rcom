@@ -204,16 +204,17 @@ int llopen(ConnectionType type) {
 
 	switch (type) {
 	case TRANSMITTER:
-		if (sendControlFrame(fd, SET) > 0 && readControlFrame(fd, UA) == OK)
+		if ((sendControlFrame(fd, SET) > 0) && (readControlFrame(fd, UA) == OK))
 			return fd;
 		break;
 	case RECEIVER:
-		if (readControlFrame(fd, SET) == OK && sendControlFrame(fd, UA) > 0)
+		if ((readControlFrame(fd, SET) == OK) && (sendControlFrame(fd, UA) > 0))
 			return fd;
 		break;
 	}
 
-	return logError("Failed llopen");
+	printf("Failed llopen\n");
+	return -1;
 }
 
 void llcloseTransmitter(int fd) {
