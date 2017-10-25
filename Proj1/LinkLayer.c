@@ -63,7 +63,7 @@ int readFromSerialPort(int fd, uchar ** dest);
  * Keeps reading until a FRAME FLAG is found.
  *
  * @param fd The Serial Port's filedescriptor
- * @returned Number of bytes read, -1 if an error ocurred.
+ * @return Number of bytes read, -1 if an error ocurred.
  */
 int readFrameFlag(int fd);
 
