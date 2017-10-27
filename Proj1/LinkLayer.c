@@ -297,7 +297,7 @@ int readFromSerialPort(int fd, uchar ** dest) {
 	int bufferIdx = 0;		//Number of bytes received
 
 	if (readFrameFlag(fd) < 1) {
-		printf("llread Error: read Frame flag error\n");
+		printf("readFromSerialPort Error: read Frame flag error\n");
 		return -1;
 	}
 
@@ -305,14 +305,14 @@ int readFromSerialPort(int fd, uchar ** dest) {
 	buffer[bufferIdx++] = FLAG;
 	do {
 		if (read(fd, buffer + bufferIdx, sizeof(uchar)) < 1) {
-			printf("llread error: Failed to read from SerialPort\n");
+			printf("readFromSerialPort error: Failed to read from SerialPort\n");
 			return -1;
 		}
 
 		++bufferIdx;
 		if ( (bufferIdx % RECEIVER_SIZE) == 0 ) {
 			if ((buffer = realloc(buffer, ((bufferIdx / RECEIVER_SIZE) + 1) * RECEIVER_SIZE )) == NULL) {
-				printf("llread error: Failed to realloc buffer\n");
+				printf("readFromSerialPort error: Failed to realloc buffer\n");
 				return -1;
 			}
 		}
@@ -338,7 +338,7 @@ int llread(int fd, uchar ** dest) {
 
 			if (deframingInformation(dest, &ret) != OK) {
 				// enviar REJ aqui para antecipar TIMEOUT ?
-				logError("Failed to deframe information");
+				logError("llread Error: Failed to deframe information");
 				return -1;
 			}
 
