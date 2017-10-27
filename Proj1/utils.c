@@ -1,6 +1,8 @@
 #include <termios.h>
 #include "utils.h"
 
+int DEBUG = FALSE;
+
 long getFileSize(FILE* file) {
 	// saving current position
 	long currentPosition = ftell(file);
@@ -49,9 +51,10 @@ uint convertBytesToInt(uchar * src) {
 }
 
 int logError(char * errorMsg) {
-#ifdef DEBUG
-	fprintf(stderr, "Error: %s\n", errorMsg);
-#endif
+ 	if (DEBUG) {
+		fprintf(stderr, "Error: %s\n", errorMsg);
+	}
+
 	return ERROR;
 }
 

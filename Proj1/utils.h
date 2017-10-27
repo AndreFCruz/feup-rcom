@@ -11,6 +11,8 @@
 #define ERROR	0
 #define OK		1
 
+extern int DEBUG;
+
 typedef unsigned int uint;
 typedef unsigned char uchar;
 

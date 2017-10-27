@@ -9,14 +9,13 @@
 #include "ApplicationLayer.h"
 #include "utils.h"
 
-#define DEBUG	1
-
 #define BAUDRATE 38400
 #define _IDXIX_SOURCE 1 /* POSIX compliant source */
 #define NUM_RETRIES 3
 #define TIMEOUT 	3
 #define DATA_BYTES	32
 #define MAX_DATA_BYTES	(256*256 - 1)
+
 
 void printUsage(char * progName) {
 	printf("Usage:\t%s <SerialPort> <r/w> <FILE_NAME> [BAUDRATE] [DATA_BYTES] [NUM_RETRIES] [TIMEOUT]\n", progName);
@@ -39,6 +38,8 @@ void printSettings(const char * port, int baudrate, int timeout, int numRetries,
 
 int main(int argc, char** argv)
 {
+	DEBUG = TRUE;
+
 	if ( (strcmp("0", argv[1])!=0) && (strcmp("1", argv[1])!=0) ) {
 		printUsage(argv[0]);
 		exit(1);
