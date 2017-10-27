@@ -51,7 +51,9 @@ void makeControlPacket(ControlPacket * src, Packet * dest) {
 int sendDataPacket(int fd, DataPacket * src) {
 	Packet packet;
 	makeDataPacket(src, &packet);
-	int written = llwrite(fd, &(packet.data), packet.size);
+	//uchar * dataBuffer = packet.data;
+	int written = llwrite(fd, &packet.data, packet.size);
+	//free(dataBuffer);
 	free(packet.data);
 	if (written >= (int) packet.size)
 		return OK;
@@ -88,6 +90,7 @@ int receiveDataPacket(int fd, DataPacket * dest) {
 	printf("Received data packet size: %d\n", (int) dest->size);
 	dest->data = (uchar *) malloc(dest->size);
 	memcpy(dest->data, &data[HEADER_SIZE], dest->size);
+	free(data);
 	return OK;
 }
 

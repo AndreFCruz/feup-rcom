@@ -150,6 +150,7 @@ int receiveFile() {
 			return OK;
 		}
 
+		free(dataPacket.data);
 	}
 	printf("OUT OF DATA PACKETS \n");
 

@@ -455,6 +455,8 @@ int readControlFrame(int fd, ControlType controlType) {
 		return logError("Frame was not of the given type or Flags were not recognized");
 	}
 
+	free (controlFrame);
+
 	return OK;
 }
 
