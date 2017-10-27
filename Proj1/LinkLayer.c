@@ -338,18 +338,17 @@ int llread(int fd, uchar ** dest) {
 	while (tries++ < ll->numRetries){
 		if ( (ret = readFromSerialPort(fd, dest)) > 0 ) {
 			if (byteDestuffing(*dest, &ret) == ERROR) {
-				printf("llread error: Failed byteDestuffing\n");
-				return -1;
+				logError("llread error: Failed byteDestuffing");
+				continue;
 			}
 
 			if (deframingInformation(dest, &ret) != OK) {
 				// enviar REJ aqui para antecipar TIMEOUT ?
 				logError("llread Error: Failed to deframe information");
-				return -1;
+				continue;
 			}
 
 			sendControlFrame(fd, RR);
-
 			return ret;
 		}
 	}
@@ -376,10 +375,10 @@ int readFrameFlag(int fd) {
 			break;
 	}
 
-	do {
+	while (tempchar != FLAG && alarmWentOff == FALSE) {
 		printf(" ** Received Garbage : %02X **\n", tempchar);
 		read(fd, &tempchar, sizeof(uchar));
-	} while (tempchar != FLAG && alarmWentOff == FALSE);
+	}
 	printf("\t** Exited garbage eater\n");
 
 	return ERROR;
@@ -511,12 +510,16 @@ int framingInformation(uchar ** packet, int* size) {
 
 int deframingInformation(uchar ** frame, int* size) {
 	//Checking the Header
-	if (((*frame)[FLAG1_POS] != FLAG) ||
-		((*frame)[AF_POS] != AF1) ||
-		((*frame)[CF_POS] != (INF | (ll->seqNumber << 6))) ||
-		(((*frame)[AF_POS] ^ (*frame)[CF_POS]) != (*frame)[BCC_POS])) {
-			printArray((*frame), *size);
-			return logError("Received unexpected head Information");
+	int flagPred = ((*frame)[FLAG1_POS] != FLAG);
+	int afPred = ((*frame)[AF_POS] != AF1);
+	int seqNrPred = ((*frame)[CF_POS] != (INF | (ll->seqNumber << 6)));
+	int bccPred = (((*frame)[AF_POS] ^ (*frame)[CF_POS]) != (*frame)[BCC_POS]);
+
+	if ( flagPred || afPred || seqNrPred ||	bccPred ) {
+		printf("Unexpected info on deframe: ");
+		printArray((*frame), *size);
+		printf("Flag: %d. AF: %d. SeqNr: %d. BCC: %d.\n", flagPred, afPred, seqNrPred, bccPred);
+		return ERROR;
 	}
 
 	//read's Nr is negative of sender's Ns
