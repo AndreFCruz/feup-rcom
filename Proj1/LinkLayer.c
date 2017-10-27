@@ -524,11 +524,6 @@ int deframingInformation(uchar ** frame, int* size) {
 		return ERROR;
 	}
 
-	printf("\t\t** DEFRAMED seqNr: %d . ", ll->seqNumber);
-	//read's Nr is negative of sender's Ns
-	ll->seqNumber = ((*frame)[CF_POS] >> 6) & 0b01 ? 0 : 1;
-	printf("SeqNr is now %d\n", ll->seqNumber);
-
 	//Checking the Trailer
 	uint trailPos = (*size) - INF_TRAILER_SIZE;
 	uchar bcc = calcBCC((*frame) + INF_HEAD_SIZE, trailPos - INF_HEAD_SIZE);
@@ -539,6 +534,11 @@ int deframingInformation(uchar ** frame, int* size) {
 	}
 	if ((*frame)[trailPos + TRAIL_FLAG_POS] != FLAG)
 		return logError("Received unexpected value instead of trailer FLAG\n");
+
+	printf("\t\t** DEFRAMED seqNr: %d . ", ll->seqNumber);
+	//read's Nr is negative of sender's Ns
+	ll->seqNumber = ((*frame)[CF_POS] >> 6) & 0b01 ? 0 : 1;
+	printf("SeqNr is now %d\n", ll->seqNumber);
 
 	//Remove the framing
 	(*size) -= INF_FORMAT_SIZE;
