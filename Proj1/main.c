@@ -13,7 +13,7 @@
 #define _IDXIX_SOURCE 1 /* POSIX compliant source */
 #define NUM_RETRIES 3
 #define TIMEOUT 	3
-#define DATA_BYTES	32 // TODO test with 1
+#define DATA_BYTES	32
 #define MAX_DATA_BYTES	(256*256 - 1)
 
 const int DEBUG = FALSE; // TODO

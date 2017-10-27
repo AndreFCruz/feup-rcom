@@ -157,8 +157,6 @@ int initLinkLayer(int porta, int baudRate, uint timeout, uint nRetries) {
 	ll->numRetries = nRetries;
 	ll->seqNumber = 0;
 
-	setAlarmTimeout(timeout);
-
 	return OK;
 }
 
@@ -271,15 +269,18 @@ int llwrite(int fd, uchar ** bufferPtr, int length) {
 		return -1;
 	}
 
-	setAlarm();
 	uint tries = 0;
+	setAlarm();
 	do {
+		alarmWentOff = FALSE;
 		printf("llwrite: ");
 		if ((res = write(fd, *bufferPtr, length)) < length) {
 			printf("llwrite error: Bad write: %d bytes\n", res);
 			return -1;
 		}
 		printf(" tentativa %d.\n", tries);
+
+		alarm(ll->timeout);
 	} while ( (readControlFrame(fd, RR) != OK) && (++tries < (ll->numRetries)));
 
 	stopAlarm();
@@ -365,7 +366,7 @@ int readFrameFlag(int fd) {
 	// ler uma flag (incluindo a flag) e dar return ERROR
 	while (alarmWentOff == FALSE) {
 		res = read(fd, &tempchar, 1);
-		printf("\t** ReadFrameFlag: %02X\n", tempchar);
+		printf("\t** ReadFrameFlag: %02X . NumBytes: %d\n", tempchar, res);
 
 		if (res == 0)
 			continue;

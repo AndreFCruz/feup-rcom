@@ -4,16 +4,8 @@
 #include "utils.h"
 #include "Alarm.h"
 
-#define DEFAULT_TIMEOUT		3
-
 
 int alarmWentOff = FALSE;
-
-static int alarmTimeout = DEFAULT_TIMEOUT;
-
-void setAlarmTimeout(uint secs) {
-	alarmTimeout = secs;
-}
 
 void alarmHandler(int signal) {
 	if (signal != SIGALRM)
@@ -21,8 +13,6 @@ void alarmHandler(int signal) {
 
 	alarmWentOff = TRUE;
 	printf("\tConnection timed out!\n");
-
-	alarm(alarmTimeout);
 }
 
 void setAlarm() {
@@ -34,8 +24,6 @@ void setAlarm() {
 	sigaction(SIGALRM, &action, NULL);
 
 	alarmWentOff = FALSE;
-
-	alarm(alarmTimeout);
 }
 
 void stopAlarm() {
