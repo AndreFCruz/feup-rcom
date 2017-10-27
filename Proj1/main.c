@@ -9,6 +9,8 @@
 #include "ApplicationLayer.h"
 #include "utils.h"
 
+#define DEBUG
+
 #define BAUDRATE 38400
 #define _IDXIX_SOURCE 1 /* POSIX compliant source */
 #define NUM_RETRIES 3

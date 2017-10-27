@@ -326,19 +326,19 @@ int readFromSerialPort(int fd, uchar ** dest) {
 }
 
 int llread(int fd, uchar ** dest) {
-	uint tries = 0;
+	// uint tries = 0;
 	int ret;
 	while ( 1 /* tries++ < ll->numRetries */ ){
 		if ( (ret = readFromSerialPort(fd, dest)) > 0 ) {
 			if (byteDestuffing(*dest, &ret) == ERROR) {
-				logError("llread error: Failed byteDestuffing");
+				logError("llread: Failed byteDestuffing");
 				free(*dest);
 				continue;
 			}
 
 			if (deframingInformation(dest, &ret) != OK) {
 				// enviar REJ aqui para antecipar TIMEOUT ?
-				logError("llread Error: Failed to deframe information");
+				logError("llread: Failed to deframe information");
 				free(*dest);
 				continue;
 			}

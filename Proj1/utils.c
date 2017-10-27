@@ -49,7 +49,9 @@ uint convertBytesToInt(uchar * src) {
 }
 
 int logError(char * errorMsg) {
+#ifdef DEBUG
 	fprintf(stderr, "Error: %s\n", errorMsg);
+#endif
 	return ERROR;
 }
 
