@@ -62,8 +62,6 @@ int sendFile() {
 	ctrlPacket.fileSize = getFileSize(file);
 	ctrlPacket.argNr = CTRL_PACKET_ARGS;
 
-	printf("Sending control packet...\n");
-
 	if (sendControlPacket(al->fd, &ctrlPacket) != OK)
 		return logError("Error sending control packet");
 
@@ -109,8 +107,6 @@ int receiveFile() {
 	if (al->fd < 0)
 		return logError("Failed llopen");
 
-	printf("Receiving control packet...\n");
-
 	ControlPacket ctrlPacket;
 	if (receiveControlPacket(al->fd, &ctrlPacket) != OK || ctrlPacket.type != START) {
 		return logError("Error receiving control packet");
@@ -143,16 +139,14 @@ int receiveFile() {
 		currentSeqNr = (currentSeqNr + 1) % 256;
 		progress += (uint) dataPacket.size;
 
-		//printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: 0x%02X\n", progress, ctrlPacket.fileSize, dataPacket.size);
+		printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: 0x%02X\n", progress, ctrlPacket.fileSize, dataPacket.size);
 
 		if (fwrite(dataPacket.data, sizeof(char), dataPacket.size, outputFile) == 0) {
-			printf("fwrite returned 0\n");
-			return OK;
+			return logError("sendFile: fwrite returned 0");
 		}
 
 		free(dataPacket.data);
 	}
-	printf("OUT OF DATA PACKETS \n");
 
 	if (fclose(outputFile)) {
 		perror("fclose failed");
