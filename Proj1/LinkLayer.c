@@ -335,7 +335,7 @@ int readFromSerialPort(int fd, uchar ** dest) {
 int llread(int fd, uchar ** dest) {
 	uint tries = 0;
 	int ret;
-	while (tries++ < ll->numRetries){
+	while ( 1 /* tries++ < ll->numRetries */ ){
 		if ( (ret = readFromSerialPort(fd, dest)) > 0 ) {
 			if (byteDestuffing(*dest, &ret) == ERROR) {
 				logError("llread error: Failed byteDestuffing");
@@ -517,7 +517,7 @@ int deframingInformation(uchar ** frame, int* size) {
 	int seqNrPred = ((*frame)[CF_POS] != (INF | (ll->seqNumber << 6)));
 	int bccPred = (((*frame)[AF_POS] ^ (*frame)[CF_POS]) != (*frame)[BCC_POS]);
 
-	if ( flagPred || afPred || seqNrPred ||	bccPred ) {
+	if ( flagPred || afPred || bccPred ) {
 		printf("Unexpected info on deframe: ");
 		printArray((*frame), *size);
 		printf("Flag: %d. AF: %d. SeqNr: %d. BCC: %d.\n", flagPred, afPred, seqNrPred, bccPred);
@@ -535,10 +535,13 @@ int deframingInformation(uchar ** frame, int* size) {
 	if ((*frame)[trailPos + TRAIL_FLAG_POS] != FLAG)
 		return logError("Received unexpected value instead of trailer FLAG\n");
 
-	printf("\t\t** DEFRAMED seqNr: %d . ", ll->seqNumber);
+	printf("** DEFRAME SeqNr: %d .. ", ll->seqNumber);
 	//read's Nr is negative of sender's Ns
-	ll->seqNumber = ((*frame)[CF_POS] >> 6) & 0b01 ? 0 : 1;
-	printf("SeqNr is now %d\n", ll->seqNumber);
+	// THIS MUST BE AFTER CHECKING FRAME INFO
+	if (!seqNrPred) {
+		ll->seqNumber = ((*frame)[CF_POS] >> 6) & 0b01 ? 0 : 1;
+	}
+	printf("** NEW seqNr: %d \n", ll->seqNumber);
 
 	//Remove the framing
 	(*size) -= INF_FORMAT_SIZE;
@@ -547,7 +550,7 @@ int deframingInformation(uchar ** frame, int* size) {
 	if (((*frame) = realloc(*frame, (*size))) == NULL)
 		return logError("Realloc error in deframingInformation");
 
-	return OK;
+	return (!seqNrPred);
 }
 
 int byteStuffing(uchar ** buffer, int * size) {
