@@ -96,6 +96,8 @@ int sendFile() {
 	if (state != OK || llclose(al->fd) != OK)
 		return ERROR;
 
+	printf("\nFile sent successfully.\n");
+
 	return OK;
 }
 
@@ -163,7 +165,7 @@ int receiveFile() {
 	if (state != OK || llclose(al->fd) != OK)
 		return logError("llclose failed");
 
-	printf("File received successfully.\n");
+	printf("\nFile received successfully.\n");
 
 	return OK;
 }

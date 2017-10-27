@@ -337,8 +337,8 @@ int llread(int fd, uchar ** dest) {
 			}
 
 			if (deframingInformation(dest, &ret) != OK) {
-				// enviar REJ aqui para antecipar TIMEOUT ?
 				logError("llread: Failed to deframe information");
+				//sendControlFrame(fd, REJ); // TODO
 				free(*dest);
 				continue;
 			}
@@ -510,7 +510,6 @@ int deframingInformation(uchar ** frame, int* size) {
 	uchar bcc = calcBCC((*frame) + INF_HEAD_SIZE, trailPos - INF_HEAD_SIZE);
 
 	if ((*frame)[trailPos + TRAIL_BCC_POS] != bcc) {
-		//sendControlFrame(REJ);	//O que faz ele na receção de um BCC? ver protocolo
 		return logError("received unexpected Data Field BCC2\n");
 	}
 	if ((*frame)[trailPos + TRAIL_FLAG_POS] != FLAG)
