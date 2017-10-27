@@ -505,6 +505,8 @@ int framingInformation(uchar ** packet, int* size) {
 	(*packet)[CF_POS] = (INF | (ll->seqNumber << 6));
 	(*packet)[BCC_POS] = (AF1 ^ (*packet)[CF_POS]);
 
+	printf("\t\t** Made frame with seqNr: %d\n", ll->seqNumber);
+
 	return OK;
 }
 
@@ -522,8 +524,10 @@ int deframingInformation(uchar ** frame, int* size) {
 		return ERROR;
 	}
 
+	printf("\t\t** DEFRAMED seqNr: %d . ", ll->seqNumber);
 	//read's Nr is negative of sender's Ns
 	ll->seqNumber = ((*frame)[CF_POS] >> 6) & 0b01 ? 0 : 1;
+	printf("SeqNr is now %d\n", ll->seqNumber);
 
 	//Checking the Trailer
 	uint trailPos = (*size) - INF_TRAILER_SIZE;
