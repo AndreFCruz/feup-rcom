@@ -280,7 +280,7 @@ int llwrite(int fd, uchar ** bufferPtr, int length) {
 			return -1;
 		}
 		printf(" tentativa %d.\n", tries);
-	} while ((++tries < (ll->numRetries)) && (readControlFrame(fd, RR) != OK));
+	} while ( (readControlFrame(fd, RR) != OK) && (++tries < (ll->numRetries)));
 
 	stopAlarm();
 
@@ -364,7 +364,8 @@ int readFrameFlag(int fd) {
 	// se nao, passar para o loop seguinte e descartar tudo até
 	// ler uma flag (incluindo a flag) e dar return ERROR
 	while (alarmWentOff == FALSE) {
-		res = read(fd, &tempchar, sizeof(uchar));
+		res = read(fd, &tempchar, 1);
+		printf("\t** ReadFrameFlag: %02X\n", tempchar);
 
 		if (res == 0)
 			continue;
@@ -378,7 +379,7 @@ int readFrameFlag(int fd) {
 		printf(" ** Received Garbage : %02X **\n", tempchar);
 		read(fd, &tempchar, sizeof(uchar));
 	} while (tempchar != FLAG && alarmWentOff == FALSE);
-	printf("Found flag in harbage yo dawg\n");
+	printf("\t** Exited garbage eater\n");
 
 	return ERROR;
 }

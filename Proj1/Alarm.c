@@ -43,6 +43,7 @@ void stopAlarm() {
 	action.sa_handler = NULL;
 	sigemptyset(&action.sa_mask);
 	action.sa_flags = 0;
+	alarmWentOff = FALSE;
 
 	sigaction(SIGALRM, &action, NULL);
 
