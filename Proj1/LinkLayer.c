@@ -271,6 +271,7 @@ int llwrite(int fd, uchar ** bufferPtr, int length) {
 		return -1;
 	}
 
+	setAlarm();
 	uint tries = 0;
 	do {
 		printf("llwrite: tentativa %d\n", tries);
@@ -279,6 +280,8 @@ int llwrite(int fd, uchar ** bufferPtr, int length) {
 			return -1;
 		}
 	} while ((++tries < (ll->numRetries)) && (readControlFrame(fd, RR) != OK));
+
+	stopAlarm();
 
 	if (tries >= ll->numRetries)
 		return ERROR;
@@ -313,22 +316,13 @@ int readFromSerialPort(int fd, uchar ** dest) {
 				return -1;
 			}
 		}
-	} while (buffer[bufferIdx - 1] != FLAG && alarmWentOff == FALSE);
-
-	if (byteDestuffing(buffer, &bufferIdx) == ERROR) {
-		printf("llread error: Failed byteDestuffing\n");
-		return -1;
-	}
-
-	if (deframingInformation(&buffer, &bufferIdx) != OK) {
-		// enviar REJ aqui para antecipar TIMEOUT ?
-		logError("Failed to deframe information");
-		return -1;
-	}
+		if (alarmWentOff == TRUE) {
+			return -1;
+		}
+	} while (buffer[bufferIdx - 1] != FLAG);
 
 	*dest = buffer;
 
-	sendControlFrame(fd, RR);
 	return bufferIdx;
 }
 
@@ -337,9 +331,23 @@ int llread(int fd, uchar ** dest) {
 	int ret;
 	while (tries++ < ll->numRetries){
 		if ( (ret = readFromSerialPort(fd, dest)) > 0 ) {
+			if (byteDestuffing(*dest, &ret) == ERROR) {
+				printf("llread error: Failed byteDestuffing\n");
+				return -1;
+			}
+
+			if (deframingInformation(dest, &ret) != OK) {
+				// enviar REJ aqui para antecipar TIMEOUT ?
+				logError("Failed to deframe information");
+				return -1;
+			}
+
+			sendControlFrame(fd, RR);
+
 			return ret;
 		}
 	}
+
 	return -1;
 }
 
@@ -395,7 +403,7 @@ int sendControlFrame(int fd, ControlType controlType) {
 }
 
 int readControlFrame(int fd, ControlType controlType) {
-	uchar controlFrame[CONTROL_FRAME_SIZE];
+	uchar * controlFrame;
 	uchar afValue;
 
 	switch (controlType) {
@@ -416,7 +424,7 @@ int readControlFrame(int fd, ControlType controlType) {
 	}
 
 	int res;
-	if ((res = read(fd, controlFrame, CONTROL_FRAME_SIZE)) < CONTROL_FRAME_SIZE) {
+	if ((res = readFromSerialPort(fd, &controlFrame)) < CONTROL_FRAME_SIZE) {
 		printf("Failed to read control frame. Read %d. Ctrl type: %02X", res, controlType);
 		printArray(controlFrame, res);
 		return ERROR;
@@ -553,5 +561,8 @@ int byteDestuffing(uchar * buffer, int * size) {
 			buffer[i] = (buffer[i] ^ STUFFING);
 		}
 	}
+
+	// TODO realloc?
+
 	return OK;
 }
