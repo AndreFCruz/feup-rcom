@@ -296,7 +296,7 @@ int readFromSerialPort(int fd, uchar ** dest) {
 	uchar * buffer = (uchar *) malloc(RECEIVER_SIZE);
 	int bufferIdx = 0;		//Number of bytes received
 
-	if (readFrameFlag(fd) < 1) {
+	if (readFrameFlag(fd) != OK) {
 		printf("readFromSerialPort Error: read Frame flag error\n");
 		return -1;
 	}
@@ -352,20 +352,30 @@ int llread(int fd, uchar ** dest) {
 }
 
 int readFrameFlag(int fd) {
-	uchar tempuchar = 0;
-	int totalRead = 0;
+	uchar tempchar = 0;
 	int res;
 
-	while (tempuchar != FLAG) {
-		if ( (res = read(fd, &tempuchar, sizeof(uchar))) < 1) {
-			printf("readFrameFlag error: Failed to read from SerialPort\n");
-			return -1;
-		}
-		++totalRead;
+	// Loop para ler 1 caracter: se for a FLAG OK;
+	// se nao, passar para o loop seguinte e descartar tudo até
+	// ler uma flag (incluindo a flag) e dar return ERROR
+	while (alarmWentOff == FALSE) {
+		res = read(fd, &tempchar, sizeof(uchar));
 
-		printf("uchar read: %02X\n", tempuchar);
+		if (res == 0)
+			continue;
+		else if (res == 1 && tempchar == FLAG)
+			return OK;
+		else
+			break;
 	}
-	return totalRead;
+
+	printf(" ** Received Garbage ** ");
+	do {
+		read(fd, &tempchar, sizeof(uchar));
+		printf("#");
+	} while (tempchar != FLAG);
+
+	return ERROR;
 }
 
 void createControlFrame(uchar buffer[], uchar adressField, uchar controlField) {
