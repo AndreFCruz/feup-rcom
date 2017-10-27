@@ -17,7 +17,7 @@
 #define INF_FORMAT_SIZE		6
 #define INF_HEAD_SIZE		4
 #define INF_TRAILER_SIZE 	2
-#define RECEIVER_SIZE		256
+#define RECEIVER_SIZE		1024
 
 //Information Message Trailers position
 #define TRAIL_BCC_POS		0
@@ -214,7 +214,7 @@ int llopen(ConnectionType type) {
 		break;
 	}
 
-	printf("Failed llopen\n");
+	logError("Failed llopen");
 	return -1;
 }
 
@@ -231,7 +231,6 @@ void llcloseReceiver(int fd) {
 }
 
 int llclose(int fd) {
-	printf("** llclose called **");
 
 	if (TRANSMITTER == connectionType)
 		llcloseTransmitter(fd);
@@ -257,15 +256,13 @@ int llclose(int fd) {
 int llwrite(int fd, uchar ** bufferPtr, int length) {
 	int res = 0;
 
-	printf("**llwrite called**");
-
 	if (framingInformation(bufferPtr, &length) == ERROR) {
-		printf("llwrite error: Failed to create Information Frame.\n");
+		logError("llwrite: Failed to create Information Frame");
 		return -1;
 	}
 
 	if (byteStuffing(bufferPtr, &length) == ERROR) {
-		printf("llwrite error: Failed to create Information Frame.\n");
+		logError("llwrite: Failed to create Information Frame");
 		return -1;
 	}
 
@@ -273,12 +270,10 @@ int llwrite(int fd, uchar ** bufferPtr, int length) {
 	setAlarm();
 	do {
 		alarmWentOff = FALSE;
-		printf("llwrite: ");
 		if ((res = write(fd, *bufferPtr, length)) < length) {
-			printf("llwrite error: Bad write: %d bytes\n", res);
+			logError("llwrite error: Bad write");
 			return -1;
 		}
-		printf(" tentativa %d.\n", tries);
 
 		alarm(ll->timeout);
 	} while ( (readControlFrame(fd, RR) != OK) && (++tries < (ll->numRetries)));
@@ -300,11 +295,10 @@ int readFromSerialPort(int fd, uchar ** dest) {
 	int res;
 
 	if (readFrameFlag(fd) != OK) {
-		printf("readFromSerialPort Error: read Frame flag error\n");
+		logError("readFromSerialPort: read Frame flag error");
 		return -1;
 	}
 
-	printf("\nStarting reading loop\n");
 	buffer[bufferIdx++] = FLAG;
 	do {
 		if (alarmWentOff == TRUE)
@@ -312,17 +306,15 @@ int readFromSerialPort(int fd, uchar ** dest) {
 
 		res = read(fd, buffer + bufferIdx, sizeof(uchar));
 		if ( res < 0 ) {
-			printf("readFromSerialPort error: Failed to read from SerialPort\n");
+			logError("readFromSerialPort: Failed to read from SerialPort");
 			return -1;
 		} else if (res == 0) {
 			continue;
 		}
-		printf(".");
 		++bufferIdx;
 		if ( ((bufferIdx + 1) % RECEIVER_SIZE) == 0 ) {
-			printf("incremented buffer size from %d to %d\n", bufferIdx, ((bufferIdx + 1) / RECEIVER_SIZE + 1) * RECEIVER_SIZE );
 			if ((buffer = realloc(buffer,  ((bufferIdx + 1) / RECEIVER_SIZE + 1) * RECEIVER_SIZE)) == NULL) {
-				printf("readFromSerialPort error: Failed to realloc buffer\n");
+				logError("readFromSerialPort: Failed to realloc buffer");
 				return -1;
 			}
 		}
@@ -368,7 +360,6 @@ int readFrameFlag(int fd) {
 	// ler uma flag (incluindo a flag) e dar return ERROR
 	while (alarmWentOff == FALSE) {
 		res = read(fd, &tempchar, 1);
-		printf("\t** ReadFrameFlag: %02X . NumBytes: %d\n", tempchar, res);
 
 		if (res == 0)
 			continue;
@@ -379,12 +370,10 @@ int readFrameFlag(int fd) {
 	}
 
 	while (tempchar != FLAG && alarmWentOff == FALSE) {
-		printf(" ** Received Garbage : %02X **\n", tempchar);
 		read(fd, &tempchar, sizeof(uchar));
 	}
-	printf("\t** Exited garbage eater\n");
 
-	return ERROR;
+	return logError("\tExited garbage eater");
 }
 
 void createControlFrame(uchar buffer[], uchar adressField, uchar controlField) {
@@ -412,17 +401,13 @@ int sendControlFrame(int fd, ControlType controlType) {
 
 	int res;
 	if ((res = write(fd, controlFrame, CONTROL_FRAME_SIZE)) < CONTROL_FRAME_SIZE) {
-		printf("senControlFrame error: Bad write: %d bytes\n", res);
+		logError("\tsenControlFrame: Bad write");
 		return -1;
 	}
-
-	printf("Send control frame: ");
-	printArray(controlFrame, CONTROL_FRAME_SIZE);
 
 	return res;
 }
 
-// TODO Dividir em duas funcoes, uma para ler uma control frame, outra para confirmar o tipo
 int readControlFrame(int fd, ControlType controlType) {
 	uchar * controlFrame;
 	uchar afValue;
@@ -451,10 +436,6 @@ int readControlFrame(int fd, ControlType controlType) {
 		return ERROR;
 	}
 
-	printf("Read control frame: ");
-	printArray(controlFrame, CONTROL_FRAME_SIZE);
-	printf("%02X, %02X, %02X, %02X, %02X\n", FLAG, afValue, controlType, (controlFrame[AF_POS] ^ controlFrame[CF_POS]), FLAG);
-
 	if ((controlFrame[FLAG1_POS] == FLAG) &&
 		((controlFrame[CF_POS] & 0x7F) == controlType) &&
 		(controlFrame[AF_POS] == afValue) &&
@@ -462,7 +443,7 @@ int readControlFrame(int fd, ControlType controlType) {
 		(controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS])))
 	{
 		uchar seqNrToReceive =  (~(ll->seqNumber)) << 7;
-		printf("Current seqNr: %02X. Received seqNr: %02X. Modified seqNr: %02x\n", ll->seqNumber, controlFrame[CF_POS] & 0xA0, seqNrToReceive);
+
 		if ((controlType == RR) || (controlType == REJ)) {
 			if (controlFrame[CF_POS] == (controlType | seqNrToReceive)) {
 				ll->seqNumber = ll->seqNumber ? 0 : 1;
@@ -494,8 +475,7 @@ int framingInformation(uchar ** packet, int* size) {
 	(*size) += INF_FORMAT_SIZE;
 
 	if ((*packet = realloc(*packet, (*size))) == NULL) {
-		printf("framingInformation: Realloc error.\n");
-		return ERROR;
+		return logError("framingInformation: Realloc error.");
 	}
 
 	(*packet)[previousSize + TRAIL_BCC_POS] = calcBCC((*packet), previousSize);
@@ -507,8 +487,6 @@ int framingInformation(uchar ** packet, int* size) {
 	(*packet)[AF_POS] = AF1;
 	(*packet)[CF_POS] = (INF | (ll->seqNumber << 6));
 	(*packet)[BCC_POS] = (AF1 ^ (*packet)[CF_POS]);
-
-	printf("\t\t** Made frame with seqNr: %d\n", ll->seqNumber);
 
 	return OK;
 }
@@ -538,16 +516,13 @@ int deframingInformation(uchar ** frame, int* size) {
 	if ((*frame)[trailPos + TRAIL_FLAG_POS] != FLAG)
 		return logError("Received unexpected value instead of trailer FLAG\n");
 
-	printf("** DEFRAME SeqNr: %d .. ", ll->seqNumber);
 	//read's Nr is negative of sender's Ns
 	// THIS MUST BE AFTER CHECKING FRAME INFO
 	if (!seqNrPred) {
 		ll->seqNumber = ((*frame)[CF_POS] >> 6) & 0b01 ? 0 : 1;
 	}
-	printf("** NEW seqNr: %d \n", ll->seqNumber);
 
-	//Remove the framing
-	(*size) -= INF_FORMAT_SIZE;
+	(*size) -= INF_FORMAT_SIZE; // Size -= Frame_Size
 
 	memmove((*frame), (*frame) + INF_HEAD_SIZE, (*size));
 	if (((*frame) = realloc(*frame, (*size))) == NULL)
