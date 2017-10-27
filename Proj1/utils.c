@@ -104,3 +104,21 @@ int getBaudrate(int baudrate) {
 		return -1;
 	}
 }
+
+const int PROGRESS_BAR_LENGTH = 40;
+
+void printProgressBar(int current, int total) {
+	float percentage = 100.0 * (float) current / (float) total;
+
+	printf("\rCompleted: %6.2f%% [", percentage);
+
+	int i, len = PROGRESS_BAR_LENGTH;
+	int pos = percentage * len / 100.0;
+
+	for (i = 0; i < len; i++)
+		i <= pos ? printf("#") : printf(" ");
+
+	printf("]");
+
+	fflush(stdout);
+}

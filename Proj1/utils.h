@@ -32,4 +32,7 @@ int logError(char * errorMsg);
 
 int getBaudrate(int baudrate);
 
+void printProgressBar(int current, int total);
+
+
 #endif

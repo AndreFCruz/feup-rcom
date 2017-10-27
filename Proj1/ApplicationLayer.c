@@ -80,6 +80,7 @@ int sendFile() {
 		}
 
 		progress += res;
+		printProgressBar(progress, ctrlPacket.fileSize);
 	}
 	free(fileBuffer);
 
@@ -139,7 +140,9 @@ int receiveFile() {
 		currentSeqNr = (currentSeqNr + 1) % 256;
 		progress += (uint) dataPacket.size;
 
-		printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: 0x%02X\n", progress, ctrlPacket.fileSize, dataPacket.size);
+		printProgressBar(progress, ctrlPacket.fileSize);
+
+		// printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: 0x%02X\n", progress, ctrlPacket.fileSize, dataPacket.size);
 
 		if (fwrite(dataPacket.data, sizeof(char), dataPacket.size, outputFile) == 0) {
 			return logError("sendFile: fwrite returned 0");
