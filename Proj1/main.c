@@ -18,8 +18,6 @@
 #define DATA_BYTES	32
 #define MAX_DATA_BYTES	(256*256 - 1)
 
-const int DEBUG = FALSE; // TODO
-
 void printUsage(char * progName) {
 	printf("Usage:\t%s <SerialPort> <r/w> <FILE_NAME> [BAUDRATE] [DATA_BYTES] [NUM_RETRIES] [TIMEOUT]\n", progName);
 	printf("\tex: %s 0 w pinguim.gif\n", progName);
