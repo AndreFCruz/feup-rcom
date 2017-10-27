@@ -274,11 +274,12 @@ int llwrite(int fd, uchar ** bufferPtr, int length) {
 	setAlarm();
 	uint tries = 0;
 	do {
-		printf("llwrite: tentativa %d\n", tries);
+		printf("llwrite: ");
 		if ((res = write(fd, *bufferPtr, length)) < length) {
 			printf("llwrite error: Bad write: %d bytes\n", res);
 			return -1;
 		}
+		printf(" tentativa %d.\n", tries);
 	} while ((++tries < (ll->numRetries)) && (readControlFrame(fd, RR) != OK));
 
 	stopAlarm();
@@ -295,6 +296,7 @@ int llwrite(int fd, uchar ** bufferPtr, int length) {
 int readFromSerialPort(int fd, uchar ** dest) {
 	uchar * buffer = (uchar *) malloc(RECEIVER_SIZE);
 	int bufferIdx = 0;		//Number of bytes received
+	int res;
 
 	if (readFrameFlag(fd) != OK) {
 		printf("readFromSerialPort Error: read Frame flag error\n");
@@ -304,9 +306,15 @@ int readFromSerialPort(int fd, uchar ** dest) {
 	printf("\nStarting reading loop\n");
 	buffer[bufferIdx++] = FLAG;
 	do {
-		if (read(fd, buffer + bufferIdx, sizeof(uchar)) < 1) {
+		if (alarmWentOff == TRUE)
+			return -1;
+
+		res = read(fd, buffer + bufferIdx, sizeof(uchar));
+		if ( res < 0 ) {
 			printf("readFromSerialPort error: Failed to read from SerialPort\n");
 			return -1;
+		} else if (res == 0) {
+			continue;
 		}
 
 		++bufferIdx;
@@ -315,9 +323,6 @@ int readFromSerialPort(int fd, uchar ** dest) {
 				printf("readFromSerialPort error: Failed to realloc buffer\n");
 				return -1;
 			}
-		}
-		if (alarmWentOff == TRUE) {
-			return -1;
 		}
 	} while (buffer[bufferIdx - 1] != FLAG);
 
@@ -369,11 +374,11 @@ int readFrameFlag(int fd) {
 			break;
 	}
 
-	printf(" ** Received Garbage ** ");
 	do {
+		printf(" ** Received Garbage : %02X **\n", tempchar);
 		read(fd, &tempchar, sizeof(uchar));
-		printf("#");
-	} while (tempchar != FLAG);
+	} while (tempchar != FLAG && alarmWentOff == FALSE);
+	printf("Found flag in harbage yo dawg\n");
 
 	return ERROR;
 }
