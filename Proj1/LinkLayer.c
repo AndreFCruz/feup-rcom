@@ -317,10 +317,11 @@ int readFromSerialPort(int fd, uchar ** dest) {
 		} else if (res == 0) {
 			continue;
 		}
-
+		printf(".");
 		++bufferIdx;
-		if ( (bufferIdx % RECEIVER_SIZE) == 0 ) {
-			if ((buffer = realloc(buffer, ((bufferIdx / RECEIVER_SIZE) + 1) * RECEIVER_SIZE )) == NULL) {
+		if ( ((bufferIdx + 1) % RECEIVER_SIZE) == 0 ) {
+			printf("incremented buffer size from %d to %d\n", bufferIdx, ((bufferIdx + 1) / RECEIVER_SIZE + 1) * RECEIVER_SIZE );
+			if ((buffer = realloc(buffer,  ((bufferIdx + 1) / RECEIVER_SIZE + 1) * RECEIVER_SIZE)) == NULL) {
 				printf("readFromSerialPort error: Failed to realloc buffer\n");
 				return -1;
 			}
@@ -339,12 +340,14 @@ int llread(int fd, uchar ** dest) {
 		if ( (ret = readFromSerialPort(fd, dest)) > 0 ) {
 			if (byteDestuffing(*dest, &ret) == ERROR) {
 				logError("llread error: Failed byteDestuffing");
+				free(*dest);
 				continue;
 			}
 
 			if (deframingInformation(dest, &ret) != OK) {
 				// enviar REJ aqui para antecipar TIMEOUT ?
 				logError("llread Error: Failed to deframe information");
+				free(*dest);
 				continue;
 			}
 
@@ -561,6 +564,8 @@ int byteStuffing(uchar ** buffer, int * size) {
 		if (((*buffer)[i] == (uchar) FLAG) || ((*buffer)[i] == (uchar) ESC))
 			++cnt;
 	}
+	if (cnt == 0) return OK;
+
 	*size = (*size) + cnt;
 
 	if (((*buffer) = realloc((*buffer), *size)) == NULL) { // may abort
