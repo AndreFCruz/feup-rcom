@@ -531,7 +531,7 @@ int deframingInformation(uchar ** frame, int* size) {
 
 	if ((*frame)[trailPos + TRAIL_BCC_POS] != bcc) {
 		//sendControlFrame(REJ);	//O que faz ele na receção de um BCC? ver protocolo
-		return logError("received unexpected Data Field BCC\n");
+		return logError("received unexpected Data Field BCC2\n");
 	}
 	if ((*frame)[trailPos + TRAIL_FLAG_POS] != FLAG)
 		return logError("Received unexpected value instead of trailer FLAG\n");
