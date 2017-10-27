@@ -9,7 +9,7 @@
 #include "ApplicationLayer.h"
 #include "utils.h"
 
-#define BAUDRATE B38400
+#define BAUDRATE 38400
 #define _IDXIX_SOURCE 1 /* POSIX compliant source */
 #define NUM_RETRIES 3
 #define TIMEOUT 	3
@@ -19,7 +19,7 @@
 const int DEBUG = FALSE; // TODO
 
 void printUsage(char * progName) {
-	printf("Usage:\t%s <SerialPort> <r/w> <FILE_NAME> [DATA_BYTES] [BAUDRATE] [NUM_RETRIES] [TIMEOUT]\n", progName);
+	printf("Usage:\t%s <SerialPort> <r/w> <FILE_NAME> [BAUDRATE] [DATA_BYTES] [NUM_RETRIES] [TIMEOUT]\n", progName);
 	printf("\tex: %s 0 w pinguim.gif\n", progName);
 	printf("Arguments between '[' ']' are optional\n");
 }
@@ -60,15 +60,15 @@ int main(int argc, char** argv)
 
 	char * fileName = argc > 3 ? argv[3] : NULL;
 
-	int dataBytes = DATA_BYTES;
+	int baudRate = BAUDRATE;
 	if (argc > 4)
-		dataBytes = strtol(argv[4], NULL, 10);
+		baudRate = strtol(argv[4], NULL, 10);
+
+	int dataBytes = DATA_BYTES;
+	if (argc > 5)
+		dataBytes = strtol(argv[5], NULL, 10);
 	if (dataBytes > MAX_DATA_BYTES)
 		dataBytes = MAX_DATA_BYTES;
-
-	int baudRate = BAUDRATE;
-	if (argc > 5)
-		baudRate = strtol(argv[5], NULL, 10);
 
 	int numRetries = NUM_RETRIES;
 	if (argc > 6)

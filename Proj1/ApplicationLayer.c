@@ -15,7 +15,7 @@ int initApplicationLayer(const char * port, int baudrate, int timeout, int numRe
 	else
 		return logError("ApplicationLayer already initialized");
 
-	if (initLinkLayer(atoi(port), baudrate, timeout, numRetries) != OK)
+	if (initLinkLayer(atoi(port), getBaudrate(baudrate), timeout, numRetries) != OK)
 		return logError("Failed LL initialization");
 
 	if ((al->fd = openSerialPort()) == -1)

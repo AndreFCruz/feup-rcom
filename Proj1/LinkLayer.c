@@ -397,11 +397,13 @@ int sendControlFrame(int fd, ControlType controlType) {
 		return -1;
 	}
 
+	printf("Send control frame: ");
 	printArray(controlFrame, CONTROL_FRAME_SIZE);
 
 	return res;
 }
 
+// TODO Dividir em duas funcoes, uma para ler uma control frame, outra para confirmar o tipo
 int readControlFrame(int fd, ControlType controlType) {
 	uchar * controlFrame;
 	uchar afValue;
@@ -425,7 +427,7 @@ int readControlFrame(int fd, ControlType controlType) {
 
 	int res;
 	if ((res = readFromSerialPort(fd, &controlFrame)) < CONTROL_FRAME_SIZE) {
-		printf("Failed to read control frame. Read %d. Ctrl type: %02X", res, controlType);
+		printf("Failed to read control frame. Read %d. Ctrl type: %02X -- ", res, controlType);
 		printArray(controlFrame, res);
 		return ERROR;
 	}
