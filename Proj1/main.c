@@ -9,7 +9,7 @@
 #include "ApplicationLayer.h"
 #include "utils.h"
 
-#define DEBUG
+#define DEBUG	1
 
 #define BAUDRATE 38400
 #define _IDXIX_SOURCE 1 /* POSIX compliant source */
