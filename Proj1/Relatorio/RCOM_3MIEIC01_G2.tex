@@ -1,0 +1,174 @@
+\documentclass[a4paper]{article}
+
+%use the english line for english reports
+%usepackage[english]{babel}
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=C,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\begin{document}
+
+\setlength{\textwidth}{16cm}
+\setlength{\textheight}{22cm}
+
+\title{\Huge\textbf{1º Trabalho Laboratorial:}\linebreak\linebreak
+\Huge\textbf{Ligação de Dados}\linebreak\linebreak\linebreak
+\Large\textbf{Relatório}\linebreak\linebreak
+\linebreak\linebreak
+\includegraphics[scale=0.1]{images/feup-logo.png}\linebreak\linebreak
+\linebreak
+\Large{Mestrado Integrado em Engenharia Informática e Computação} \linebreak\linebreak
+\Large{Redes de Computadores}\linebreak
+}
+
+\author{\textbf{Turma 1 Grupo 2:}\\
+\linebreak\\
+André Cruz - 201503776 \\
+Bruno Piedade - 201505668 \\
+Edgar Carneiro - 201503748 \\
+\linebreak\linebreak \\
+ \\ Faculdade de Engenharia da Universidade do Porto \\ Rua Roberto Frias, s\/n, 4200-465 Porto, Portugal \linebreak\linebreak
+\linebreak\linebreak\vspace{1cm}}
+
+\maketitle
+\thispagestyle{empty}
+
+%************************************************************************************************
+%************************************************************************************************
+
+\newpage
+
+%Todas as figuras devem ser referidas no texto. %\ref{fig:codigoFigura}
+%
+%%Exemplo de código para inserção de figuras
+%%\begin{figure}[h!]
+%%\begin{center}
+%%escolher entre uma das seguintes três linhas:
+%%\includegraphics[height=20cm,width=15cm]{path relativo da imagem}
+%%\includegraphics[scale=0.5]{path relativo da imagem}
+%%\includegraphics{path relativo da imagem}
+%%\caption{legenda da figura}
+%%\label{fig:codigoFigura}
+%%\end{center}
+%%\end{figure}
+%
+%
+%\textit{Para escrever em itálico}
+%\textbf{Para escrever em negrito}
+%Para escrever em letra normal
+%``Para escrever texto entre aspas''
+%
+%Para fazer parágrafo, deixar uma linha em branco.
+%
+%Como fazer bullet points:
+%\begin{itemize}
+	%\item Item1
+	%\item Item2
+%\end{itemize}
+%
+%Como enumerar itens:
+%\begin{enumerate}
+	%\item Item 1
+	%\item Item 2
+%\end{enumerate}
+%
+%\begin{quote}``Isto é uma citação''\end{quote}
+
+%Sumário
+\Huge\textbf{Sumário}\linebreak\linebreak
+
+Pimeiro parágrafo sobre o contexto do trabalho.
+
+SEgundo parágrafo sobre as principais conclusões do relatório.
+\newpage
+
+%1.Introdução
+\section{Introdução}
+
+Objetivos do trabalho e do relatorio? (COPIAR do guiao?)
+
+descrição da lógica do relatório com indicações sobre o tipo de informação que poderá ser encontrada em cada uma secções seguintes
+\newpage
+
+%2.Arquitetura
+\section{Arquitetura}
+
+Blocos funcionais e interfaces
+\newpage
+
+%3.Estrutura do código
+\section{Estrutura do Código}
+
+APIs, principais estruturas de dados, principais funções e sua relação com a arquitetura)
+\newpage
+
+%4. Casos de uso principais
+\section{Casos de uso principais}
+
+(identificação; sequências de chamada de funções)
+\newpage
+
+%5. Protocolo de ligação lógica
+\section{Protocolo de ligação lógica}
+
+  (identificação dos principais aspectos funcionais; descrição da estratégia de implementação destes aspectos com apresentação de extratos de código)
+\newpage
+
+%6. Protocolo de aplicação
+\section{Protocolo de aplicação}
+
+  (identificação dos principais aspectos funcionais; descrição da estratégia de implementação destes aspectos com apresentação de extratos de código)
+\newpage
+
+%7. Validação
+\section{Validação}
+
+   (descrição dos testes efectuados com apresentação quantificada dos resultados, se possível)
+\newpage
+
+%8. Eficiência do protocolo de ligação de dados
+\section{Eficiência do protocolo de ligação de dados}
+
+   (caraterização estatística da  eficiência do protocolo, feita com recurso a medidas sobre o código desenvolvido. A caracterização teórica de um protocolo Stop\&Wait, que deverá ser usada como termo de comparação, encontra-se descrita nos slides de Ligação Lógica das aulas teóricas). 
+\newpage
+
+%9. Conclusões
+\section{Eficiência do protocolo de ligação de dados}
+
+  (síntese da informação apresentada nas secções anteriores; reflexão sobre os objectivos de aprendizagem alcançados)
+\newpage
+
+%Anexo I
+\section{Anexo I}
+\begin{lstlisting}[language=C]
+
+
+\end{lstlisting}
+
+\end{document}
