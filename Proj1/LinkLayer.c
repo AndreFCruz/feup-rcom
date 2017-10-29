@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "LinkLayer.h"
+#include "Alarm.h"
 
 #define FLAG 				0x7E
 #define ESC 				0x7D
@@ -16,7 +17,7 @@
 #define INF_FORMAT_SIZE		6
 #define INF_HEAD_SIZE		4
 #define INF_TRAILER_SIZE 	2
-#define RECEIVER_SIZE		256
+#define RECEIVER_SIZE		1024
 
 //Information Message Trailers position
 #define TRAIL_BCC_POS		0
@@ -213,7 +214,7 @@ int llopen(ConnectionType type) {
 		break;
 	}
 
-	printf("Failed llopen\n");
+	logError("Failed llopen");
 	return -1;
 }
 
@@ -230,7 +231,6 @@ void llcloseReceiver(int fd) {
 }
 
 int llclose(int fd) {
-	printf("** llclose called **");
 
 	if (TRANSMITTER == connectionType)
 		llcloseTransmitter(fd);
@@ -256,26 +256,29 @@ int llclose(int fd) {
 int llwrite(int fd, uchar ** bufferPtr, int length) {
 	int res = 0;
 
-	printf("**llwrite called**");
-
 	if (framingInformation(bufferPtr, &length) == ERROR) {
-		printf("llwrite error: Failed to create Information Frame.\n");
+		logError("llwrite: Failed to create Information Frame");
 		return -1;
 	}
 
 	if (byteStuffing(bufferPtr, &length) == ERROR) {
-		printf("llwrite error: Failed to create Information Frame.\n");
+		logError("llwrite: Failed to create Information Frame");
 		return -1;
 	}
 
 	uint tries = 0;
+	setAlarm();
 	do {
-		printf("llwrite: tentativa %d\n", tries);
+		alarmWentOff = FALSE;
 		if ((res = write(fd, *bufferPtr, length)) < length) {
-			printf("llwrite error: Bad write: %d bytes\n", res);
+			logError("llwrite error: Bad write");
 			return -1;
 		}
-	} while ((++tries < (ll->numRetries)) && (readControlFrame(fd, RR) != OK));
+
+		alarm(ll->timeout);
+	} while ( (readControlFrame(fd, RR) != OK) && (++tries < (ll->numRetries)));
+
+	stopAlarm();
 
 	if (tries >= ll->numRetries)
 		return ERROR;
@@ -289,72 +292,88 @@ int llwrite(int fd, uchar ** bufferPtr, int length) {
 int readFromSerialPort(int fd, uchar ** dest) {
 	uchar * buffer = (uchar *) malloc(RECEIVER_SIZE);
 	int bufferIdx = 0;		//Number of bytes received
+	int res;
 
-	if (readFrameFlag(fd) < 1) {
-		printf("llread Error: read Frame flag error\n");
+	if (readFrameFlag(fd) != OK) {
+		logError("readFromSerialPort: read Frame flag error");
 		return -1;
 	}
 
-	printf("\nStarting reading loop\n");
 	buffer[bufferIdx++] = FLAG;
 	do {
-		if (read(fd, buffer + bufferIdx, sizeof(uchar)) < 1) {
-			printf("llread error: Failed to read from SerialPort\n");
+		if (alarmWentOff == TRUE)
 			return -1;
-		}
 
+		res = read(fd, buffer + bufferIdx, sizeof(uchar));
+		if ( res < 0 ) {
+			logError("readFromSerialPort: Failed to read from SerialPort");
+			return -1;
+		} else if (res == 0) {
+			continue;
+		}
 		++bufferIdx;
-		if ( (bufferIdx % RECEIVER_SIZE) == 0 ) {
-			if ((buffer = realloc(buffer, ((bufferIdx / RECEIVER_SIZE) + 1) * RECEIVER_SIZE )) == NULL) {
-				printf("llread error: Failed to realloc buffer\n");
+		if ( ((bufferIdx + 1) % RECEIVER_SIZE) == 0 ) {
+			if ((buffer = realloc(buffer,  ((bufferIdx + 1) / RECEIVER_SIZE + 1) * RECEIVER_SIZE)) == NULL) {
+				logError("readFromSerialPort: Failed to realloc buffer");
 				return -1;
 			}
 		}
 	} while (buffer[bufferIdx - 1] != FLAG);
 
-	if (byteDestuffing(buffer, &bufferIdx) == ERROR) {
-		printf("llread error: Failed byteDestuffing\n");
-		return -1;
-	}
-
-	if (deframingInformation(&buffer, &bufferIdx) != OK) {
-		// enviar REJ aqui para antecipar TIMEOUT ?
-		logError("Failed to deframe information");
-		return -1;
-	}
-
 	*dest = buffer;
 
-	sendControlFrame(fd, RR);
 	return bufferIdx;
 }
 
 int llread(int fd, uchar ** dest) {
-	uint tries = 0;
+	// uint tries = 0;
 	int ret;
-	while (tries++ < ll->numRetries){
+	while ( 1 /* tries++ < ll->numRetries */ ){
 		if ( (ret = readFromSerialPort(fd, dest)) > 0 ) {
+			if (byteDestuffing(*dest, &ret) == ERROR) {
+				logError("llread: Failed byteDestuffing");
+				free(*dest);
+				continue;
+			}
+
+			if (deframingInformation(dest, &ret) != OK) {
+				logError("llread: Failed to deframe information");
+				//sendControlFrame(fd, REJ); // TODO
+				free(*dest);
+				continue;
+			}
+
+			sendControlFrame(fd, RR);
 			return ret;
 		}
 	}
+
 	return -1;
 }
 
 int readFrameFlag(int fd) {
-	uchar tempuchar = 0;
-	int totalRead = 0;
+	uchar tempchar = 0;
 	int res;
 
-	while (tempuchar != FLAG) {
-		if ( (res = read(fd, &tempuchar, sizeof(uchar))) < 1) {
-			printf("readFrameFlag error: Failed to read from SerialPort\n");
-			return -1;
-		}
-		++totalRead;
+	// Loop para ler 1 caracter: se for a FLAG OK;
+	// se nao, passar para o loop seguinte e descartar tudo até
+	// ler uma flag (incluindo a flag) e dar return ERROR
+	while (alarmWentOff == FALSE) {
+		res = read(fd, &tempchar, 1);
 
-		printf("uchar read: %02X\n", tempuchar);
+		if (res == 0)
+			continue;
+		else if (res == 1 && tempchar == FLAG)
+			return OK;
+		else
+			break;
 	}
-	return totalRead;
+
+	while (tempchar != FLAG && alarmWentOff == FALSE) {
+		read(fd, &tempchar, sizeof(uchar));
+	}
+
+	return logError("\tExited garbage eater");
 }
 
 void createControlFrame(uchar buffer[], uchar adressField, uchar controlField) {
@@ -382,17 +401,15 @@ int sendControlFrame(int fd, ControlType controlType) {
 
 	int res;
 	if ((res = write(fd, controlFrame, CONTROL_FRAME_SIZE)) < CONTROL_FRAME_SIZE) {
-		printf("senControlFrame error: Bad write: %d bytes\n", res);
+		logError("\tsenControlFrame: Bad write");
 		return -1;
 	}
-
-	printArray(controlFrame, CONTROL_FRAME_SIZE);
 
 	return res;
 }
 
 int readControlFrame(int fd, ControlType controlType) {
-	uchar controlFrame[CONTROL_FRAME_SIZE];
+	uchar * controlFrame;
 	uchar afValue;
 
 	switch (controlType) {
@@ -413,15 +430,11 @@ int readControlFrame(int fd, ControlType controlType) {
 	}
 
 	int res;
-	if ((res = read(fd, controlFrame, CONTROL_FRAME_SIZE)) < CONTROL_FRAME_SIZE) {
-		printf("Failed to read control frame. Read %d. Ctrl type: %02X", res, controlType);
+	if ((res = readFromSerialPort(fd, &controlFrame)) < CONTROL_FRAME_SIZE) {
+		printf("Failed to read control frame. Read %d. Ctrl type: %02X -- ", res, controlType);
 		printArray(controlFrame, res);
 		return ERROR;
 	}
-
-	printf("Read control frame: ");
-	printArray(controlFrame, CONTROL_FRAME_SIZE);
-	printf("%02X, %02X, %02X, %02X, %02X\n", FLAG, afValue, controlType, (controlFrame[AF_POS] ^ controlFrame[CF_POS]), FLAG);
 
 	if ((controlFrame[FLAG1_POS] == FLAG) &&
 		((controlFrame[CF_POS] & 0x7F) == controlType) &&
@@ -430,7 +443,7 @@ int readControlFrame(int fd, ControlType controlType) {
 		(controlFrame[BCC_POS] == (controlFrame[AF_POS] ^ controlFrame[CF_POS])))
 	{
 		uchar seqNrToReceive =  (~(ll->seqNumber)) << 7;
-		printf("Current seqNr: %02X. Received seqNr: %02X. Modified seqNr: %02x\n", ll->seqNumber, controlFrame[CF_POS] & 0xA0, seqNrToReceive);
+
 		if ((controlType == RR) || (controlType == REJ)) {
 			if (controlFrame[CF_POS] == (controlType | seqNrToReceive)) {
 				ll->seqNumber = ll->seqNumber ? 0 : 1;
@@ -441,6 +454,8 @@ int readControlFrame(int fd, ControlType controlType) {
 	} else {
 		return logError("Frame was not of the given type or Flags were not recognized");
 	}
+
+	free (controlFrame);
 
 	return OK;
 }
@@ -460,8 +475,7 @@ int framingInformation(uchar ** packet, int* size) {
 	(*size) += INF_FORMAT_SIZE;
 
 	if ((*packet = realloc(*packet, (*size))) == NULL) {
-		printf("framingInformation: Realloc error.\n");
-		return ERROR;
+		return logError("framingInformation: Realloc error.");
 	}
 
 	(*packet)[previousSize + TRAIL_BCC_POS] = calcBCC((*packet), previousSize);
@@ -479,36 +493,41 @@ int framingInformation(uchar ** packet, int* size) {
 
 int deframingInformation(uchar ** frame, int* size) {
 	//Checking the Header
-	if (((*frame)[FLAG1_POS] != FLAG) ||
-		((*frame)[AF_POS] != AF1) ||
-		((*frame)[CF_POS] != (INF | (ll->seqNumber << 6))) ||
-		(((*frame)[AF_POS] ^ (*frame)[CF_POS]) != (*frame)[BCC_POS])) {
-			printArray((*frame), *size);
-			return logError("Received unexpected head Information");
-	}
+	int flagPred = ((*frame)[FLAG1_POS] != FLAG);
+	int afPred = ((*frame)[AF_POS] != AF1);
+	int seqNrPred = ((*frame)[CF_POS] != (INF | (ll->seqNumber << 6)));
+	int bccPred = (((*frame)[AF_POS] ^ (*frame)[CF_POS]) != (*frame)[BCC_POS]);
 
-	//read's Nr is negative of sender's Ns
-	ll->seqNumber = ((*frame)[CF_POS] >> 6) & 0b01 ? 0 : 1;
+	if ( flagPred || afPred || bccPred ) {
+		printf("Unexpected info on deframe: ");
+		printArray((*frame), *size);
+		printf("Flag: %d. AF: %d. SeqNr: %d. BCC: %d.\n", flagPred, afPred, seqNrPred, bccPred);
+		return ERROR;
+	}
 
 	//Checking the Trailer
 	uint trailPos = (*size) - INF_TRAILER_SIZE;
 	uchar bcc = calcBCC((*frame) + INF_HEAD_SIZE, trailPos - INF_HEAD_SIZE);
 
 	if ((*frame)[trailPos + TRAIL_BCC_POS] != bcc) {
-		//sendControlFrame(REJ);	//O que faz ele na receção de um BCC? ver protocolo
-		return logError("received unexpected Data Field BCC\n");
+		return logError("received unexpected Data Field BCC2\n");
 	}
 	if ((*frame)[trailPos + TRAIL_FLAG_POS] != FLAG)
 		return logError("Received unexpected value instead of trailer FLAG\n");
 
-	//Remove the framing
-	(*size) -= INF_FORMAT_SIZE;
+	//read's Nr is negative of sender's Ns
+	// THIS MUST BE AFTER CHECKING FRAME INFO
+	if (!seqNrPred) {
+		ll->seqNumber = ((*frame)[CF_POS] >> 6) & 0b01 ? 0 : 1;
+	}
+
+	(*size) -= INF_FORMAT_SIZE; // Size -= Frame_Size
 
 	memmove((*frame), (*frame) + INF_HEAD_SIZE, (*size));
 	if (((*frame) = realloc(*frame, (*size))) == NULL)
 		return logError("Realloc error in deframingInformation");
 
-	return OK;
+	return (!seqNrPred);
 }
 
 int byteStuffing(uchar ** buffer, int * size) {
@@ -519,6 +538,8 @@ int byteStuffing(uchar ** buffer, int * size) {
 		if (((*buffer)[i] == (uchar) FLAG) || ((*buffer)[i] == (uchar) ESC))
 			++cnt;
 	}
+	if (cnt == 0) return OK;
+
 	*size = (*size) + cnt;
 
 	if (((*buffer) = realloc((*buffer), *size)) == NULL) { // may abort
@@ -550,5 +571,8 @@ int byteDestuffing(uchar * buffer, int * size) {
 			buffer[i] = (buffer[i] ^ STUFFING);
 		}
 	}
+
+	// TODO realloc?
+
 	return OK;
 }

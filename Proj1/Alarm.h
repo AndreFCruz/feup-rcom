@@ -3,8 +3,6 @@
 
 extern int alarmWentOff;
 
-void setAlarmTimeout(uint secs);
-
 void alarmHandler(int signal);
 
 void setAlarm();

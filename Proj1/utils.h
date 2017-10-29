@@ -11,6 +11,8 @@
 #define ERROR	0
 #define OK		1
 
+extern int DEBUG;
+
 typedef unsigned int uint;
 typedef unsigned char uchar;
 
@@ -22,10 +24,15 @@ long getFileSize(FILE* file);
 
 void printArray(uchar buffer[], int size);
 
-void convertIntToBytes(uchar * res, uint src);	// DEPRECATED 
+void convertIntToBytes(uchar * res, uint src);	// DEPRECATED
 
 uint convertBytesToInt(uchar * src);			// DEPRECATED
 
 int logError(char * errorMsg);
+
+int getBaudrate(int baudrate);
+
+void printProgressBar(int current, int total);
+
 
 #endif

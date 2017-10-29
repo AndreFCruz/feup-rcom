@@ -15,7 +15,7 @@ int initApplicationLayer(const char * port, int baudrate, int timeout, int numRe
 	else
 		return logError("ApplicationLayer already initialized");
 
-	if (initLinkLayer(atoi(port), baudrate, timeout, numRetries) != OK)
+	if (initLinkLayer(atoi(port), getBaudrate(baudrate), timeout, numRetries) != OK)
 		return logError("Failed LL initialization");
 
 	if ((al->fd = openSerialPort()) == -1)
@@ -62,8 +62,6 @@ int sendFile() {
 	ctrlPacket.fileSize = getFileSize(file);
 	ctrlPacket.argNr = CTRL_PACKET_ARGS;
 
-	printf("Sending control packet...\n");
-
 	if (sendControlPacket(al->fd, &ctrlPacket) != OK)
 		return logError("Error sending control packet");
 
@@ -82,6 +80,7 @@ int sendFile() {
 		}
 
 		progress += res;
+		printProgressBar(progress, ctrlPacket.fileSize);
 	}
 	free(fileBuffer);
 
@@ -94,8 +93,10 @@ int sendFile() {
 	if ((state == OK) && sendControlPacket(al->fd, &ctrlPacket) != OK)
 		return logError("Error sending control packet");
 
-	if (llclose(al->fd) != OK)
+	if (state != OK || llclose(al->fd) != OK)
 		return ERROR;
+
+	printf("\nFile sent successfully.\n");
 
 	return OK;
 }
@@ -108,8 +109,6 @@ int receiveFile() {
 	al->fd = llopen(al->type);
 	if (al->fd < 0)
 		return logError("Failed llopen");
-
-	printf("Receiving control packet...\n");
 
 	ControlPacket ctrlPacket;
 	if (receiveControlPacket(al->fd, &ctrlPacket) != OK || ctrlPacket.type != START) {
@@ -143,15 +142,16 @@ int receiveFile() {
 		currentSeqNr = (currentSeqNr + 1) % 256;
 		progress += (uint) dataPacket.size;
 
-		//printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: 0x%02X\n", progress, ctrlPacket.fileSize, dataPacket.size);
+		printProgressBar(progress, ctrlPacket.fileSize);
+
+		// printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: 0x%02X\n", progress, ctrlPacket.fileSize, dataPacket.size);
 
 		if (fwrite(dataPacket.data, sizeof(char), dataPacket.size, outputFile) == 0) {
-			printf("fwrite returned 0\n");
-			return OK;
+			return logError("sendFile: fwrite returned 0");
 		}
 
+		free(dataPacket.data);
 	}
-	printf("OUT OF DATA PACKETS \n");
 
 	if (fclose(outputFile)) {
 		perror("fclose failed");
@@ -162,10 +162,10 @@ int receiveFile() {
 		return logError("Error receiving control packet");
 	}
 
-	if (!llclose(al->fd))
+	if (state != OK || llclose(al->fd) != OK)
 		return logError("llclose failed");
 
-	printf("File received successfully.\n");
+	printf("\nFile received successfully.\n");
 
 	return OK;
 }
