@@ -272,7 +272,8 @@ int llwrite(int fd, uchar ** bufferPtr, int length) {
 		alarmWentOff = FALSE;
 		if ((res = write(fd, *bufferPtr, length)) < length) {
 			logError("llwrite error: * Bad write *");
-			return -1;
+			// return -1;
+			continue;
 		}
 
 		alarm(ll->timeout);
@@ -338,9 +339,12 @@ int llread(int fd, uchar ** dest) {
 				continue;
 			}
 
-			if (deframingInformation(dest, &ret) != OK) {
+			ret = deframingInformation(dest, &ret);
+			if (ret == ERROR2) {
+				sendControlFrame(fd, REJ);
+			}
+			if (ret != OK) {
 				logError("llread: Failed to deframe information");
-				sendControlFrame(fd, REJ); // TODO
 				free(*dest);
 				continue;
 			}
@@ -509,10 +513,11 @@ int deframingInformation(uchar ** frame, int* size) {
 
 	//Checking the Trailer
 	uint trailPos = (*size) - INF_TRAILER_SIZE;
-	uchar bcc = calcBCC((*frame) + INF_HEAD_SIZE, trailPos - INF_HEAD_SIZE);
+	uchar bcc2 = calcBCC((*frame) + INF_HEAD_SIZE, trailPos - INF_HEAD_SIZE);
 
-	if ((*frame)[trailPos + TRAIL_BCC_POS] != bcc) {
-		return logError("received unexpected Data Field BCC2\n");
+	if ((*frame)[trailPos + TRAIL_BCC_POS] != bcc2) {
+		logError("received unexpected Data Field BCC2\n");
+		return ERROR2;
 	}
 	if ((*frame)[trailPos + TRAIL_FLAG_POS] != FLAG)
 		return logError("Received unexpected value instead of trailer FLAG\n");
