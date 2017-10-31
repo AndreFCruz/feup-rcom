@@ -40,7 +40,7 @@ int main(int argc, char** argv)
 {
 	DEBUG = TRUE;
 
-	if ( (strcmp("0", argv[1])!=0) && (strcmp("1", argv[1])!=0) ) {
+	if (argc < 2 || ((strcmp("0", argv[1])!=0) && (strcmp("1", argv[1])!=0))) {
 		printUsage(argv[0]);
 		exit(1);
 	}
