@@ -16,6 +16,17 @@ void makeDataPacket(DataPacket * src, Packet * dest) {
 	dest->size = packetSize;
 }
 
+int sendDataPacket(int fd, DataPacket * src) {
+	Packet packet;
+	makeDataPacket(src, &packet);
+	int written = llwrite(fd, &(packet.data), packet.size);
+	free(packet.data); // TODO
+	if (written >= (int) packet.size)
+		return OK;
+
+	return ERROR;
+}
+
 void makeControlPacket(ControlPacket * src, Packet * dest) {
 	int fileNameSize = strnlen(src->fileName, MAX_FILE_NAME);
 	int packetSize = 1 + 2 * (src->argNr) + fileNameSize + FILE_SIZE_LENGTH;
@@ -42,17 +53,6 @@ void makeControlPacket(ControlPacket * src, Packet * dest) {
 	dest->size = packetSize;
 }
 
-int sendDataPacket(int fd, DataPacket * src) {
-	Packet packet;
-	makeDataPacket(src, &packet);
-	int written = llwrite(fd, &(packet.data), packet.size);
-	free(packet.data); // TODO
-	if (written >= (int) packet.size)
-		return OK;
-
-	return ERROR;
-}
-
 int sendControlPacket(int fd, ControlPacket * src) {
 	Packet packet;
 	makeControlPacket(src, &packet);
@@ -64,19 +64,19 @@ int sendControlPacket(int fd, ControlPacket * src) {
 }
 
 int receiveDataPacket(int fd, DataPacket * dest) {
-	uchar * data;
-	if(llread(fd, &data) <= 0)
+	uchar * buffer;
+	if(llread(fd, &buffer) <= 0)
 		return logError("receiveDataPacket: failed to read packet");
 
-	if(data[CTRL_FIELD_IDX] != DATA) {
+	if(buffer[CTRL_FIELD_IDX] != DATA) {
 		return logError("receiveDataPacket: type does not match any known type DATA");
 	}
 
-	dest->seqNr = data[SEQ_NUM_IDX];
-	dest->size = (uchar) data[DATA_PACKET_SIZE2_IDX] * SIZE2_MUL + (uchar) data[DATA_PACKET_SIZE1_IDX];
+	dest->seqNr = buffer[SEQ_NUM_IDX];
+	dest->size = (uchar) buffer[DATA_PACKET_SIZE2_IDX] * SIZE2_MUL + (uchar) buffer[DATA_PACKET_SIZE1_IDX];
 	dest->data = (uchar *) malloc(dest->size);
-	memcpy(dest->data, &data[HEADER_SIZE], dest->size);
-	free(data);
+	memcpy(dest->data, &buffer[HEADER_SIZE], dest->size);
+	free(buffer);
 	return OK;
 }
 

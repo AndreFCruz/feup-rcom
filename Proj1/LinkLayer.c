@@ -14,7 +14,7 @@
 #define STUFFING 			0X20
 
 #define CONTROL_FRAME_SIZE	5
-#define INF_FORMAT_SIZE		6
+#define INF_FRAME_SIZE		6
 #define INF_HEAD_SIZE		4
 #define INF_TRAILER_SIZE 	2
 #define RECEIVER_SIZE		1024
@@ -271,7 +271,7 @@ int llwrite(int fd, uchar ** bufferPtr, int length) {
 	do {
 		alarmWentOff = FALSE;
 		if ((res = write(fd, *bufferPtr, length)) < length) {
-			logError("llwrite error: Bad write");
+			logError("llwrite error: * Bad write *");
 			return -1;
 		}
 
@@ -282,39 +282,41 @@ int llwrite(int fd, uchar ** bufferPtr, int length) {
 
 	if (tries >= ll->numRetries)
 		return ERROR;
-	//TODO: Fazer alguma coisa quando as tentativas ultrapassarem? é que nao esta a afazer nada,
-	//dai de certo reiniciar... Ver o que acontece ao reader. Fica infinitamente a espera?
 
 	return res;
 }
 
 
 int readFromSerialPort(int fd, uchar ** dest) {
-	uchar * buffer = (uchar *) malloc(RECEIVER_SIZE);
-	int bufferIdx = 0;		//Number of bytes received
-	int res;
-
 	if (readFrameFlag(fd) != OK) {
 		logError("readFromSerialPort: read Frame flag error");
 		return -1;
 	}
 
+	uchar * buffer = (uchar *) malloc(RECEIVER_SIZE);
+	int bufferIdx = 0;		//Number of bytes received
+	int res;
+
 	buffer[bufferIdx++] = FLAG;
 	do {
-		if (alarmWentOff == TRUE)
+		if (alarmWentOff == TRUE) {
+			free(buffer);
 			return -1;
+		}
 
 		res = read(fd, buffer + bufferIdx, sizeof(uchar));
 		if ( res < 0 ) {
 			logError("readFromSerialPort: Failed to read from SerialPort");
+			free(buffer);
 			return -1;
 		} else if (res == 0) {
 			continue;
 		}
 		++bufferIdx;
 		if ( ((bufferIdx + 1) % RECEIVER_SIZE) == 0 ) {
-			if ((buffer = realloc(buffer,  ((bufferIdx + 1) / RECEIVER_SIZE + 1) * RECEIVER_SIZE)) == NULL) {
+			if ((buffer = (uchar*) realloc(buffer,  ((bufferIdx + 1) / RECEIVER_SIZE + 1) * RECEIVER_SIZE)) == NULL) {
 				logError("readFromSerialPort: Failed to realloc buffer");
+				free(buffer);
 				return -1;
 			}
 		}
@@ -338,7 +340,7 @@ int llread(int fd, uchar ** dest) {
 
 			if (deframingInformation(dest, &ret) != OK) {
 				logError("llread: Failed to deframe information");
-				//sendControlFrame(fd, REJ); // TODO
+				sendControlFrame(fd, REJ); // TODO
 				free(*dest);
 				continue;
 			}
@@ -472,9 +474,9 @@ uchar calcBCC(uchar * buffer, size_t length) {
 int framingInformation(uchar ** packet, int* size) {
 
 	uint previousSize = (*size);
-	(*size) += INF_FORMAT_SIZE;
+	(*size) += INF_FRAME_SIZE;
 
-	if ((*packet = realloc(*packet, (*size))) == NULL) {
+	if (((*packet) = (uchar*) realloc(*packet, *size)) == NULL) {
 		return logError("framingInformation: Realloc error.");
 	}
 
@@ -521,10 +523,10 @@ int deframingInformation(uchar ** frame, int* size) {
 		ll->seqNumber = ((*frame)[CF_POS] >> 6) & 0b01 ? 0 : 1;
 	}
 
-	(*size) -= INF_FORMAT_SIZE; // Size -= Frame_Size
+	(*size) -= INF_FRAME_SIZE; // Size -= Frame_Size
 
 	memmove((*frame), (*frame) + INF_HEAD_SIZE, (*size));
-	if (((*frame) = realloc(*frame, (*size))) == NULL)
+	if (((*frame) = (uchar*) realloc(*frame, (*size))) == NULL)
 		return logError("Realloc error in deframingInformation");
 
 	return (!seqNrPred);
@@ -542,7 +544,7 @@ int byteStuffing(uchar ** buffer, int * size) {
 
 	*size = (*size) + cnt;
 
-	if (((*buffer) = realloc((*buffer), *size)) == NULL) { // may abort
+	if (((*buffer) = ((uchar*) realloc((*buffer), *size))) == NULL) { // may abort
 		return logError("ByteStuffing: Realloc error.");
 	}
 

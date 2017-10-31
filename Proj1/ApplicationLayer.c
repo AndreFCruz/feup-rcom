@@ -47,7 +47,7 @@ int sendFile() {
 	if (al == NULL)
 		return logError("AL not initialized");
 
-	FILE * file = fopen(al->fileName, "r"); // may need to be changed to "ab" for compatibility
+	FILE * file = fopen(al->fileName, "r");
 	if (file == NULL)
 		return logError("Error while opening file");
 
@@ -69,6 +69,8 @@ int sendFile() {
 	uchar * fileBuffer = (uchar *) malloc(al->maxDataMsgSize * sizeof(char));
 	uint res, progress = 0, currentSeqNr = 0;
 	int state = OK;
+	printProgressBar(0, ctrlPacket.fileSize);
+	
 	while ( (res = fread(fileBuffer, sizeof(char), al->maxDataMsgSize, file)) > 0 ) {
 		dataPacket.seqNr = currentSeqNr;
 		currentSeqNr = (currentSeqNr + 1) % 256;
@@ -129,6 +131,8 @@ int receiveFile() {
 	DataPacket dataPacket;
 	uint progress = 0, currentSeqNr = 0;
 	int state = OK;
+	printProgressBar(0, ctrlPacket.fileSize);
+
 	while (progress < ctrlPacket.fileSize) {
 		if ( (state = receiveDataPacket(al->fd, &dataPacket)) != OK) {
 			logError("Error receiving data packet");
@@ -143,8 +147,6 @@ int receiveFile() {
 		progress += (uint) dataPacket.size;
 
 		printProgressBar(progress, ctrlPacket.fileSize);
-
-		// printf("PROGRESS: %d, FILESIZE: %d, DATAPACKETSIZE: 0x%02X\n", progress, ctrlPacket.fileSize, dataPacket.size);
 
 		if (fwrite(dataPacket.data, sizeof(char), dataPacket.size, outputFile) == 0) {
 			return logError("sendFile: fwrite returned 0");
