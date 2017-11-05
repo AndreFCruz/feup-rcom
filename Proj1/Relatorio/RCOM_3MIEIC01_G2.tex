@@ -102,16 +102,23 @@ Edgar Carneiro - 201503748 \\
 
 %Sumário
 \Huge\textbf{Sumário}\linebreak\linebreak
+\normalsize 
 
-Pimeiro parágrafo sobre o contexto do trabalho.
+Pimeiro parágrafo sobre o contexto do trabalho:\\
+O trabalho, realizado no âmbito da cadeira de Redes de Computadores, tinha como objetivo a implementação de um protocolo de ligação de dados, de acordo como uma especificação dada pelos docentes da cadeira. A ligação de dados era feita através da Porta Série, que conectava assim dois computadores.
+Era também pedido aos alunos que testassem esse protocolo com uma aplicação simples de transferência de dados.
 
-SEgundo parágrafo sobre as principais conclusões do relatório.
+Segundo parágrafo sobre as principais conclusões do relatório.\\
+TODO
 \newpage
 
 %1.Introdução
 \section{Introdução}
 
 Objetivos do trabalho e do relatorio? (COPIAR do guiao?)
+O trabalho tinha como objetivo a implementação de um protocolo de ligação de dados.
+A ligação de dados era estabelecida através da Porta Série, conectando assim dois computadores.
+A ligação de dados tinha três camadas ... TODO
 
 descrição da lógica do relatório com indicações sobre o tipo de informação que poderá ser encontrada em cada uma secções seguintes
 \newpage
@@ -119,14 +126,74 @@ descrição da lógica do relatório com indicações sobre o tipo de informaç�
 %2.Arquitetura
 \section{Arquitetura}
 
-Blocos funcionais e interfaces
+Blocos funcionais e interfaces\\
+
+\large\textbf{Blocos Funcionais}\\
+\normalsize 
+
+No Trabalho é possível distinguir a existência de duas camadas bem definidas:  a camada do protocolo de ligação de dados - \textit{LinkLayer} - e a camada da aplicação - \textit{AplicationLayer}.
+Os ficheiros \textit{LinkLayer.h} e  \textit{LinkLayer.c} representam a camada de ligação de dados. Os ficheiros \textit{AplicationLayer.h, AplicationLayer.c, Packets.h} e \\texit{ Packets.c} representam a camada da aplicação.
+
+A camada de ligação de dados é a camada responsável pelo estabelecimento de ligação e, portanto, tem todas as funções que asseguram a consistência do protocolo, como o tratamento de erros, envio de mensagens de comunicação, entre outros. É também nesta camada que a interação com a porta série é feita, nomeadamente, a sua abertura, a escrita e leitura desta e o seu fecho.
+
+A camada da aplicação é responsável pela envio e receção de ficheiros, segmentando o ficheiro a enviar em tramas de tamanho definivel pelo utilizador. Esta camada faz uso da inteface da camada de ligação de dados, chamando as suas funções para o envio e receção de segmentos do ficheiro a receber / enviar. A camada da aplicação é sub-dividida em duas sub-camadas, dai o uso dos ficheiros \textit{AplicationLayer.h} e \textit{AplicationLayer.c} para representar a camada mais abstrata, responsável pelo envio do fiicheiro e a receção do ficheiro, e que faz uso da camada menos abstrata, representada nos fiheiros  \textit{Packets.h} e \textit{Packets.c}, que é responsável pela segmentação do ficheiro em pacotes e envio de pacotes de controlo e informação.
+
+\large\textbf{Interface}\\
+\normalsize
+
+Na interface da linha de comandos é permitido ao utilizador correr o programa usando o mesmo binário, independentemente de ser o recetor ou o emissor.
+É necessário o utilizador especificar se será o emissor / recetor, qual o Serial Port a ser usado e, no caso do recetor, qual o ficheiro a transmitir. No entanto, existem parâmetros opcionais que permitem definir outras definições relcionadas com a transmissão de informação, tais como: \textit{baudrate}, tamanho dos segmentos de informação, número de tentativas no reenvio de tramas e tempo esperado até ao reenvio de uma trama.
+Assim, a aplicação pode correr com valores inseridos pelo utilizador, ou com os seus valores por defeito.
+
+O módulo da interface do utilizador interage depois com a camada de aplicação, inicializando esta e indicando o ficheiro a transmitir, no caso do emissor, ou se receberá um ficheiro, no caso do recetor.
+
 \newpage
 
 %3.Estrutura do código
 \section{Estrutura do Código}
 
-APIs, principais estruturas de dados, principais funções e sua relação com a arquitetura)
+APIs, principais estruturas de dados, principais funções e sua relação com a arquitetura)\\
+
+\large\textbf{\textit{Application Layer}}\\
+\normalsize
+
+Tal como já foi referido, na secção \textbf{Arquitetura}, a implementação da camada da aplicação é feita através dos ficheiros \textit{AplicationLayer.h, AplicationLayer.c, Packets.h} e \textit{Packets.c}.
+
+Os ficheiros \textit{AplicationLayer.h} e \textit{AplicationLayer.c} , representantes da sub-camada mais abstrata da camada da aplicação, fazem uso de uma estrutura de dados que guarda o descritor do ficheiro da porta série, o nome do ficheiro a ser transmitido, o tamanho máximo de mensagem a ser transmitido e ainda o tipo de conexão a ser usado - emissor ou recetor.\\
+Meter figurinha da struct ( TODO COMENTAR)\\
+
+As funções da API desta sub-camada são:\\
+Meter figurinha da struct ( TODO COMENTAR)\\
+
+As prinicpais funções desta sub-camada são:\\
+Meter figurinha da struct ( TODO COMENTAR)\\
+
+Os ficheiros \textit{Packets.h} e \textit{Packets.c} , representantes da sub-camada menos abstrata da camada da aplicação, fazem uso de três estruturas de dados: a estrutura \textit{Packet} que guarda um apontador para a informação, e o tamanho dessa informação; a estrutura \textit{DataPacket]} que guarda o número sequencial do pacote a ser enviado, o seu tamanho e o apontador para essa informação; a estrutura \textit{ControlPacket} que guarda o tipo de pacote de Controlo - inicio ou fim -, o nome do ficheiro, o tamanho do ficheiro e o número de argumentos do pacote de controlo.\\
+Meter figurinha da struct ( TODO COMENTAR)\\
+
+As funções da API desta sub-camada são:\\
+Meter figurinha da struct ( TODO COMENTAR)\\
+
+As principais funções desta sub-camada são:\\
+Meter figurinha da struct ( TODO COMENTAR)\\
+
+\large\textbf{\textit{Link Layer}}\\
+\normalsize
+
+Tal como já foi referido, na secção \textbf{Arquitetura}, a implementação da camada de ligação de dados é feita através dos ficheiros \textit{LinkLayer.h} e \textit{LinkLayer.c}.
+
+A camada da ligação de dados é representada através de uma estrutura de dados onde é guardado a porta série utilizada, o \textit{baudrate} utilizado, o número de sequência da trama esperada, tempo esperado até ao reenvio de uma trama, e o número de tentativas de reenvio de uma trama.\\
+Meter figurinha da struct ( TODO COMENTAR)\\
+
+As funções da API desta camada são:\\
+Meter figurinha da struct ( TODO COMENTAR)\\
+
+As principais funções desta camada são:\\
+Meter figurinha da struct ( TODO COMENTAR)\\
+
+
 \newpage
+
 
 %4. Casos de uso principais
 \section{Casos de uso principais}
