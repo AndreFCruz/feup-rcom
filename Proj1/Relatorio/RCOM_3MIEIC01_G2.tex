@@ -234,7 +234,7 @@ As funções de mais baixo nível, associadas à camada da ligação de dados, s
 
  (identificação dos principais aspectos funcionais; descrição da estratégia de implementação destes aspectos com apresentação de extratos de código)\\
  
- A camada de ligação de dados é a camada de mais baixo nível e é a camada responsálve pela interação direta com a Porta Série. Algumas das funcionalidades implementada por esta camada são:
+ A camada de ligação de dados é a camada de mais baixo nível e é a camada responsável pela interação direta com a Porta Série. Algumas das funcionalidades implementada por esta camada são:
 \begin{itemize}
 	\item Abertura e Fecho da Porta Série;
 	\item Escrita de um tramas de informação e controlo usando a Porta Série.
@@ -266,7 +266,28 @@ De seguida, tenta escrever a trama, sendo que se não receber uma resposta do ti
 
 (identificação dos principais aspectos funcionais; descrição da estratégia de implementação destes aspectos com apresentação de extratos de código)\\
 
-BRUNO ESCREVE AQUI xD
+A camada de aplicação é a camada de alto nível responsável pelo processo de envio e receção do ficheiro fonte fazendo uso do API disponibilizado pela camada ligação de dados. As funcionalidades implementadas por esta camada são:
+
+Inicializar a ligação; 
+Ler o ficheiro fonte e dividi-lo em pacotes de dados (caso seja emissor);  
+Reconstruir o ficheiro fonte a partir de pacotes de dados (caso seja recetor);  
+Receber e enviar os pacotes; 
+Terminar a ligação.
+
+Para gerir a interação com os pacotes de dados foi desenvolvido o API (Packet.c) composto pelas seguintes funções:
+
+Em relação aos pacotes de dados: 
+A função makeDataPacket que cria o pacote de dados a partir da informação original do ficheiro fonte; sendDataPacket que envia o pacote de dados utilizando llwrite; receiveDataPacket que recebe o pacote de dados utilizando llread e recolhe a informação do ficheiro fonte.
+
+Em relação aos pacote de controlo:
+A função makeControlPacket que cria o pacote de controlo; sendControlPacket que envia o pacote de controlo utilizando llwrite; receiveControlPacket que recebe o pacote utilizando llread.
+
+Foram implementadas as seguintes funções:
+
+A função sendFile (utilizado no caso do emissor) é responsável por inicializar a ligação, ler o ficheiro fonte e dividi-lo em pacotes de dados, enviar os mesmos e terminar a ligação. Faz recurso a 3 funções do API da camada de ligação de dados: llopen, llwrite e llclose e API de pacotes.
+
+A função receiveFile (utilizado no caso do recetor) é responsável por inicializar a ligação, ler os pacotes de dados, reconstruir o ficheiro fonte utilizando os mesmos e terminar a ligação. Faz recurso a 3 funções do API da camada de ligação de dados: llopen, llread e llclose e API de pacotes.
+
 
 \newpage
 
