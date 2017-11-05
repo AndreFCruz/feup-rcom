@@ -197,6 +197,36 @@ Meter figurinha da struct ( TODO COMENTAR)\\
 \section{Casos de uso principais}
 
 (identificação; sequências de chamada de funções)
+
+Existem dois casos de uso principais bem distintos: correr o programa como emissor ou correr o prorama como recetor. Em cada um destes casos é possível correr o programa usando o mesmo binário, apenas dependendo os argumentos usados na chamada do programa, sendo estes:\\
+TODO meter imagem do print usage\\
+
+No caso em que o programa é executado como \textbf{recetor} a sequência de chamada de funções, considerando as de maior relevência, é:
+\begin{itemize}
+	\item \textbf{receiveFile}, que tem como objetivo receber o ficheiro indicado e que faz uso de funções como a \textbf{receiveControlPacket}, \textbf{receiveDataPacket}, \textbf{llopen} e \textbf{llclose}.
+	\item \textbf{receiveControlPacket}, que tem como objetivo enviar um pacote de controlo, do tipo \textit{START} no início da transmissão e do tipo \textit{END} no fim da transmissão, e que faz uso de funções como \textbf{fillControlPacketArg} e \textbf{llread}.
+	\item \textbf{receiveDataPacket},  que tem como objeitvo enviar um pacote de informação,e que faz uso de funções como \textbf{llread}.
+	\item \textbf{fillControlPacketArg}, que tem como objetivo preencher os argumentos de um control packet, com informação recebida.
+	\item \textbf{llread}, que tem como objetivo ler da Porta Série informação, aplicando-lhe \textit{Byte Destuffing} e \textit{Deframing}. Faz uso das funções \textbf{byteDestuffing, deframingInformation, sendControlFrame} e \textbf{read}.
+\end{itemize}
+
+No caso em que o programa é executado como \textbf{emissor} a sequência de chamada de funções, considerando as de mairo relevância, é:
+\begin{itemize}
+	\item \textbf{sendFile}, que tem como objetivo enviar o ficheiro indicado e que faz uso de funções como a \textbf{sendControlPacket}, \textbf{sendDataPacket}, \textbf{llopen} e \textbf{llclose}.
+	\item \textbf{sendControlPacket}, que tem como objetivo enviar um pacote de controlo, do tipo \textit{START} no início da transmissão e do tipo \textit{END} no fim da transmissão, e que faz uso de funções como \textbf{makeControlPacket} e \textbf{llwrite}.
+	\item \textbf{sendDataPacket},  que tem como objeitvo enviar um pacote de informação, e que faz uso de funções como \textbf{makeDataPacket} e \textbf{llwrite}.
+	\item \textbf{makeControlPacket}, que tem como objetivo criar uma pacote de controlo.
+	\item \textbf{makeDataPacket}, que tem como objetivo criar um pacot de informação.
+	\item \textbf{llwrite}, que tem como objetivo escrever para a Porta Série a informação recebida como argumento, após aplicar uma \textit{frame} e \textit{Byte Stuffing} à informação. Faz uso das funções \textbf{framingInformation, byteStuffing, readControlFrame} e \textbf{write}.
+\end{itemize}
+
+As funções de mais baixo nível, associadas à camada da ligação de dados, são usadas quer pelo emissor quer pelo recetor, sendo estas:
+\begin{itemize}
+	\item \textbf{llopen}, que tem como objetivo abrir a ligação da Porta Série. Faz uso das funções \textbf{openSerialPort, sendControlFrame} e \textbf{readControlFrame}.
+	\item \textbf{llclose}, que tem como objetivo terminar a ligação da Porta Série. Faz uso das funções \textbf{llcloseTransmitter, llcloseReceiver} - conforme seja Emissor ou Recetor - e \textbf{close}.
+	\item \textbf{sendControlFrame}, que tem como objetivo enviar uma trama de controlo. Faz uso das funções \textbf{createControlFrame} e \textbf{write}.
+	\item \textbf{readControlFrame}, que tem como objetivo receber uma trama de controlo. Faz uso da função \textbf{readFromSerialPort}.
+\end{itemize}
 \newpage
 
 %5. Protocolo de ligação lógica
