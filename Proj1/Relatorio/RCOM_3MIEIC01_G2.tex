@@ -267,28 +267,26 @@ De seguida, tenta escrever a trama, sendo que se não receber uma resposta do ti
 (identificação dos principais aspectos funcionais; descrição da estratégia de implementação destes aspectos com apresentação de extratos de código)\\
 
 A camada de aplicação é a camada de alto nível responsável pelo processo de envio e receção do ficheiro fonte fazendo uso do API disponibilizado pela camada ligação de dados. As funcionalidades implementadas por esta camada são:
-
-Inicializar a ligação; 
-Ler o ficheiro fonte e dividi-lo em pacotes de dados (caso seja emissor);  
-Reconstruir o ficheiro fonte a partir de pacotes de dados (caso seja recetor);  
-Receber e enviar os pacotes; 
-Terminar a ligação.
-
+\begin{itemize}
+	\item Inicializar a ligação; 
+	\item Ler o ficheiro fonte e dividi-lo em pacotes de dados (caso seja emissor);  
+	\item Reconstruir o ficheiro fonte a partir de pacotes de dados (caso seja recetor);  
+	\item Receber e enviar os pacotes; 
+	\item Terminar a ligação.
+\end{itemize}
 Para gerir a interação com os pacotes de dados foi desenvolvido o API (Packet.c) composto pelas seguintes funções:
 
 Em relação aos pacotes de dados: 
-A função makeDataPacket que cria o pacote de dados a partir da informação original do ficheiro fonte; sendDataPacket que envia o pacote de dados utilizando llwrite; receiveDataPacket que recebe o pacote de dados utilizando llread e recolhe a informação do ficheiro fonte.
+A função \textbf{makeDataPacket} que cria o pacote de dados a partir da informação original do ficheiro fonte; \textbf{sendDataPacket} que envia o pacote de dados utilizando llwrite; \textbf{receiveDataPacket} que recebe o pacote de dados utilizando llread e recolhe a informação do ficheiro fonte.
 
 Em relação aos pacote de controlo:
-A função makeControlPacket que cria o pacote de controlo; sendControlPacket que envia o pacote de controlo utilizando llwrite; receiveControlPacket que recebe o pacote utilizando llread.
+A função \textbf{makeControlPacket} que cria o pacote de controlo; \textbf{sendControlPacket} que envia o pacote de controlo utilizando \textit{llwrite}; \textbf{receiveControlPacket} que recebe o pacote utilizando \textit{llread}.
 
 Foram implementadas as seguintes funções:
-
-A função sendFile (utilizado no caso do emissor) é responsável por inicializar a ligação, ler o ficheiro fonte e dividi-lo em pacotes de dados, enviar os mesmos e terminar a ligação. Faz recurso a 3 funções do API da camada de ligação de dados: llopen, llwrite e llclose e API de pacotes.
-
-A função receiveFile (utilizado no caso do recetor) é responsável por inicializar a ligação, ler os pacotes de dados, reconstruir o ficheiro fonte utilizando os mesmos e terminar a ligação. Faz recurso a 3 funções do API da camada de ligação de dados: llopen, llread e llclose e API de pacotes.
-
-
+\begin{itemize}
+	\item A função \textbf{sendFile} (utilizado no caso do emissor) é responsável por inicializar a ligação, ler o ficheiro fonte e dividi-lo em pacotes de dados, enviar os mesmos e terminar a ligação. Faz recurso a 3 funções do API da camada de ligação de dados: \textit{llopen, llwrite} e \textit{llclose} e API de pacotes.
+	\item A função \textbf{receiveFile} (utilizado no caso do recetor) é responsável por inicializar a ligação, ler os pacotes de dados, reconstruir o ficheiro fonte utilizando os mesmos e terminar a ligação. Faz recurso a 3 funções do API da camada de ligação de dados: \textit{llopen, llread} e \textit{llclose} e API de pacotes.
+\end{itemize}
 \newpage
 
 %7. Validação
@@ -303,7 +301,20 @@ Para validação do programa desenvolvido, e para garantir que funcionava de aco
 %8. Eficiência do protocolo de ligação de dados
 \section{Eficiência do protocolo de ligação de dados}
 
-   (caraterização estatística da  eficiência do protocolo, feita com recurso a medidas sobre o código desenvolvido. A caracterização teórica de um protocolo Stop\&Wait, que deverá ser usada como termo de comparação, encontra-se descrita nos slides de Ligação Lógica das aulas teóricas). 
+(caraterização estatística da  eficiência do protocolo, feita com recurso a medidas sobre o código desenvolvido. A caracterização teórica de um protocolo Stop\&Wait, que deverá ser usada como termo de comparação, encontra-se descrita nos slides de Ligação Lógica das aulas teóricas). 
+
+\textbf{Variável: Tamanho da trama I}\\
+
+
+\textbf{Variável: Capacidade da ligação}\\
+
+
+\textbf{Variável: Tempo de Propagação}\\
+
+
+\textbf{Variável: \textit{Frame Error Ratio}}\\
+
+
 \newpage
 
 %9. Conclusões
