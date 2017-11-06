@@ -1,4 +1,5 @@
 \documentclass[a4paper, 11pt]{article}
+\usepackage[margin=1.1in]{geometry}
 
 %use the english line for english reports
 %usepackage[english]{babel}
@@ -100,33 +101,37 @@ Edgar Carneiro - 201503748 \\
 %
 %\begin{quote}``Isto é uma citação''\end{quote}
 
+\tableofcontents
+
+\newpage
+
 %Sumário
-\Huge\textbf{Sumário}\linebreak\linebreak
+\section{Sumário}
 \normalsize 
 
 Pimeiro parágrafo sobre o contexto do trabalho:\\
-O trabalho, realizado no âmbito da cadeira de Redes de Computadores, tinha como objetivo a implementação de um protocolo de ligação de dados, de acordo como uma especificação dada pelos docentes da cadeira. A ligação de dados era feita através da Porta Série, que conectava assim dois computadores.
-Era também pedido aos alunos que testassem esse protocolo com uma aplicação simples de transferência de dados.
-
 Segundo parágrafo sobre as principais conclusões do relatório.\\
 TODO
-\newpage
 
 %1.Introdução
 \section{Introdução}
 
-Objetivos do trabalho e do relatorio? (COPIAR do guiao?)
-O trabalho tinha como objetivo a implementação de um protocolo de ligação de dados.
-A ligação de dados era estabelecida através da Porta Série, conectando assim dois computadores.
-A ligação de dados tinha três camadas ... TODO
+O trabalho, realizado no âmbito da cadeira de Redes de Computadores, tinha como objetivo a implementação de um protocolo de ligação de dados, de acordo como uma especificação fornecida, através de um guião. Era também pedido aos alunos que desenvolvessem um simples aplicação, de forma a testar o protocolo implementado.
 
-descrição da lógica do relatório com indicações sobre o tipo de informação que poderá ser encontrada em cada uma secções seguintes
-\newpage
+O Relatório encontra-se dividido em diversas secções, nas quais se pode encontrar a seguinte informação:
+\begin{itemize}
+	\item \textbf{Arquitetura}, onde são descriminados os diferentes blocos funcionais e interfaces.
+	\item \textbf{Estrutura do código}, apresentando as API's, principais estruturas de dados, principais funções e a sua realação com a arquitetura.
+	\item \textbf{Casos de uso principais}, onde são identificados os principais casos de uso e as suas sequências de chamada de funções.
+	\item \textbf{Protocolo de ligação lógica}, identificando os principais aspetos funcionais, bem como a descrição da estratégia de implementação.
+	\item \textbf{Protocolo de aplicação},  identificando os principais aspetos funcionais, bem como a descrição da estratégia de implementação.
+	\item \textbf{Validação}, descrevendo os testes efetuados.
+	\item \textbf{Eficiência do protocolo de ligação de dados}, onde é realizada a caracterização estatística da eficiência do protocolo implementado.
+	\item \textbf{Conclusões}, onde é feita uma tese da informação apresentada nas secções anteriores, bem como uma reflexão sobre os objectivos de aprendizagem alcançados.
+\end{itemize}
 
 %2.Arquitetura
 \section{Arquitetura}
-
-Blocos funcionais e interfaces\\
 
 \large\textbf{Blocos Funcionais}\\
 \normalsize 
@@ -145,19 +150,11 @@ Na interface da linha de comandos é permitido ao utilizador correr o programa u
 É necessário o utilizador especificar se será o emissor / recetor, qual o Serial Port a ser usado e, no caso do recetor, qual o ficheiro a transmitir. No entanto, existem parâmetros opcionais que permitem definir outras definições relcionadas com a transmissão de informação, tais como: \textit{baudrate}, tamanho dos segmentos de informação, número de tentativas no reenvio de tramas e tempo esperado até ao reenvio de uma trama.
 Assim, a aplicação pode correr com valores inseridos pelo utilizador, ou com os seus valores por defeito.
 
-O módulo da interface do utilizador interage depois com a camada de aplicação, inicializando esta e indicando o ficheiro a transmitir, no caso do emissor, ou se receberá um ficheiro, no caso do recetor.
-
-\newpage
-
 %3.Estrutura do código
 \section{Estrutura do Código}
 
-APIs, principais estruturas de dados, principais funções e sua relação com a arquitetura)\\
-
 \large\textbf{\textit{Application Layer}}\\
 \normalsize
-
-Tal como já foi referido, na secção \textbf{Arquitetura}, a implementação da camada da aplicação é feita através dos ficheiros \textit{AplicationLayer.h, AplicationLayer.c, Packets.h} e \textit{Packets.c}.
 
 Os ficheiros \textit{AplicationLayer.h} e \textit{AplicationLayer.c} , representantes da sub-camada mais abstrata da camada da aplicação, fazem uso de uma estrutura de dados que guarda o descritor do ficheiro da porta série, o nome do ficheiro a ser transmitido, o tamanho máximo de mensagem a ser transmitido e ainda o tipo de conexão a ser usado - emissor ou recetor.\\
 Meter figurinha da struct ( TODO COMENTAR)\\
@@ -180,8 +177,6 @@ Meter figurinha da struct ( TODO COMENTAR)\\
 \large\textbf{\textit{Link Layer}}\\
 \normalsize
 
-Tal como já foi referido, na secção \textbf{Arquitetura}, a implementação da camada de ligação de dados é feita através dos ficheiros \textit{LinkLayer.h} e \textit{LinkLayer.c}.
-
 A camada da ligação de dados é representada através de uma estrutura de dados onde é guardado a porta série utilizada, o \textit{baudrate} utilizado, o número de sequência da trama esperada, tempo esperado até ao reenvio de uma trama, e o número de tentativas de reenvio de uma trama.\\
 Meter figurinha da struct ( TODO COMENTAR)\\
 
@@ -191,12 +186,8 @@ Meter figurinha da struct ( TODO COMENTAR)\\
 As principais funções desta camada são:\\
 Meter figurinha da struct ( TODO COMENTAR)\\
 
-\newpage
-
 %4. Casos de uso principais
 \section{Casos de uso principais}
-
-(identificação; sequências de chamada de funções)
 
 Existem dois casos de uso principais bem distintos: correr o programa como emissor ou correr o prorama como recetor. Em cada um destes casos é possível correr o programa usando o mesmo binário, apenas dependendo os argumentos usados na chamada do programa, sendo estes:\\
 TODO meter imagem do print usage\\
@@ -227,76 +218,50 @@ As funções de mais baixo nível, associadas à camada da ligação de dados, s
 	\item \textbf{sendControlFrame}, que tem como objetivo enviar uma trama de controlo. Faz uso das funções \textbf{createControlFrame} e \textbf{write}.
 	\item \textbf{readControlFrame}, que tem como objetivo receber uma trama de controlo. Faz uso da função \textbf{readFromSerialPort}.
 \end{itemize}
-\newpage
 
 %5. Protocolo de ligação lógica
 \section{Protocolo de ligação lógica}
 
- (identificação dos principais aspectos funcionais; descrição da estratégia de implementação destes aspectos com apresentação de extratos de código)\\
- 
- A camada de ligação de dados é a camada de mais baixo nível e é a camada responsável pela interação direta com a Porta Série. Algumas das funcionalidades implementada por esta camada são:
-\begin{itemize}
-	\item Abertura e Fecho da Porta Série;
-	\item Escrita de um tramas de informação e controlo usando a Porta Série.
-	\item Leitura de um tramas de informação e controlo usando a Porta Série.
-	\item Criação de tramas de controle.
-	\item Fazer \textit{Byte Stuffing} e \textit{Byte Destuffing} de uma trama.
-	\item Fazer \textit{Framing } e \textit{Deframing} de uma trama.
-\end{itemize}
+ A camada de ligação de dados é a camada de mais baixo nível e é a camada responsável pela interação direta com a Porta Série. Algumas das funcionalidades implementada por esta camada são: abertura e fecho da Porta Série; escrita de um tramas de informação e controlo; leitura de um tramas de informação e controlo; criação de tramas de controle; \textit{byte stuffing} e \textit{byte destuffing} de uma trama; \textit{framing } e \textit{deframing} de uma trama.
 
 A nível da API da camada de ligação de dados foram implementadas as quatro funções previstas: \textbf{llopen, llclose, llread} e \textbf{llwrite}.\\
 
 A função \textbf{llopen} é responsável por estabelecer a ligação através da Porta Série. Faz recurso à função \textbf{openSerialPort} que abre a Porta Série e configura uma nova \textit{struct termios}. De seguida, e segundo o protocolo especificado no guião, envia uma trama de controlo do tipo SET e espera pela receção de uma trama de controlo do tipo UA, no caso do emissor, e faz o processo oposto no caso do recetor - espera pela receção de uma trama de controlo do tipo SET e após a sua receção envia uma trama de controlo do tipo UA.\\
-meter aqui uma imagem da llopen - TODO \\
+meter aqui uma imagem da llopen - TODO 
 
 A função \textbf{llclose} é responsável pelo termino da ligação estabelecida através da Porta Série. Segundo o protocolo especificado no guião, o termino da ligação é realizado através do envio de uma trama de controlo do tipo DISC por parte do emissor,  recessão do DISC e envio de uma trama também do tipo DISC por parte do recetor, receção do DISC enviado pelo recetor e envio de uma trama de controlo do tipo UA por parte do emissor, receção do UA por parte do recetor. Após a verificação deste protocolo de terminação, é reposta a \textit{struct termios} anterior à configurada pela função \textit{llopen} e fecha-se a ligação usando o descritor de ficheiro da Porta Série.\\
-meter aqui uma imagem do llclose - TODO \\
+meter aqui uma imagem do llclose - TODO 
 
 A função \textbf{llread} é responsável pela leitura de informação da Porta Série, sendo que irá aplicar \textit{destufffing} e \textit{deframing} à trama recebida. Se ocorrer um erro no \textit{destuffing} ou um erro na \textit{frame} que não seja no \textit{BCC2} a trama é descartada, ficando assim à espera de uma nova trama. Se houver um error, e for no \textit{BCC2}, a trama é descartada, o recetor continua a espera de uma nova trama, mas envia um rama de controle do tipo REJ. Se a trama for corretamente recebida, esta é retornada e o recetor envia uma trama de controle do tipo RR.\\
-meter aqui imagem do llread - TODO \\
+meter aqui imagem do llread - TODO 
 
 A função \textbf{llwrite} é responsável pelo envio de informação através da Porta Série. Esta recebe a mensagem a enviar da camada superior e aplica-lhe \textit{framing} e \textit{stuffing}.
 De seguida, tenta escrever a trama, sendo que se não receber uma resposta do tipo RR durante um intervalo de tempo previamente definido - \textit{default} é 3 segundos - este reenvia a trama. O reenvio da trama é feito um número de vezes previamente definido - \textit{default} é 3 tentativas. Se ao fim desse número de tentativas não tiver obtido sucesso, retorna erro.\\
- meter aqui imagem do llread - TODO \\
- 
-\newpage
+ meter aqui imagem do llread - TODO 
 
 %6. Protocolo de aplicação
 \section{Protocolo de aplicação}
 
-(identificação dos principais aspectos funcionais; descrição da estratégia de implementação destes aspectos com apresentação de extratos de código)\\
+A camada de aplicação é a camada de alto nível responsável pelo processo de envio e receção do ficheiro fonte fazendo uso do API disponibilizado pela camada ligação de dados. As funcionalidades implementadas por esta camada são: inicializar a ligação; ler o ficheiro fonte e dividi-lo em pacotes de dados (caso seja emissor); reconstruir o ficheiro fonte a partir de pacotes de dados (caso seja recetor); receber e enviar os pacotes; terminar a ligação.\\
 
-A camada de aplicação é a camada de alto nível responsável pelo processo de envio e receção do ficheiro fonte fazendo uso do API disponibilizado pela camada ligação de dados. As funcionalidades implementadas por esta camada são:
-\begin{itemize}
-	\item Inicializar a ligação; 
-	\item Ler o ficheiro fonte e dividi-lo em pacotes de dados (caso seja emissor);  
-	\item Reconstruir o ficheiro fonte a partir de pacotes de dados (caso seja recetor);  
-	\item Receber e enviar os pacotes; 
-	\item Terminar a ligação.
-\end{itemize}
 Para gerir a interação com os pacotes de dados foi desenvolvido o API (Packet.c) composto pelas seguintes funções:
 
 Em relação aos pacotes de dados: 
 A função \textbf{makeDataPacket} que cria o pacote de dados a partir da informação original do ficheiro fonte; \textbf{sendDataPacket} que envia o pacote de dados utilizando llwrite; \textbf{receiveDataPacket} que recebe o pacote de dados utilizando llread e recolhe a informação do ficheiro fonte.
 
 Em relação aos pacote de controlo:
-A função \textbf{makeControlPacket} que cria o pacote de controlo; \textbf{sendControlPacket} que envia o pacote de controlo utilizando \textit{llwrite}; \textbf{receiveControlPacket} que recebe o pacote utilizando \textit{llread}.
+A função \textbf{makeControlPacket} que cria o pacote de controlo; \textbf{sendControlPacket} que envia o pacote de controlo utilizando \textit{llwrite}; \textbf{receiveControlPacket} que recebe o pacote utilizando \textit{llread}.\\
 
 Foram implementadas as seguintes funções:
 \begin{itemize}
 	\item A função \textbf{sendFile} (utilizado no caso do emissor) é responsável por inicializar a ligação, ler o ficheiro fonte e dividi-lo em pacotes de dados, enviar os mesmos e terminar a ligação. Faz recurso a 3 funções do API da camada de ligação de dados: \textit{llopen, llwrite} e \textit{llclose} e API de pacotes.
 	\item A função \textbf{receiveFile} (utilizado no caso do recetor) é responsável por inicializar a ligação, ler os pacotes de dados, reconstruir o ficheiro fonte utilizando os mesmos e terminar a ligação. Faz recurso a 3 funções do API da camada de ligação de dados: \textit{llopen, llread} e \textit{llclose} e API de pacotes.
 \end{itemize}
-\newpage
 
 %7. Validação
 \section{Validação}
 
-(descrição dos testes efectuados com apresentação quantificada dos resultados, se possível)\\
-
 Para validação do programa desenvolvido, e para garantir que funcionava de acordo com o protocolo especificado, foram realizados constantemente testes durante o desenvolvimento do programa e também na sua demonstração. Foram testados ficheiros de diferentes tamanhos e enviados com diferentes baudrates e diferentes tamanhos de pacotes de informação. Foram realizados, simultaneamente com os testes já referidos, testes de interrupção da comunicação na Porta Série e testes de introdução de erros através do curto-circuito existente nas portas séries. Todos testes terão sido também realizados na presença do professor, aquando do momento de avaliação.
-
-\newpage
 
 %8. Eficiência do protocolo de ligação de dados
 \section{Eficiência do protocolo de ligação de dados}
@@ -304,7 +269,8 @@ Para validação do programa desenvolvido, e para garantir que funcionava de aco
 (caraterização estatística da  eficiência do protocolo, feita com recurso a medidas sobre o código desenvolvido. A caracterização teórica de um protocolo Stop\&Wait, que deverá ser usada como termo de comparação, encontra-se descrita nos slides de Ligação Lógica das aulas teóricas). 
 
 \textbf{Variável: Tamanho da trama I}\\
-
+Usando um baudrate constante de 460800 e uma imagem constante de tamanho 80942 bytes, fazendo variar o tamanho da tramaI, obteve-se:\\
+TODO - meter aqui o grafico e a tabela\\
 
 \textbf{Variável: Capacidade da ligação}\\
 
