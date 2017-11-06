@@ -14,7 +14,7 @@
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \definecolor{gray}{rgb}{0.5,0.5,0.5}
-\definecolor{mauve}{rgb}{0.58,0,0.82}
+\definecolor{orange}{rgb}{1,0.54,0}
 
 \lstset{frame=tb,
   language=C,
@@ -27,7 +27,7 @@
   numberstyle=\tiny\color{gray},
   keywordstyle=\color{blue},
   commentstyle=\color{dkgreen},
-  stringstyle=\color{mauve},
+  stringstyle=\color{orange},
   breaklines=true,
   breakatwhitespace=true,
   tabsize=3
@@ -156,41 +156,100 @@ Assim, a aplicação pode correr com valores inseridos pelo utilizador, ou com o
 \large\textbf{\textit{Application Layer}}\\
 \normalsize
 
-Os ficheiros \textit{AplicationLayer.h} e \textit{AplicationLayer.c} , representantes da sub-camada mais abstrata da camada da aplicação, fazem uso de uma estrutura de dados que guarda o descritor do ficheiro da porta série, o nome do ficheiro a ser transmitido, o tamanho máximo de mensagem a ser transmitido e ainda o tipo de conexão a ser usado - emissor ou recetor.\\
-Meter figurinha da struct ( TODO COMENTAR)\\
+Os ficheiros \textit{AplicationLayer.h} e \textit{AplicationLayer.c} , representantes da sub-camada mais abstrata da camada da aplicação, fazem uso de uma estrutura de dados que guarda o descritor do ficheiro da porta série, o nome do ficheiro a ser transmitido, o tamanho máximo de mensagem a ser transmitido e ainda o tipo de conexão a ser usado - emissor ou recetor.
 
-As funções da API desta sub-camada são:\\
-Meter figurinha da struct ( TODO COMENTAR)\\
+\begin{lstlisting}[language=C]
+typedef struct {
+    int fd; // serial port's file descriptor
+    char * fileName;
+    ConnectionType type;
+    int maxDataMsgSize;
+} ApplicationLayer;
+\end{lstlisting}
 
-As prinicpais funções desta sub-camada são:\\
-Meter figurinha da struct ( TODO COMENTAR)\\
+As prinicpais funções desta sub-camada são:
 
-Os ficheiros \textit{Packets.h} e \textit{Packets.c} , representantes da sub-camada menos abstrata da camada da aplicação, fazem uso de três estruturas de dados: a estrutura \textit{Packet} que guarda um apontador para a informação, e o tamanho dessa informação; a estrutura \textit{DataPacket]} que guarda o número sequencial do pacote a ser enviado, o seu tamanho e o apontador para essa informação; a estrutura \textit{ControlPacket} que guarda o tipo de pacote de Controlo - inicio ou fim -, o nome do ficheiro, o tamanho do ficheiro e o número de argumentos do pacote de controlo.\\
-Meter figurinha da struct ( TODO COMENTAR)\\
+\begin{lstlisting}[language=C]
+int initApplicationLayer(const char * port, int baudrate, int timeout, int numRetries, ConnectionType type, int maxDataMsgSize, char * file);
+void destroyApplicationLayer();
+int sendFile();
+int receiveFile();
+\end{lstlisting}
 
-As funções da API desta sub-camada são:\\
-Meter figurinha da struct ( TODO COMENTAR)\\
+Os ficheiros \textit{Packets.h} e \textit{Packets.c} , representantes da sub-camada menos abstrata da camada da aplicação, fazem uso de três estruturas de dados: a estrutura \textit{Packet} que guarda um apontador para a informação, e o tamanho dessa informação; a estrutura \textit{DataPacket]} que guarda o número sequencial do pacote a ser enviado, o seu tamanho e o apontador para essa informação; a estrutura \textit{ControlPacket} que guarda o tipo de pacote de Controlo - inicio ou fim -, o nome do ficheiro, o tamanho do ficheiro e o número de argumentos do pacote de controlo.
 
-As principais funções desta sub-camada são:\\
-Meter figurinha da struct ( TODO COMENTAR)\\
+\noindent\begin{minipage}{.22\textwidth}
+\begin{lstlisting}[frame=tlrb]
+typedef struct {
+    uchar * data;
+    uint size;
+} Packet;
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}{.22\textwidth}
+\begin{lstlisting}[frame=tlrb]
+typedef struct {
+    uchar seqNr;
+    uint size;
+    uchar * data;
+} DataPacket;
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}{.4\textwidth}
+\begin{lstlisting}[frame=tlrb]
+typedef struct {
+    PacketType type;
+    char fileName[MAX_FILE_NAME];
+    uint fileSize;
+    uint argNr;
+} ControlPacket;
+\end{lstlisting}
+\end{minipage}
+
+As principais funções desta sub-camada são:
+
+\begin{lstlisting}[language=C]
+int sendDataPacket(int fd, DataPacket * src);
+int sendControlPacket(int fd, ControlPacket * src);
+int receiveDataPacket(int fd, DataPacket * dest);
+int receiveControlPacket(int fd, ControlPacket * dest);
+\end{lstlisting}
 
 \large\textbf{\textit{Link Layer}}\\
 \normalsize
 
-A camada da ligação de dados é representada através de uma estrutura de dados onde é guardado a porta série utilizada, o \textit{baudrate} utilizado, o número de sequência da trama esperada, tempo esperado até ao reenvio de uma trama, e o número de tentativas de reenvio de uma trama.\\
-Meter figurinha da struct ( TODO COMENTAR)\\
+A camada da ligação de dados é representada através de uma estrutura de dados onde é guardado a porta série utilizada, o \textit{baudrate} utilizado, o número de sequência da trama esperada, tempo esperado até ao reenvio de uma trama, e o número de tentativas de reenvio de uma trama.
 
-As funções da API desta camada são:\\
-Meter figurinha da struct ( TODO COMENTAR)\\
+\begin{lstlisting}[language=C]
+typedef struct {
+	char port[MAX_PORT_NAME];
+	int baudRate;
+	uint seqNumber;
+	uint timeout;
+	uint numRetries;
+} LinkLayer;
+\end{lstlisting}
 
-As principais funções desta camada são:\\
-Meter figurinha da struct ( TODO COMENTAR)\\
+As principais funções desta camada são:
+
+\begin{lstlisting}[language=C]
+int initLinkLayer(int porta, int baudRate, uint timeout, uint numTransmissions);
+int openSerialPort();
+int llopen(ConnectionType type);
+int llclose(int fd);
+int llwrite(int fd, uchar ** buffer, int length);
+int llread(int fd, uchar ** buffer);
+\end{lstlisting}
 
 %4. Casos de uso principais
 \section{Casos de uso principais}
 
-Existem dois casos de uso principais bem distintos: correr o programa como emissor ou correr o prorama como recetor. Em cada um destes casos é possível correr o programa usando o mesmo binário, apenas dependendo os argumentos usados na chamada do programa, sendo estes:\\
-TODO meter imagem do print usage\\
+Existem dois casos de uso principais bem distintos: correr o programa como emissor ou correr o prorama como recetor. Em cada um destes casos é possível correr o programa usando o mesmo binário, apenas dependendo os argumentos usados na chamada do programa, sendo estes:
+
+\begin{lstlisting}[language=C]
+	printf("Usage:\t%s <SerialPort> <r/w> <FILE_NAME> [BAUDRATE] [DATA_BYTES] [NUM_RETRIES] [TIMEOUT]\n", progName);
+	printf("Arguments between [ ] are optional\n");
+\end{lstlisting}
 
 No caso em que o programa é executado como \textbf{recetor} a sequência de chamada de funções, considerando as de maior relevência, é:
 \begin{itemize}
@@ -226,18 +285,16 @@ As funções de mais baixo nível, associadas à camada da ligação de dados, s
 
 A nível da API da camada de ligação de dados foram implementadas as quatro funções previstas: \textbf{llopen, llclose, llread} e \textbf{llwrite}.\\
 
-A função \textbf{llopen} é responsável por estabelecer a ligação através da Porta Série. Faz recurso à função \textbf{openSerialPort} que abre a Porta Série e configura uma nova \textit{struct termios}. De seguida, e segundo o protocolo especificado no guião, envia uma trama de controlo do tipo SET e espera pela receção de uma trama de controlo do tipo UA, no caso do emissor, e faz o processo oposto no caso do recetor - espera pela receção de uma trama de controlo do tipo SET e após a sua receção envia uma trama de controlo do tipo UA.\\
-meter aqui uma imagem da llopen - TODO 
+A função \textbf{llopen} é responsável por estabelecer a ligação através da Porta Série. Faz recurso à função \textbf{openSerialPort} que abre a Porta Série e configura uma nova \textit{struct termios}. De seguida, e segundo o protocolo especificado no guião, envia uma trama de controlo do tipo SET e espera pela receção de uma trama de controlo do tipo UA, no caso do emissor, e faz o processo oposto no caso do recetor - espera pela receção de uma trama de controlo do tipo SET e após a sua receção envia uma trama de controlo do tipo UA.
 
-A função \textbf{llclose} é responsável pelo termino da ligação estabelecida através da Porta Série. Segundo o protocolo especificado no guião, o termino da ligação é realizado através do envio de uma trama de controlo do tipo DISC por parte do emissor,  recessão do DISC e envio de uma trama também do tipo DISC por parte do recetor, receção do DISC enviado pelo recetor e envio de uma trama de controlo do tipo UA por parte do emissor, receção do UA por parte do recetor. Após a verificação deste protocolo de terminação, é reposta a \textit{struct termios} anterior à configurada pela função \textit{llopen} e fecha-se a ligação usando o descritor de ficheiro da Porta Série.\\
-meter aqui uma imagem do llclose - TODO 
+A função \textbf{llclose} é responsável pelo termino da ligação estabelecida através da Porta Série. Segundo o protocolo especificado no guião, o termino da ligação é realizado através do envio de uma trama de controlo do tipo DISC por parte do emissor,  recessão do DISC e envio de uma trama também do tipo DISC por parte do recetor, receção do DISC enviado pelo recetor e envio de uma trama de controlo do tipo UA por parte do emissor, receção do UA por parte do recetor. Após a verificação deste protocolo de terminação, é reposta a \textit{struct termios} anterior à configurada pela função \textit{llopen} e fecha-se a ligação usando o descritor de ficheiro da Porta Série.
 
-A função \textbf{llread} é responsável pela leitura de informação da Porta Série, sendo que irá aplicar \textit{destufffing} e \textit{deframing} à trama recebida. Se ocorrer um erro no \textit{destuffing} ou um erro na \textit{frame} que não seja no \textit{BCC2} a trama é descartada, ficando assim à espera de uma nova trama. Se houver um error, e for no \textit{BCC2}, a trama é descartada, o recetor continua a espera de uma nova trama, mas envia um rama de controle do tipo REJ. Se a trama for corretamente recebida, esta é retornada e o recetor envia uma trama de controle do tipo RR.\\
-meter aqui imagem do llread - TODO 
+A função \textbf{llread} é responsável pela leitura de informação da Porta Série, sendo que irá aplicar \textit{destufffing} e \textit{deframing} à trama recebida. Se ocorrer um erro no \textit{destuffing} ou um erro na \textit{frame} que não seja no \textit{BCC2} a trama é descartada, ficando assim à espera de uma nova trama. Se houver um error, e for no \textit{BCC2}, a trama é descartada, o recetor continua a espera de uma nova trama, mas envia um rama de controle do tipo REJ. Se a trama for corretamente recebida, esta é retornada e o recetor envia uma trama de controle do tipo RR.
 
 A função \textbf{llwrite} é responsável pelo envio de informação através da Porta Série. Esta recebe a mensagem a enviar da camada superior e aplica-lhe \textit{framing} e \textit{stuffing}.
 De seguida, tenta escrever a trama, sendo que se não receber uma resposta do tipo RR durante um intervalo de tempo previamente definido - \textit{default} é 3 segundos - este reenvia a trama. O reenvio da trama é feito um número de vezes previamente definido - \textit{default} é 3 tentativas. Se ao fim desse número de tentativas não tiver obtido sucesso, retorna erro.\\
- meter aqui imagem do llread - TODO 
+
+\textbf{Consultar \underline{Anexo II} para extratos de código.}
 
 %6. Protocolo de aplicação
 \section{Protocolo de aplicação}
@@ -258,6 +315,8 @@ Foram implementadas as seguintes funções:
 	\item A função \textbf{receiveFile} (utilizado no caso do recetor) é responsável por inicializar a ligação, ler os pacotes de dados, reconstruir o ficheiro fonte utilizando os mesmos e terminar a ligação. Faz recurso a 3 funções do API da camada de ligação de dados: \textit{llopen, llread} e \textit{llclose} e API de pacotes.
 \end{itemize}
 
+\textbf{Consultar \underline{Anexo III} para extratos de código.}
+
 %7. Validação
 \section{Validação}
 
@@ -266,7 +325,7 @@ Para validação do programa desenvolvido, e para garantir que funcionava de aco
 %8. Eficiência do protocolo de ligação de dados
 \section{Eficiência do protocolo de ligação de dados}
 
-(caraterização estatística da  eficiência do protocolo, feita com recurso a medidas sobre o código desenvolvido. A caracterização teórica de um protocolo Stop\&Wait, que deverá ser usada como termo de comparação, encontra-se descrita nos slides de Ligação Lógica das aulas teóricas). 
+(caraterização estatística da  eficiência do protocolo, feita com recurso a medidas sobre o código desenvolvido. A caracterização teórica de um protocolo Stop\&Wait, que deverá ser usada como termo de comparação, encontra-se descrita nos slides de Ligação Lógica das aulas teóricas). \\
 
 \textbf{Variável: Tamanho da trama I}\\
 Usando um baudrate constante de 460800 e uma imagem constante de tamanho 80942 bytes, fazendo variar o tamanho da tramaI, obteve-se:\\
@@ -294,6 +353,305 @@ TODO - meter aqui o grafico e a tabela\\
 \begin{lstlisting}[language=C]
 
 
+\end{lstlisting}
+
+\newpage
+
+%Anexo2
+\section{Anexo II}
+
+\begin{lstlisting}[caption = llopen, language=C]
+int llopen(ConnectionType type) {
+	connectionType = type;
+
+	int fd = openSerialPort();
+
+	switch (type) {
+	case TRANSMITTER:
+		if ((sendControlFrame(fd, SET) > 0) && (readControlFrame(fd, UA) == OK))
+			return fd;
+		break;
+	case RECEIVER:
+		if ((readControlFrame(fd, SET) == OK) && (sendControlFrame(fd, UA) > 0))
+			return fd;
+		break;
+	}
+
+	logError("Failed llopen");
+	return -1;
+}
+\end{lstlisting}
+
+
+\begin{lstlisting}[caption = llclose, language=C]
+int llclose(int fd) {
+	if (TRANSMITTER == connectionType)
+		llcloseTransmitter(fd);
+	else if (RECEIVER == connectionType)
+		llcloseReceiver(fd);
+	else
+		logError("llclose: no connection type set");
+
+	//Reset terminal to previous configuration
+	if ( tcsetattr(fd,TCSANOW,&oldtio) == -1 ) {
+		perror("tcsetattr");
+		return -1;
+	}
+
+	if (close(fd) < 0) {
+		perror("failed close(fd)");
+		return -1;
+	}
+	return OK;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption = llread, language=C]
+int llread(int fd, uchar ** dest) {
+	int ret;
+	while ( 1 ){
+		if ( (ret = readFromSerialPort(fd, dest)) > 0 ) {
+			if (byteDestuffing(*dest, &ret) == ERROR) {
+				logError("llread: Failed byteDestuffing");
+				free(*dest);
+				continue;
+			}
+
+			ret = deframingInformation(dest, &ret);
+			if (ret == ERROR2) {
+				sendControlFrame(fd, REJ);
+			}
+			if (ret != OK) {
+				logError("llread: Failed to deframe information");
+				free(*dest);
+				continue;
+			}
+
+			sendControlFrame(fd, RR);
+			return ret;
+		}
+	}
+	
+	return -1;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption = llwrite, language=C]
+int llwrite(int fd, uchar ** bufferPtr, int length) {
+	int res = 0;
+
+	if (framingInformation(bufferPtr, &length) == ERROR) {
+		logError("llwrite: Failed to create Information Frame");
+		return -1;
+	}
+
+	if (byteStuffing(bufferPtr, &length) == ERROR) {
+		logError("llwrite: Failed to create Information Frame");
+		return -1;
+	}
+
+	uint tries = 0;
+	setAlarm();
+	do {
+		alarmWentOff = FALSE;
+		if ((res = write(fd, *bufferPtr, length)) < length) {
+			logError("llwrite error: * Bad write *");
+			continue;
+		}
+
+		alarm(ll->timeout);
+	} while ( (readControlFrame(fd, RR) != OK) && (++tries < (ll->numRetries)));
+
+	stopAlarm();
+
+	if (tries >= ll->numRetries)
+		return ERROR;
+		
+	return res;
+}
+\end{lstlisting}
+
+\newpage
+
+%Anexo3
+\section{Anexo III}
+
+\begin{lstlisting}[caption = sendFile, language=C]
+int sendFile() {
+	if (al == NULL)
+		return logError("AL not initialized");
+
+	FILE * file = fopen(al->fileName, "r");
+	if (file == NULL)
+		return logError("Error while opening file");
+
+	// establish connection
+	al->fd = llopen(al->type);
+	if (al->fd < 0)
+		return logError("Failed llopen");
+
+	ControlPacket ctrlPacket;
+	ctrlPacket.type = START;
+	strcpy(ctrlPacket.fileName, al->fileName);
+	ctrlPacket.fileSize = getFileSize(file);
+	ctrlPacket.argNr = CTRL_PACKET_ARGS;
+
+	if (sendControlPacket(al->fd, &ctrlPacket) != OK)
+		return logError("Error sending control packet");
+
+	DataPacket dataPacket;
+	uchar * fileBuffer = (uchar *) malloc(al->maxDataMsgSize * sizeof(char));
+	uint res, progress = 0, currentSeqNr = 0;
+	int state = OK;
+	printProgressBar(0, ctrlPacket.fileSize);
+	
+	while ( (res = fread(fileBuffer, sizeof(char), al->maxDataMsgSize, file)) > 0 ) {
+		dataPacket.seqNr = currentSeqNr;
+		currentSeqNr = (currentSeqNr + 1) % 256;
+		dataPacket.size = res;
+		dataPacket.data = fileBuffer;
+		if (sendDataPacket(al->fd, &dataPacket) != OK) {
+			state = logError("Error sending data packet");
+			break;
+		}
+
+		progress += res;
+		printProgressBar(progress, ctrlPacket.fileSize);
+	}
+	free(fileBuffer);
+
+	if (fclose(file)) {
+		perror("Error while closing file");
+		return ERROR;
+	}
+
+	ctrlPacket.type = END;
+	if ((state == OK) && sendControlPacket(al->fd, &ctrlPacket) != OK)
+		return logError("Error sending control packet");
+
+	if (state != OK || llclose(al->fd) != OK)
+		return ERROR;
+
+	printf("\nFile sent successfully.\n");
+
+	return OK;
+}
+\end{lstlisting}
+
+
+\begin{lstlisting}[caption = receiveFile, language=C]
+int receiveFile() {
+	if (al == NULL)
+		return logError("AL not initialized");
+
+	al->fd = llopen(al->type);
+	if (al->fd < 0)
+		return logError("Failed llopen");
+
+	ControlPacket ctrlPacket;
+	if (receiveControlPacket(al->fd, &ctrlPacket) != OK || ctrlPacket.type != START) {
+		return logError("Error receiving control packet");
+	}
+
+	if (al->fileName == NULL) {
+		al->fileName = malloc(sizeof(char) * MAX_FILE_NAME);
+		strncpy(al->fileName, ctrlPacket.fileName, MAX_FILE_NAME);
+	}
+
+	FILE * outputFile = fopen(al->fileName, "wb");
+	if (outputFile == NULL)
+		return logError("Could not create output file");
+
+	printf("Created file %s with expected size %d.\n", al->fileName, ctrlPacket.fileSize);
+
+	DataPacket dataPacket;
+	uint progress = 0, currentSeqNr = 0;
+	int state = OK;
+	printProgressBar(0, ctrlPacket.fileSize);
+
+	while (progress < ctrlPacket.fileSize) {
+		if ( (state = receiveDataPacket(al->fd, &dataPacket)) != OK) {
+			logError("Error receiving data packet");
+			break;
+		}
+
+		if (dataPacket.seqNr < currentSeqNr) {
+			printf("\tReceived duplicate packet: %d. Current: %d\n", dataPacket.seqNr, currentSeqNr);
+			continue;
+		}
+		currentSeqNr = (currentSeqNr + 1) % 256;
+		progress += (uint) dataPacket.size;
+
+		printProgressBar(progress, ctrlPacket.fileSize);
+
+		if (fwrite(dataPacket.data, sizeof(char), dataPacket.size, outputFile) == 0) {
+			return logError("sendFile: fwrite returned 0");
+		}
+
+		free(dataPacket.data);
+	}
+
+	if (fclose(outputFile)) {
+		perror("fclose failed");
+		return ERROR;
+	}
+
+	if ((state == OK) && (receiveControlPacket(al->fd, &ctrlPacket) != OK || ctrlPacket.type != END)) {
+		return logError("Error receiving control packet");
+	}
+
+	if (state != OK || llclose(al->fd) != OK)
+		return logError("llclose failed");
+
+	printf("\nFile received successfully.\n");
+
+	return OK;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption = makeDataPacket, language=C]
+void makeDataPacket(DataPacket * src, Packet * dest) {
+	int packetSize = HEADER_SIZE + (src->size);
+	uchar * data = (uchar *) malloc(packetSize);
+
+	data[CTRL_FIELD_IDX] = DATA;
+	data[SEQ_NUM_IDX] = src->seqNr;
+	data[DATA_PACKET_SIZE2_IDX] = (uchar) (src->size / SIZE2_MUL);
+	data[DATA_PACKET_SIZE1_IDX] = (uchar) (src->size % SIZE2_MUL);
+
+	memcpy(&data[HEADER_SIZE], src->data, src->size);
+
+	dest->data = data;
+	dest->size = packetSize;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption = makeControlPacket, language=C]
+void makeControlPacket(ControlPacket * src, Packet * dest) {
+	int fileNameSize = strnlen(src->fileName, MAX_FILE_NAME);
+	int packetSize = 1 + 2 * (src->argNr) + fileNameSize + FILE_SIZE_LENGTH;
+
+	uchar * data = (uchar *) malloc(packetSize);
+
+	data[CTRL_FIELD_IDX] = src->type;
+
+	int index = 1;
+	data[index++] = FILE_SIZE_ARG;
+	data[index++] = sizeof(int);
+
+	uchar fileSize[sizeof(int)];
+	convertIntToBytes(fileSize, src->fileSize);
+	memcpy(&data[index], fileSize, FILE_SIZE_LENGTH);
+
+	index += FILE_SIZE_LENGTH;
+
+	data[index++] = FILE_NAME_ARG;
+	data[index++] = (uchar) fileNameSize;
+	memcpy(&data[index], src->fileName, fileNameSize);
+
+	dest->data = data;
+	dest->size = packetSize;
+}
 \end{lstlisting}
 
 \end{document}

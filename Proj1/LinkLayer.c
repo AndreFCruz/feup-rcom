@@ -329,9 +329,8 @@ int readFromSerialPort(int fd, uchar ** dest) {
 }
 
 int llread(int fd, uchar ** dest) {
-	// uint tries = 0;
 	int ret;
-	while ( 1 /* tries++ < ll->numRetries */ ){
+	while ( 1 ){
 		if ( (ret = readFromSerialPort(fd, dest)) > 0 ) {
 			if (byteDestuffing(*dest, &ret) == ERROR) {
 				logError("llread: Failed byteDestuffing");
