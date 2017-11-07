@@ -25,9 +25,9 @@ long getFileSize(FILE* file);
 
 void printArray(uchar buffer[], int size);
 
-void convertIntToBytes(uchar * res, uint src);	// DEPRECATED
+void convertIntToBytes(uchar * res, uint src);	
 
-uint convertBytesToInt(uchar * src);			// DEPRECATED
+uint convertBytesToInt(uchar * src);			
 
 int logError(char * errorMsg);
 

@@ -36,7 +36,6 @@
 
 #define MAX_PORT_NAME 		16
 #define PORT_NAME			"/dev/ttyS"
-// #define PORT_NAME			"/dev/ttys" // for MacOS
 
 
 typedef enum {
@@ -577,8 +576,5 @@ int byteDestuffing(uchar * buffer, int * size) {
 			buffer[i] = (buffer[i] ^ STUFFING);
 		}
 	}
-
-	// TODO realloc?
-
 	return OK;
 }

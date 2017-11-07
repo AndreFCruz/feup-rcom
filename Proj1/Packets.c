@@ -20,7 +20,6 @@ int sendDataPacket(int fd, DataPacket * src) {
 	Packet packet;
 	makeDataPacket(src, &packet);
 	int written = llwrite(fd, &(packet.data), packet.size);
-	//free(packet.data); // TODO
 	if (written >= (int) packet.size)
 		return OK;
 
