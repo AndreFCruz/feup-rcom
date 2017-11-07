@@ -156,7 +156,7 @@ Assim, a aplicação pode correr com valores inseridos pelo utilizador, ou com o
 \large\textbf{\textit{Application Layer}}\\
 \normalsize
 
-Os ficheiros \textit{AplicationLayer.h} e \textit{AplicationLayer.c} , representantes da subcamada mais abstrata da camada da aplicação, fazem uso de uma estrutura de dados que guarda o descritor do ficheiro da porta série, o nome do ficheiro a ser transmitido, o tamanho máximo de mensagem a ser transmitido e ainda o tipo de conexão a ser usado - emissor ou recetor.
+Os ficheiros \textit{AplicationLayer.h} e \textit{AplicationLayer.c}, representantes da subcamada mais abstrata da camada da aplicação, fazem uso de uma estrutura de dados que guarda o descritor do ficheiro da porta série, o nome do ficheiro a ser transmitido, o tamanho máximo de mensagem a ser transmitido e ainda o tipo de conexão a ser usado - emissor ou recetor.
 
 \begin{lstlisting}[language=C]
 typedef struct {
@@ -176,7 +176,7 @@ int sendFile();
 int receiveFile();
 \end{lstlisting}
 
-Os ficheiros \textit{Packets.h} e \textit{Packets.c} , representantes da subcamada menos abstrata da camada da aplicação, fazem uso de três estruturas de dados: a estrutura \textit{Packet} que guarda um apontador para a informação, e o tamanho dessa informação; a estrutura \textit{DataPacket]} que guarda o número sequencial do pacote a ser enviado, o seu tamanho e o apontador para essa informação; a estrutura \textit{ControlPacket} que guarda o tipo de pacote de Controlo - inicio ou fim -, o nome do ficheiro, o tamanho do ficheiro e o número de argumentos do pacote de controlo.
+Os ficheiros \textit{Packets.h} e \textit{Packets.c}, representantes da subcamada menos abstrata da camada da aplicação, fazem uso de três estruturas de dados: a estrutura \textit{Packet} que guarda um apontador para a informação, e o tamanho dessa informação; a estrutura \textit{DataPacket]} que guarda o número sequencial do pacote a ser enviado, o seu tamanho e o apontador para essa informação; a estrutura \textit{ControlPacket} que guarda o tipo de pacote de Controlo - inicio ou fim -, o nome do ficheiro, o tamanho do ficheiro e o número de argumentos do pacote de controlo.
 
 \noindent\begin{minipage}{.22\textwidth}
 \begin{lstlisting}[frame=tlrb]
