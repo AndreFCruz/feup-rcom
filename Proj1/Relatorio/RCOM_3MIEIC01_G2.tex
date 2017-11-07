@@ -111,23 +111,23 @@ Edgar Carneiro - 201503748 \\
 
 Este trabalho foi realizado no âmbito da cadeira de Redes de Computadores, e era pedido aos alunos a implementação de um protocolo de comunicação assíncrona para a transmissão de um ficheiro através de uma Porta Série RS-232.
 
-As principais conclusões obtidas no desenvolvimento do Relatório foram que o protocolo implementado foi compreensivo o suficiente para o resultado esperado e escala conforme a teoria leocionada nas aulas téoricas. O protocolo executa com cerca de 77\% de eficácia, como podemos ver pelas estatísticas geradas.
+As principais conclusões obtidas no desenvolvimento do projeto foram que o protocolo implementado foi compreensivo o suficiente para o objetivo de transmitir ficheiros com recuperação de erros e escala conforme a teoria lecionada nas aulas teóricas. O protocolo executa com cerca de 77\% de eficácia, como podemos ver pelas estatísticas geradas.
 
-%1.Introdução
+%1. Introdução
 \section{Introdução}
 
-O trabalho tinha como objetivo a implementação de um protocolo de ligação de dados, de acordo como uma especificação fornecida, através de um guião. Era também pedido aos alunos que desenvolvessem um simples aplicação, de forma a testar o protocolo implementado.
+O trabalho tinha como objetivo a implementação de um protocolo de ligação de dados, de acordo como uma especificação fornecida, através de um guião. Era também pedido aos alunos que desenvolvessem uma simples aplicação, de forma a testar o protocolo implementado.
 
 O Relatório encontra-se dividido em diversas secções, nas quais se pode encontrar a seguinte informação:
 \begin{itemize}
 	\item \textbf{Arquitetura}, onde são descriminados os diferentes blocos funcionais e interfaces.
-	\item \textbf{Estrutura do código}, apresentando as API's, principais estruturas de dados, principais funções e a sua realação com a arquitetura.
+	\item \textbf{Estrutura do código}, apresentando as API's, principais estruturas de dados, principais funções e a sua relação com a arquitetura.
 	\item \textbf{Casos de uso principais}, onde são identificados os principais casos de uso e as suas sequências de chamada de funções.
 	\item \textbf{Protocolo de ligação lógica}, identificando os principais aspetos funcionais, bem como a descrição da estratégia de implementação.
 	\item \textbf{Protocolo de aplicação},  identificando os principais aspetos funcionais, bem como a descrição da estratégia de implementação.
 	\item \textbf{Validação}, descrevendo os testes efetuados.
 	\item \textbf{Eficiência do protocolo de ligação de dados}, onde é realizada a caracterização estatística da eficiência do protocolo implementado.
-	\item \textbf{Conclusões}, onde é feita uma tese da informação apresentada nas secções anteriores, bem como uma reflexão sobre os objectivos de aprendizagem alcançados.
+	\item \textbf{Conclusões}, onde é feita uma tese da informação apresentada nas secções anteriores, bem como uma reflexão sobre os objetivos de aprendizagem alcançados.
 \end{itemize}
 
 %2.Arquitetura
@@ -141,13 +141,13 @@ Os ficheiros \textit{LinkLayer.h} e  \textit{LinkLayer.c} representam a camada d
 
 A camada de ligação de dados é a camada responsável pelo estabelecimento de ligação e, portanto, tem todas as funções que asseguram a consistência do protocolo, como o tratamento de erros, envio de mensagens de comunicação, entre outros. É também nesta camada que a interação com a porta série é feita, nomeadamente, a sua abertura, a escrita e leitura desta e o seu fecho.
 
-A camada da aplicação é responsável pela envio e receção de ficheiros, segmentando o ficheiro a enviar em tramas de tamanho definivel pelo utilizador. Esta camada faz uso da inteface da camada de ligação de dados, chamando as suas funções para o envio e receção de segmentos do ficheiro a receber / enviar. A camada da aplicação é sub-dividida em duas sub-camadas, dai o uso dos ficheiros \textit{AplicationLayer.h} e \textit{AplicationLayer.c} para representar a camada mais abstrata, responsável pelo envio do fiicheiro e a receção do ficheiro, e que faz uso da camada menos abstrata, representada nos fiheiros  \textit{Packets.h} e \textit{Packets.c}, que é responsável pela segmentação do ficheiro em pacotes e envio de pacotes de controlo e informação.\\
+A camada da aplicação é responsável pela envio e receção de ficheiros, segmentando o ficheiro a enviar em tramas de tamanho definível pelo utilizador. Esta camada faz uso da interface da camada de ligação de dados, chamando as suas funções para o envio e receção de segmentos do ficheiro a receber / enviar. A camada da aplicação é subdividida em duas subcamadas, dai o uso dos ficheiros \textit{AplicationLayer.h} e \textit{AplicationLayer.c} para representar a camada mais abstrata, responsável pelo envio do ficheiro e a receção do ficheiro, e que faz uso da camada menos abstrata, representada nos ficheiros  \textit{Packets.h} e \textit{Packets.c}, que é responsável pela segmentação do ficheiro em pacotes e envio de pacotes de controlo e informação.\\
 
 \large\textbf{Interface}\\
 \normalsize
 
 Na interface da linha de comandos é permitido ao utilizador correr o programa usando o mesmo binário, independentemente de ser o recetor ou o emissor.
-É necessário o utilizador especificar se será o emissor / recetor, qual o Serial Port a ser usado e, no caso do recetor, qual o ficheiro a transmitir. No entanto, existem parâmetros opcionais que permitem definir outras definições relcionadas com a transmissão de informação, tais como: \textit{baudrate}, tamanho dos segmentos de informação, número de tentativas no reenvio de tramas e tempo esperado até ao reenvio de uma trama.
+É necessário o utilizador especificar se será o emissor / recetor, qual o Serial Port a ser usado e, no caso do recetor, qual o ficheiro a transmitir. No entanto, existem parâmetros opcionais que permitem definir outras definições relacionadas com a transmissão de informação, tais como: \textit{baudrate}, tamanho dos segmentos de informação, número de tentativas no reenvio de tramas e tempo esperado até ao reenvio de uma trama.
 Assim, a aplicação pode correr com valores inseridos pelo utilizador, ou com os seus valores por defeito.
 
 %3.Estrutura do código
@@ -156,7 +156,7 @@ Assim, a aplicação pode correr com valores inseridos pelo utilizador, ou com o
 \large\textbf{\textit{Application Layer}}\\
 \normalsize
 
-Os ficheiros \textit{AplicationLayer.h} e \textit{AplicationLayer.c} , representantes da sub-camada mais abstrata da camada da aplicação, fazem uso de uma estrutura de dados que guarda o descritor do ficheiro da porta série, o nome do ficheiro a ser transmitido, o tamanho máximo de mensagem a ser transmitido e ainda o tipo de conexão a ser usado - emissor ou recetor.
+Os ficheiros \textit{AplicationLayer.h} e \textit{AplicationLayer.c} , representantes da subcamada mais abstrata da camada da aplicação, fazem uso de uma estrutura de dados que guarda o descritor do ficheiro da porta série, o nome do ficheiro a ser transmitido, o tamanho máximo de mensagem a ser transmitido e ainda o tipo de conexão a ser usado - emissor ou recetor.
 
 \begin{lstlisting}[language=C]
 typedef struct {
@@ -167,7 +167,7 @@ typedef struct {
 } ApplicationLayer;
 \end{lstlisting}
 
-As prinicpais funções desta sub-camada são:
+As principais funções desta subcamada são:
 
 \begin{lstlisting}[language=C]
 int initApplicationLayer(const char * port, int baudrate, int timeout, int numRetries, ConnectionType type, int maxDataMsgSize, char * file);
@@ -176,7 +176,7 @@ int sendFile();
 int receiveFile();
 \end{lstlisting}
 
-Os ficheiros \textit{Packets.h} e \textit{Packets.c} , representantes da sub-camada menos abstrata da camada da aplicação, fazem uso de três estruturas de dados: a estrutura \textit{Packet} que guarda um apontador para a informação, e o tamanho dessa informação; a estrutura \textit{DataPacket]} que guarda o número sequencial do pacote a ser enviado, o seu tamanho e o apontador para essa informação; a estrutura \textit{ControlPacket} que guarda o tipo de pacote de Controlo - inicio ou fim -, o nome do ficheiro, o tamanho do ficheiro e o número de argumentos do pacote de controlo.
+Os ficheiros \textit{Packets.h} e \textit{Packets.c} , representantes da subcamada menos abstrata da camada da aplicação, fazem uso de três estruturas de dados: a estrutura \textit{Packet} que guarda um apontador para a informação, e o tamanho dessa informação; a estrutura \textit{DataPacket]} que guarda o número sequencial do pacote a ser enviado, o seu tamanho e o apontador para essa informação; a estrutura \textit{ControlPacket} que guarda o tipo de pacote de Controlo - inicio ou fim -, o nome do ficheiro, o tamanho do ficheiro e o número de argumentos do pacote de controlo.
 
 \noindent\begin{minipage}{.22\textwidth}
 \begin{lstlisting}[frame=tlrb]
@@ -206,7 +206,7 @@ typedef struct {
 \end{lstlisting}
 \end{minipage}
 
-As principais funções desta sub-camada são:
+As principais funções desta subcamada são:
 
 \begin{lstlisting}[language=C]
 int sendDataPacket(int fd, DataPacket * src);
@@ -244,29 +244,29 @@ int llread(int fd, uchar ** buffer);
 %4. Casos de uso principais
 \section{Casos de uso principais}
 
-Existem dois casos de uso principais bem distintos: correr o programa como emissor ou correr o prorama como recetor. Em cada um destes casos é possível correr o programa usando o mesmo binário, apenas dependendo os argumentos usados na chamada do programa, sendo estes:
+Existem dois casos de uso principais bem distintos: correr o programa como emissor ou correr o programa como recetor. Em cada um destes casos é possível correr o programa usando o mesmo binário, apenas dependendo os argumentos usados na chamada do programa, sendo estes:
 
 \begin{lstlisting}[language=C]
 	printf("Usage:\t%s <SerialPort> <r/w> <FILE_NAME> [BAUDRATE] [DATA_BYTES] [NUM_RETRIES] [TIMEOUT]\n", progName);
 	printf("Arguments between [ ] are optional\n");
 \end{lstlisting}
 
-No caso em que o programa é executado como \textbf{recetor} a sequência de chamada de funções, considerando as de maior relevência, é:
+No caso em que o programa é executado como \textbf{recetor} a sequência de chamada de funções, considerando as de maior relevância, é:
 \begin{itemize}
 	\item \textbf{receiveFile}, que tem como objetivo receber o ficheiro indicado e que faz uso de funções como a \textbf{receiveControlPacket}, \textbf{receiveDataPacket}, \textbf{llopen} e \textbf{llclose}.
 	\item \textbf{receiveControlPacket}, que tem como objetivo enviar um pacote de controlo, do tipo \textit{START} no início da transmissão e do tipo \textit{END} no fim da transmissão, e que faz uso de funções como \textbf{fillControlPacketArg} e \textbf{llread}.
-	\item \textbf{receiveDataPacket},  que tem como objeitvo enviar um pacote de informação,e que faz uso de funções como \textbf{llread}.
+	\item \textbf{receiveDataPacket},  que tem como objetivo enviar um pacote de informação, e que faz uso de funções como \textbf{llread}.
 	\item \textbf{fillControlPacketArg}, que tem como objetivo preencher os argumentos de um control packet, com informação recebida.
 	\item \textbf{llread}, que tem como objetivo ler da Porta Série informação, aplicando-lhe \textit{Byte Destuffing} e \textit{Deframing}. Faz uso das funções \textbf{byteDestuffing, deframingInformation, sendControlFrame} e \textbf{read}.
 \end{itemize}
 
-No caso em que o programa é executado como \textbf{emissor} a sequência de chamada de funções, considerando as de mairo relevância, é:
+No caso em que o programa é executado como \textbf{emissor} a sequência de chamada de funções, considerando as de maior relevância, é:
 \begin{itemize}
 	\item \textbf{sendFile}, que tem como objetivo enviar o ficheiro indicado e que faz uso de funções como a \textbf{sendControlPacket}, \textbf{sendDataPacket}, \textbf{llopen} e \textbf{llclose}.
 	\item \textbf{sendControlPacket}, que tem como objetivo enviar um pacote de controlo, do tipo \textit{START} no início da transmissão e do tipo \textit{END} no fim da transmissão, e que faz uso de funções como \textbf{makeControlPacket} e \textbf{llwrite}.
-	\item \textbf{sendDataPacket},  que tem como objeitvo enviar um pacote de informação, e que faz uso de funções como \textbf{makeDataPacket} e \textbf{llwrite}.
-	\item \textbf{makeControlPacket}, que tem como objetivo criar uma pacote de controlo.
-	\item \textbf{makeDataPacket}, que tem como objetivo criar um pacot de informação.
+	\item \textbf{sendDataPacket},  que tem como objetivo enviar um pacote de informação, e que faz uso de funções como \textbf{makeDataPacket} e \textbf{llwrite}.
+	\item \textbf{makeControlPacket}, que tem como objetivo criar um pacote de controlo.
+	\item \textbf{makeDataPacket}, que tem como objetivo criar um pacote de informação.
 	\item \textbf{llwrite}, que tem como objetivo escrever para a Porta Série a informação recebida como argumento, após aplicar uma \textit{frame} e \textit{Byte Stuffing} à informação. Faz uso das funções \textbf{framingInformation, byteStuffing, readControlFrame} e \textbf{write}.
 \end{itemize}
 
@@ -306,7 +306,7 @@ Para gerir a interação com os pacotes de dados foi desenvolvido o API (Packet.
 Em relação aos pacotes de dados: 
 A função \textbf{makeDataPacket} que cria o pacote de dados a partir da informação original do ficheiro fonte; \textbf{sendDataPacket} que envia o pacote de dados utilizando llwrite; \textbf{receiveDataPacket} que recebe o pacote de dados utilizando llread e recolhe a informação do ficheiro fonte.
 
-Em relação aos pacote de controlo:
+Em relação aos pacotes de controlo:
 A função \textbf{makeControlPacket} que cria o pacote de controlo; \textbf{sendControlPacket} que envia o pacote de controlo utilizando \textit{llwrite}; \textbf{receiveControlPacket} que recebe o pacote utilizando \textit{llread}.\\
 
 Foram implementadas as seguintes funções:
@@ -333,7 +333,7 @@ Usando um \textit{baudrate} constante de 115200 e uma imagem de tamanho constant
 \end{center}
 \end{figure}
 
-Após a análise dos resultados obtidos e do gráfico podemos verificar uma relação inversamente proporcional entre o Tamanho da Trama I e o Tempo Total de transferência do ficheiro. Para valores muito pequenos de trama, verifica-se grandes diferenças temporais - aumento de 8 bytes na trama de 2 bytes para 10 bytes, reduz o tempo total em cerca de 70s. Para valores grandes de trama, grandes diferenças têm pouca implicação no tempo de transferência - tramas de 10000 bytes demoram apenas mais  3ms a transferir que tramas de 20000 bytes. Verifica-se também pela análise da eficiência (S), que à medida que o tamanho da trama I aumenta, este aproxima-se do valor téorico, sendo o valor máximo obtido 79.25\%.\\
+Após a análise dos resultados obtidos e do gráfico podemos verificar uma relação inversamente proporcional entre o Tamanho da Trama I e o Tempo Total de transferência do ficheiro. Para valores muito pequenos de trama, verifica-se grandes diferenças temporais - aumento de 8 bytes na trama de 2 bytes para 10 bytes, reduz o tempo total em cerca de 70s. Para valores grandes de trama, grandes diferenças têm pouca implicação no tempo de transferência - tramas de 10000 bytes demoram apenas mais  3ms a transferir que tramas de 20000 bytes. Verifica-se também pela análise da eficiência (S), que à medida que o tamanho da trama I aumenta, este aproxima-se do valor teórico, sendo o valor máximo obtido 79.25\%.\\
 
 \textbf{Variável: Capacidade da ligação}\\
 Usando uma imagem de tamanho constante 80942 \textit{bytes} e um tamanho de trama I constante de valor 256, fazendo variar o \textit{baudrate}, obteve-se:
@@ -343,12 +343,12 @@ Usando uma imagem de tamanho constante 80942 \textit{bytes} e um tamanho de tram
 \end{center}
 \end{figure}
 
-Após a análise dos resultados obtidos e do gráfico podemos verificar uma relação inversamente proporcional entre o  I e o Tempo Total de transferência do ficheiro. Quanto menor o baudrate, maior o tempo de transferência.  Para valores muito pequenos de baudrate, verifica-se grandes diferenças no tempo - aumento do baudrate de 1200 para 2400, reduz o tempo total em cerca de 340 segundos. Para valores muito grandes de trama, grande diferenças têm pouca implicação no tempo de transferência - baudrate de  115200 demora o mesmo tempo (medido até aos milisegundos) que o baudrate de 460800.
+Após a análise dos resultados obtidos e do gráfico podemos verificar uma relação inversamente proporcional entre o  I e o Tempo Total de transferência do ficheiro. Quanto menor o baudrate, maior o tempo de transferência.  Para valores muito pequenos de baudrate, verifica-se grandes diferenças no tempo - aumento do baudrate de 1200 para 2400, reduz o tempo total em cerca de 340 segundos. Para valores muito grandes de trama, grandes diferenças têm pouca implicação no tempo de transferência - baudrate de  115200 demora o mesmo tempo (medido até aos milisegundos) que o baudrate de 460800.
 
 Pode-se também verificar, pela análise da eficiência (S), que à medida que o tamanho da trama I aumenta, este aproxima-se do valor téorico, sendo o valor máximo obtido 77.97\%\\.
 
 \textbf{Variável: Tempo de Propagação}\\
-Usando uma imagem de tamanho constante 80942 \textit{bytes}, um tamanho de trama I constante de valor 256 e um \textit{baudrate} constante de 460800 , fazendo variar o tempo de processamento de cada trama recebida, obteve-se:
+Usando uma imagem de tamanho constante 80942 \textit{bytes}, um tamanho de trama I constante de valor 256 e um \textit{baudrate} constante de 460800, fazendo variar o tempo de processamento de cada trama recebida, obteve-se:
 \begin{figure}[h!]
 \begin{center}
 \includegraphics[scale=0.3]{images/TProp.png}
@@ -358,7 +358,7 @@ Usando uma imagem de tamanho constante 80942 \textit{bytes}, um tamanho de trama
 Após a análise dos resultados obtidos e do gráfico podemos verificar uma relação diretamente proporcional entre o Tempo de Propagação e o Tempo Total de transferência do ficheiro. Assim, como era teoricamente esperado, o tempo de propagação afeta linearmente o tempo de transferência do ficheiro.
 
 \textbf{Variável: \textit{Frame Error Ratio}}\\
-Usando uma imagem de tamanho constante 80942 \textit{bytes}, um tamanho de trama I constante de valor 256 e um \textit{baudrate} constante de 460800, fazendo variar a probabilidade de ocurrencia de erros no cabeçalho das tramas I , obteve-se:
+Usando uma imagem de tamanho constante 80942 \textit{bytes}, um tamanho de trama I constante de valor 256 e um \textit{baudrate} constante de 460800, fazendo variar a probabilidade de ocorrência de erros no cabeçalho das tramas I, obteve-se:
 \begin{figure}[h!]
 \begin{center}
 \includegraphics[width=13cm, height= 4.6cm]{images/FER.png}
@@ -373,7 +373,7 @@ Após a análise dos resultados obtidos e do gráfico podemos verificar a semelh
 
 O protocolo implementado pode ser divido em duas camadas: \textit{LinkLayer} e \textit{ApplicationLayer}. A \textit{LinkLayer} como sendo a camada de mais baixo nível e fazendo iteração direta com a porta série e a \textit{ApplicationLayer} como sendo a camada de mais alto nível e que faz uso da API da \textit{LinkLayer} para enviar / receber o ficheiro. O protocolo foi implementado com robustez a erros e interrupções, conseguindo em ambos casos retomar a transferência com sucesso. A eficiência do protocolo é de cerco de 77\%, aproximando-se bastante dos valores teóricos esperados.
 
-No final, o grupo conclui que a implementação de protocolos representa um desafio, principalmente devido aos mecanismos de deteção de erros e de recuperação. Ainda assim, o grupo considera ter dominado os conceitos teóricos implicitios no trabalho, tais como o uso de \textit{stuffing, destuffing, framing, deframing} e \textit{Stop\&Wait} com \textit{sequence numbers}. O grupo considera que o desenvolvimento do protocolo consolidou os conhecimentos teóricos previamente adquiridos.
+No final, o grupo conclui que a implementação de protocolos representa um desafio, principalmente devido aos mecanismos de deteção de erros e de recuperação. Ainda assim, o grupo considera ter dominado os conceitos teóricos implícitos no trabalho, tais como o uso de \textit{stuffing, destuffing, framing, deframing} e \textit{Stop\&Wait} com \textit{sequence numbers}. O grupo considera que o desenvolvimento do protocolo consolidou os conhecimentos teóricos previamente adquiridos.
 
 \newpage
 
