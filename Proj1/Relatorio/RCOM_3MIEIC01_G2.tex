@@ -325,20 +325,38 @@ Para validação do programa desenvolvido, e para garantir que funcionava de aco
 %8. Eficiência do protocolo de ligação de dados
 \section{Eficiência do protocolo de ligação de dados}
 
-(caraterização estatística da  eficiência do protocolo, feita com recurso a medidas sobre o código desenvolvido. A caracterização teórica de um protocolo Stop\&Wait, que deverá ser usada como termo de comparação, encontra-se descrita nos slides de Ligação Lógica das aulas teóricas). \\
-
 \textbf{Variável: Tamanho da trama I}\\
-Usando um \textit{baudrate} constante de 115200 e uma imagem de tamanho constante 80942 \textit{bytes}, fazendo variar o tamanho da trama I, obteve-se:\\
-
+Usando um \textit{baudrate} constante de 115200 e uma imagem de tamanho constante 80942 \textit{bytes}, fazendo variar o tamanho da trama I, obteve-se:
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[scale=0.4]{images/TamanhoTrama.png}
+\end{center}
+\end{figure}
 
 \textbf{Variável: Capacidade da ligação}\\
-Usando uma imagem de tamanho constante 80942 \textit{bytes} e um tamanho de trama I constante de valor 256, fazendo variar o \textit{baudrate}, obteve-se:\\
+Usando uma imagem de tamanho constante 80942 \textit{bytes} e um tamanho de trama I constante de valor 256, fazendo variar o \textit{baudrate}, obteve-se:
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[scale=0.35]{images/Baudrate.png}
+\end{center}
+\end{figure}
 
 \textbf{Variável: Tempo de Propagação}\\
-Usando uma imagem de tamanho constante 80942 \textit{bytes}, um tamanho de trama I constante de valor 256 e um \textit{baudrate} constante de 460800 , fazendo variar o tempo de processamento de cada trama recebida, obteve-se:\\
+Usando uma imagem de tamanho constante 80942 \textit{bytes}, um tamanho de trama I constante de valor 256 e um \textit{baudrate} constante de 460800 , fazendo variar o tempo de processamento de cada trama recebida, obteve-se:
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[scale=0.3]{images/TProp.png}
+\end{center}
+\end{figure}
 
 \textbf{Variável: \textit{Frame Error Ratio}}\\
-Usando uma imagem de tamanho constante 80942 \textit{bytes}, um tamanho de trama I constante de valor 256 e um \textit{baudrate} constante de 460800, fazendo variar a probabilidade de ocurrencia de erros no cabeçalho das tramas I , obteve-se:\\
+Usando uma imagem de tamanho constante 80942 \textit{bytes}, um tamanho de trama I constante de valor 256 e um \textit{baudrate} constante de 460800, fazendo variar a probabilidade de ocurrencia de erros no cabeçalho das tramas I , obteve-se:
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[scale=0.6]{images/FER.png}
+\end{center}
+\end{figure}
+
 
 %9. Conclusões
 \section{Conclusões}
