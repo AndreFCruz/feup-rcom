@@ -109,14 +109,14 @@ Edgar Carneiro - 201503748 \\
 \section{Sumário}
 \normalsize 
 
-Pimeiro parágrafo sobre o contexto do trabalho:\\
-Segundo parágrafo sobre as principais conclusões do relatório.\\
-TODO
+Este trabalho foi realizado no âmbito da cadeira de Redes de Computadores, e era pedido aos alunos a implementação de um protocolo de comunicação assíncrona para a transmissão de um ficheiro através de uma Porta Série RS-232.
+
+As principais conclusões obtidas no desenvolvimento do Relatório foram que o protocolo implementado foi compreensivo o suficiente para o resultado esperado e escala conforme a teoria leocionada nas aulas téoricas. O protocolo executa com cerca de 77\% de eficácia, como podemos ver pelas estatísticas geradas.
 
 %1.Introdução
 \section{Introdução}
 
-O trabalho, realizado no âmbito da cadeira de Redes de Computadores, tinha como objetivo a implementação de um protocolo de ligação de dados, de acordo como uma especificação fornecida, através de um guião. Era também pedido aos alunos que desenvolvessem um simples aplicação, de forma a testar o protocolo implementado.
+O trabalho tinha como objetivo a implementação de um protocolo de ligação de dados, de acordo como uma especificação fornecida, através de um guião. Era também pedido aos alunos que desenvolvessem um simples aplicação, de forma a testar o protocolo implementado.
 
 O Relatório encontra-se dividido em diversas secções, nas quais se pode encontrar a seguinte informação:
 \begin{itemize}
@@ -340,12 +340,13 @@ Usando uma imagem de tamanho constante 80942 \textit{bytes}, um tamanho de trama
 \textbf{Variável: \textit{Frame Error Ratio}}\\
 Usando uma imagem de tamanho constante 80942 \textit{bytes}, um tamanho de trama I constante de valor 256 e um \textit{baudrate} constante de 460800, fazendo variar a probabilidade de ocurrencia de erros no cabeçalho das tramas I , obteve-se:\\
 
-\newpage
-
 %9. Conclusões
 \section{Conclusões}
 
-  (síntese da informação apresentada nas secções anteriores; reflexão sobre os objectivos de aprendizagem alcançados)
+O protocolo implementado pode ser divido em duas camadas: \textit{LinkLayer} e \textit{ApplicationLayer}. A \textit{LinkLayer} como sendo a camada de mais baixo nível e fazendo iteração direta com a porta série e a \textit{ApplicationLayer} como sendo a camada de mais alto nível e que faz uso da API da \textit{LinkLayer} para enviar / receber o ficheiro. O protocolo foi implementado com robustez a erros e interrupções, conseguindo em ambos casos retomar a transferência com sucesso. A eficiência do protocolo é de cerco de 77\%, aproximando-se bastante dos valores teóricos esperados.
+
+No final, o grupo conclui que a implementação de protocolos representa um desafio, principalmente devido aos mecanismos de deteção de erros e de recuperação. Ainda assim, o grupo considera ter dominado os conceitos teóricos implicitios no trabalho, tais como o uso de \textit{stuffing, destuffing, framing, deframing} e \textit{Stop\&Wait} com \textit{sequence numbers}. O grupo considera que o desenvolvimento do protocolo consolidou os conhecimentos teóricos previamente adquiridos.
+
 \newpage
 
 %Anexo I
