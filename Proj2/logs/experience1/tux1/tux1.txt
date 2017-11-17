@@ -1,0 +1,71 @@
+//IfConfig
+
+eth0      Link encap:Ethernet  HWaddr 00:0f:fe:8c:af:9d  
+          inet addr:172.16.1.21  Bcast:172.16.1.255  Mask:255.255.255.0
+          inet6 addr: fe80::20f:feff:fe8c:af9d/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:139 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:262 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:12202 (11.9 KiB)  TX bytes:25012 (24.4 KiB)
+          Interrupt:19 Memory:f0500000-f0520000 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:48 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:48 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:4036 (3.9 KiB)  TX bytes:4036 (3.9 KiB)
+
+
+//Route -n
+
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.16.1.254    0.0.0.0         UG    0      0        0 eth0
+172.16.1.0      0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+
+//Ping
+
+PING 172.16.1.24 (172.16.1.24) 56(84) bytes of data.
+64 bytes from 172.16.1.24: icmp_seq=1 ttl=64 time=0.406 ms
+64 bytes from 172.16.1.24: icmp_seq=2 ttl=64 time=0.239 ms
+64 bytes from 172.16.1.24: icmp_seq=3 ttl=64 time=0.354 ms
+64 bytes from 172.16.1.24: icmp_seq=4 ttl=64 time=0.235 ms
+64 bytes from 172.16.1.24: icmp_seq=5 ttl=64 time=0.266 ms
+64 bytes from 172.16.1.24: icmp_seq=6 ttl=64 time=0.275 ms
+64 bytes from 172.16.1.24: icmp_seq=7 ttl=64 time=0.368 ms
+64 bytes from 172.16.1.24: icmp_seq=8 ttl=64 time=0.233 ms
+64 bytes from 172.16.1.24: icmp_seq=9 ttl=64 time=0.354 ms
+64 bytes from 172.16.1.24: icmp_seq=10 ttl=64 time=0.225 ms
+64 bytes from 172.16.1.24: icmp_seq=11 ttl=64 time=0.351 ms
+64 bytes from 172.16.1.24: icmp_seq=12 ttl=64 time=0.233 ms
+64 bytes from 172.16.1.24: icmp_seq=13 ttl=64 time=0.345 ms
+64 bytes from 172.16.1.24: icmp_seq=14 ttl=64 time=0.232 ms
+64 bytes from 172.16.1.24: icmp_seq=15 ttl=64 time=0.269 ms
+64 bytes from 172.16.1.24: icmp_seq=16 ttl=64 time=0.223 ms
+
+--- 172.16.1.24 ping statistics ---
+16 packets transmitted, 16 received, 0% packet loss, time 14999ms
+rtt min/avg/max/mdev = 0.223/0.288/0.406/0.061 ms
+
+
+
+//Arp -a
+
+? (172.16.1.1) at <incomplete> on eth0
+tux24 (172.16.1.24) at 00:22:64:a6:a4:f1 [ether] on eth0
+? (172.16.1.254) at <incomplete> on eth0
+
+//Arp -a (after delete)
+
+Address                  HWtype  HWaddress           Flags Mask            Iface
+172.16.1.1                       (incomplete)                              eth0
+172.16.1.24                      (incomplete)                              eth0
+172.16.1.254                     (incomplete)                              eth0
+
+
+
