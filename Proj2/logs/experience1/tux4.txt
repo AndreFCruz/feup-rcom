@@ -1,0 +1,104 @@
+//Ifconfig
+
+eth0      Link encap:Ethernet  HWaddr 00:22:64:a6:a4:f1  
+          inet addr:172.16.1.24  Bcast:172.16.1.255  Mask:255.255.255.0
+          inet6 addr: fe80::222:64ff:fea6:a4f1/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:202 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:591 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:16234 (15.8 KiB)  TX bytes:46062 (44.9 KiB)
+          Interrupt:17 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:594 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:594 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:60588 (59.1 KiB)  TX bytes:60588 (59.1 KiB)
+
+tun0      Link encap:UNSPEC  HWaddr 00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00  
+          inet addr:10.8.0.1  P-t-P:10.8.0.2  Mask:255.255.255.255
+          UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1500  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:100 
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+
+//Route -n
+
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.16.1.254    0.0.0.0         UG    0      0        0 eth0
+10.8.0.0        10.8.0.2        255.255.255.0   UG    0      0        0 tun0
+10.8.0.2        0.0.0.0         255.255.255.255 UH    0      0        0 tun0
+172.16.1.0      0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+
+//Arp -a
+
+
+
+//Ping
+
+PING 172.16.1.21 (172.16.1.21) 56(84) bytes of data.
+64 bytes from 172.16.1.21: icmp_seq=1 ttl=64 time=0.224 ms
+64 bytes from 172.16.1.21: icmp_seq=2 ttl=64 time=0.258 ms
+64 bytes from 172.16.1.21: icmp_seq=3 ttl=64 time=0.247 ms
+64 bytes from 172.16.1.21: icmp_seq=4 ttl=64 time=0.345 ms
+64 bytes from 172.16.1.21: icmp_seq=5 ttl=64 time=0.324 ms
+64 bytes from 172.16.1.21: icmp_seq=6 ttl=64 time=0.206 ms
+64 bytes from 172.16.1.21: icmp_seq=7 ttl=64 time=0.194 ms
+64 bytes from 172.16.1.21: icmp_seq=8 ttl=64 time=0.208 ms
+64 bytes from 172.16.1.21: icmp_seq=9 ttl=64 time=0.368 ms
+64 bytes from 172.16.1.21: icmp_seq=10 ttl=64 time=0.391 ms
+64 bytes from 172.16.1.21: icmp_seq=11 ttl=64 time=0.238 ms
+64 bytes from 172.16.1.21: icmp_seq=12 ttl=64 time=0.238 ms
+64 bytes from 172.16.1.21: icmp_seq=13 ttl=64 time=0.237 ms
+64 bytes from 172.16.1.21: icmp_seq=14 ttl=64 time=0.337 ms
+64 bytes from 172.16.1.21: icmp_seq=15 ttl=64 time=0.330 ms
+64 bytes from 172.16.1.21: icmp_seq=16 ttl=64 time=0.190 ms
+64 bytes from 172.16.1.21: icmp_seq=17 ttl=64 time=0.196 ms
+64 bytes from 172.16.1.21: icmp_seq=18 ttl=64 time=0.211 ms
+64 bytes from 172.16.1.21: icmp_seq=19 ttl=64 time=0.381 ms
+64 bytes from 172.16.1.21: icmp_seq=20 ttl=64 time=0.407 ms
+64 bytes from 172.16.1.21: icmp_seq=21 ttl=64 time=0.330 ms
+64 bytes from 172.16.1.21: icmp_seq=22 ttl=64 time=0.355 ms
+64 bytes from 172.16.1.21: icmp_seq=23 ttl=64 time=0.329 ms
+64 bytes from 172.16.1.21: icmp_seq=24 ttl=64 time=0.356 ms
+64 bytes from 172.16.1.21: icmp_seq=25 ttl=64 time=0.337 ms
+64 bytes from 172.16.1.21: icmp_seq=26 ttl=64 time=0.356 ms
+64 bytes from 172.16.1.21: icmp_seq=27 ttl=64 time=0.320 ms
+64 bytes from 172.16.1.21: icmp_seq=28 ttl=64 time=0.342 ms
+64 bytes from 172.16.1.21: icmp_seq=29 ttl=64 time=0.360 ms
+64 bytes from 172.16.1.21: icmp_seq=30 ttl=64 time=0.414 ms
+64 bytes from 172.16.1.21: icmp_seq=31 ttl=64 time=0.332 ms
+64 bytes from 172.16.1.21: icmp_seq=32 ttl=64 time=0.363 ms
+64 bytes from 172.16.1.21: icmp_seq=33 ttl=64 time=0.330 ms
+64 bytes from 172.16.1.21: icmp_seq=34 ttl=64 time=0.351 ms
+64 bytes from 172.16.1.21: icmp_seq=35 ttl=64 time=0.334 ms
+64 bytes from 172.16.1.21: icmp_seq=36 ttl=64 time=0.366 ms
+64 bytes from 172.16.1.21: icmp_seq=37 ttl=64 time=0.333 ms
+64 bytes from 172.16.1.21: icmp_seq=38 ttl=64 time=0.353 ms
+64 bytes from 172.16.1.21: icmp_seq=39 ttl=64 time=0.381 ms
+64 bytes from 172.16.1.21: icmp_seq=40 ttl=64 time=0.410 ms
+64 bytes from 172.16.1.21: icmp_seq=41 ttl=64 time=0.336 ms
+64 bytes from 172.16.1.21: icmp_seq=42 ttl=64 time=0.353 ms
+64 bytes from 172.16.1.21: icmp_seq=43 ttl=64 time=0.330 ms
+64 bytes from 172.16.1.21: icmp_seq=44 ttl=64 time=0.355 ms
+
+--- 172.16.1.21 ping statistics ---
+44 packets transmitted, 44 received, 0% packet loss, time 42984ms
+rtt min/avg/max/mdev = 0.190/0.317/0.414/0.064 ms
+
+
+//Arp -a
+
+tux21 (172.16.1.21) at 00:0f:fe:8c:af:9d [ether] on eth0
+? (172.16.1.254) at <incomplete> on eth0
+? (172.16.1.1) at <incomplete> on eth0
+
+
