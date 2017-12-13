@@ -4,8 +4,8 @@
 COMPILER_TYPE = gnu
 CC = gcc
 
-PROG = clientTCP
-SRCS = main.c
+PROG = clientFTP
+SRCS = main.c utils.c
 
 CFLAGS= -Wall -g
 
