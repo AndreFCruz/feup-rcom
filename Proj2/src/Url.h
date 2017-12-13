@@ -1,33 +1,41 @@
-#pragma once
+#ifndef __URL_H
+#define __URL_H
+
+#define URL_STR_LEN 256
 
 #include <string.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <regex.h>
 #include <errno.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
-
 #include <arpa/inet.h>
-
 #include <netinet/in.h>
 
-typedef char url_content[256];
+typedef struct url_t {
+  int port;
+  char ip[URL_STR_LEN];   // host's ip
+  char host[URL_STR_LEN]; // hostname
+  char path[URL_STR_LEN]; // file path
+  char filename[URL_STR_LEN]; // filename
+  char user[URL_STR_LEN]; // username
+  char password[URL_STR_LEN]; // password
+} URL;
 
-typedef struct URL {
-	url_content user; // string to user
-	url_content password; // string to password
-	url_content host; // string to host
-	url_content ip; // string to IP
-	url_content path; // string to path
-	url_content filename; // string to filename
-	int port; // integer to port
-} url;
+/**
+ * URL struct constructor
+ */
+URL * constructURL();
 
-void initURL(url* url);
-int parseURL(url* url, const char* str); // Parse a string with the url to create the URL structure
-int getIpByHost(url* url); // gets an IP by host name
+/**
+ * Parses the url command to the given URL struct
+ */
+int parseURL(URL* url, const char* str);
 
-char* processElementUntilChar(char* str, char chr);
+/**
+ * URL struct destructor
+ */
+void destructURL(URL * url);
+
+#endif /* __URL_H */
