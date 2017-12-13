@@ -5,6 +5,8 @@
 FTP * ftp;
 URL * url;
 
+static int sendCWD();
+
 static char* receiveCommand(int fd, const char* responseCmd) {
 
 	char* responseMessage = (char*) malloc(MESSAGE_SIZE + 1);
@@ -138,6 +140,10 @@ static int retrieveFile() {
 	}
 	*/
 
+	char dataBuffer[SOCKET_SIZE];
+	int length;
+	int bytesWritten = 0;
+
 	while ((length = read(ftp->fdData, dataBuffer, SOCKET_SIZE)) > 0) {
 		if ((bytesWritten = write(fd, dataBuffer, length)) < 0) {
 			return logError("could not write data to output file!");
@@ -154,6 +160,7 @@ static int retrieveFile() {
 		return logError("received invalid response from server, connection interrupted?");
 	}
 
+	/*
 	// CHECK EXPECTED FILE SIZE
 	if (!unknownSize) {
 
@@ -164,15 +171,16 @@ static int retrieveFile() {
 		transferSpeed = bytesSinceUpdate / (double) (currentUpdate - lastUpdate);
 		logProgress(bytesRead, fileSize, transferSpeed);
 	}
+	*/
 
 	printf("[INFORMATION] file transfer completed successfully!");
-	printf("[INFORMATION] TOTAL BYTES RECEIVED: %d bytes\n", bytesRead);
-	printf("[INFORMATION] AVERAGE TRANSFER SPEED: %.2f kBytes/sec\n", (double) bytesRead / totalTime);
+	//printf("[INFORMATION] TOTAL BYTES RECEIVED: %d bytes\n", bytesRead);
+	//printf("[INFORMATION] AVERAGE TRANSFER SPEED: %.2f kBytes/sec\n", (double) bytesRead / totalTime);
 
 	return TRUE;
 }
 
-static int sendCWD(void) {
+static int sendCWD() {
 
 	char userCommand[MESSAGE_SIZE + 1];
 

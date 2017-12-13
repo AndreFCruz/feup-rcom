@@ -5,7 +5,7 @@ COMPILER_TYPE = gnu
 CC = gcc
 
 PROG = clientFTP
-SRCS = main.c utils.c
+SRCS = main.c utils.c clientFTP.c
 
 CFLAGS= -Wall -g
 

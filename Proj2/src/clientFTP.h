@@ -8,14 +8,13 @@
 #include <regex.h>
 #include <errno.h>
 #include <unistd.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
-
 #include <arpa/inet.h>
-
 #include <netinet/in.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #define SERVER_READY      "220"
 #define TRANSFER_COMPLETE "226"
