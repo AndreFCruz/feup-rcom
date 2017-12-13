@@ -14,13 +14,13 @@
 #include <netinet/in.h>
 
 typedef struct url_t {
-  int port;       // integer to port
-  char ip[URL_STR_LEN];   // string to IP
-  char host[URL_STR_LEN]; // string to host
-  char path[URL_STR_LEN]; // string to path
-  char filename[URL_STR_LEN]; // string to filename
-  char user[URL_STR_LEN]; // string to user
-  char password[URL_STR_LEN]; // string to password
+  int port;
+  char ip[URL_STR_LEN];   // host's ip
+  char host[URL_STR_LEN]; // hostname
+  char path[URL_STR_LEN]; // file path
+  char filename[URL_STR_LEN]; // filename
+  char user[URL_STR_LEN]; // username
+  char password[URL_STR_LEN]; // password
 } URL;
 
 /**
