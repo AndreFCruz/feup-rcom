@@ -23,13 +23,19 @@ void printUsage(char* argv0) {
 
 int main(int argc, char** argv){
   regex_t r;
-  const char * regex_text = "^ftp:\/\/(([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z0-9]+)@)?(([a-zA-Z][a-zA-Z0-9]*[.]?)+)\/(([^\/\s]+\/)*([^\/\s]+))?$";
+  const char * regex_text;
+  if (argc == 2) {
+    regex_text = "^ftp://(([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z0-9]+)@)?(([a-zA-Z][a-zA-Z0-9]*[.]?)+)/(([^/]+/)*([^/]+))?$";
+    // regex_text = "^ftp://(([a-z]+):([a-z]+)@)?([a-z.]+)/([a-z/.]+)?$";
+  } else if (argc == 3) {
+    regex_text = argv[2];
+  }
   const char * find_text = argv[1];
 
   printf ("Trying to find '%s' in '%s'\n", regex_text, find_text);
-  compile_regex(& r, regex_text);
-  match_regex(& r, find_text);
-  regfree(& r);
+  compile_regex (& r, regex_text);
+  match_regex (& r, find_text);
+  regfree (& r);
 
   return 0;
 }
