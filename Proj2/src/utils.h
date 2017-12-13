@@ -1,9 +1,10 @@
-#ifdef  __UTILS_H
+#ifndef __UTILS_H
 #define __UTILS_H
 
+#include <sys/types.h>
 #include <regex.h>
 
-#define BOOL	int
+// #define BOOL	int
 #define FALSE	0
 #define TRUE	1
 

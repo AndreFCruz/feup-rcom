@@ -2,10 +2,8 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <netdb.h>
-#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
 #include "utils.h"
 
 #define MAX_ERROR_MSG 0x1000
@@ -93,7 +91,7 @@ struct hostent {
     return inet_ntoa(*((struct in_addr *)h->h_addr));
 }
 
-int logError(char * msg){
-  printf(stderr, "%s %s\n", "ERROR:", msg);
+int logError(char * msg) {
+  printf("%s %s\n", "ERROR:", msg);
   return FALSE;
 }
