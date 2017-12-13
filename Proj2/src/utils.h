@@ -1,19 +1,18 @@
 #ifdef  __UTILS_H
 #define __UTILS_H
 
-<<<<<<< HEAD
+#include <regex.h>
+
 #define BOOL	int
 #define FALSE	0
 #define TRUE	1
 
-#define SOCKET_SIZE	32768
+#define SOCKET_SIZE	32768  //TODO user defined socket_size
 #define MESSAGE_SIZE	1024
-=======
-#include <regex.h>
->>>>>>> 4da629d4eb5b9ad9fc1bfcdba34717bdb39077c4
 
 char * getIp(char * domain);
 int compile_regex(regex_t * r, const char * regex_text);
 int match_regex (regex_t * r, const char * to_match);
+int logError(char * msg);
 
 #endif /* __UTILS_H */

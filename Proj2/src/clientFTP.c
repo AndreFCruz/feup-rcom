@@ -14,7 +14,8 @@ static char* receiveCommand(int fd, const char* responseCmd) {
 	}
 
 	if (responseCmd != NULL && strncmp(responseCmd, responseMessage, strlen(responseCmd))) {
-		printf("[ERROR] %s", responseMessage);
+		//printf("ERROR: %s", responseMessage);
+		logError(responseMessage);   //TODO
 		return NULL;
 	}
 
@@ -60,7 +61,7 @@ static int connectSocket(const char* ip, int port) {
 	return sockfd;
 }
 
-static int retrieveFile(void) {
+static int retrieveFile() {
 
 	char userCommand[MESSAGE_SIZE + 1];
 
@@ -74,13 +75,13 @@ static int retrieveFile(void) {
 
 	// SEND "RETR" COMMAND
 	if (!sendCommand(ftp->fdControl, userCommand, strlen(userCommand))) {
-		ERROR("sending RETR command to server failed!");
+		return logError("sending RETR command to server failed!");
 	}
 
 	// CHECK IF COMMAND RETURN CODE IS VALID
-	char* responseCommand = receiveCommand(ftp->fdControl, STATUS_OK);
+	char* responseCommand = receiveCommand(ftp->fdControl, FINISHED);
 	if (!responseCommand) {
-		ERROR("received invalid response from server, file not found?");
+		return logError("received invalid response from server, file not found?");
 	}
 
 	char expectedFilename[PATH_MAX];
@@ -97,7 +98,7 @@ static int retrieveFile(void) {
 		printf("[INFORMATION] output file size: %d (bytes)\n", fileSize);
 	}
 
-	puts("[INFORMATION] starting file transfer...");
+	printf("[INFORMATION] starting file transfer...");
 
 	int fd = open(url->filename, O_WRONLY | O_CREAT, 0600);
 
@@ -106,6 +107,7 @@ static int retrieveFile(void) {
 		return FALSE;
 	}
 
+	/*
 	char dataBuffer[SOCKET_SIZE];
 	int length;
 	int bytesRead = 0;
@@ -119,7 +121,7 @@ static int retrieveFile(void) {
 	while ((length = read(ftp->fdData, dataBuffer, SOCKET_SIZE)) > 0) {
 
 		if ((bytesWritten = write(fd, dataBuffer, length)) < 0) {
-			ERROR("could not write data to output file!");
+			return logError("could not write data to output file!");
 		}
 
 		bytesRead += length;
@@ -134,6 +136,13 @@ static int retrieveFile(void) {
 			lastUpdate = currentUpdate;
 		}
 	}
+	*/
+
+	while ((length = read(ftp->fdData, dataBuffer, SOCKET_SIZE)) > 0) {
+		if ((bytesWritten = write(fd, dataBuffer, length)) < 0) {
+			return logError("could not write data to output file!");
+		}
+	}
 
 	if (close(fd) < 0) {
 		perror(url->filename);
@@ -141,22 +150,22 @@ static int retrieveFile(void) {
 	}
 
 	// CHECK IF COMMAND RETURN CODE IS VALID
-	if (!receiveCommand(ftp->fdControl, "226")) {
-		ERROR("received invalid response from server, connection interrupted?");
+	if (!receiveCommand(ftp->fdControl, TRANSFER_COMPLETE)) {
+		return logError("received invalid response from server, connection interrupted?");
 	}
 
 	// CHECK EXPECTED FILE SIZE
 	if (!unknownSize) {
 
 		if (fileSize != bytesRead) {
-			ERROR("expected and received file sizes don't match!");
+			return logError("expected and received file sizes don't match!");
 		}
 
 		transferSpeed = bytesSinceUpdate / (double) (currentUpdate - lastUpdate);
 		logProgress(bytesRead, fileSize, transferSpeed);
 	}
 
-	puts("[INFORMATION] file transfer completed successfully!");
+	printf("[INFORMATION] file transfer completed successfully!");
 	printf("[INFORMATION] TOTAL BYTES RECEIVED: %d bytes\n", bytesRead);
 	printf("[INFORMATION] AVERAGE TRANSFER SPEED: %.2f kBytes/sec\n", (double) bytesRead / totalTime);
 
@@ -172,12 +181,12 @@ static int sendCWD(void) {
 
 	// SEND "CWD" (change working directory) COMMAND
 	if (!sendCommand(ftp->fdControl, userCommand, strlen(userCommand))) {
-		ERROR("sending CWD command to server failed!");
+		return logError("sending CWD command to server failed!");
 	}
 
 	// CHECK IF COMMAND RETURN CODE IS VALID
 	if (!receiveCommand(ftp->fdControl, DIRECTORY_OK)) {
-		ERROR("received invalid response from server, target directory not found?");
+		return logError("received invalid response from server, target directory not found?");
 	}
 
 	printf("[INFORMATION] entering directory %s...\n", url->path);
@@ -203,7 +212,7 @@ static int sendUSER(int fd) {
 	}
 
 	if (ftp->userPassword == NULL && !anonymousMode) {
-		ERROR("user must enter a password in authentication mode!");
+		return logError("user must enter a password in authentication mode!");
 	}
 
 	// FORMAT "PASS" COMMAND ARGUMENTS
@@ -211,33 +220,33 @@ static int sendUSER(int fd) {
 
 	// SEND "USER" COMMAND
 	if (!sendCommand(ftp->fdControl, userCommand, strlen(userCommand))) {
-		ERROR("sending USER command to server failed!");
+		return logError("sending USER command to server failed!");
 	}
 
 	// CHECK IF COMMAND RETURN CODE IS VALID
 	char* responseCommand = receiveCommand(ftp->fdControl, NULL);
-	int isAskingPassword = (strncmp(USER_OK, responseCommand, strlen(USER_OK)) == 0);
-	int isLoggedIn = (strncmp(PASS_OK, responseCommand, strlen(PASS_OK)) == 0);
+	int isAskingPassword = (strncmp(REQUIRED_PASSWORD, responseCommand, strlen(REQUIRED_PASSWORD)) == 0);
+	int isLoggedIn = (strncmp(SUCCESS_LOGIN, responseCommand, strlen(SUCCESS_LOGIN)) == 0);
 
 	if (!isAskingPassword && !isLoggedIn) {
-		ERROR("received invalid response from server, wrong username?...");
+		return logError("received invalid response from server, wrong username?...");
 	}
 
 	if (isAskingPassword) {
 
 		// SEND "PASS" COMMAND
 		if (!sendCommand(ftp->fdControl, passCommand, strlen(passCommand))) {
-			ERROR("sending PASS command to server failed!");
+			return logError("sending PASS command to server failed!");
 		}
 
 		// CHECK IF COMMAND RETURN CODE IS VALID (AUTHENTICATION MODE)
-		if (!anonymousMode && !receiveCommand(ftp->fdControl, PASS_OK)) {
-			ERROR("received invalid response from server, wrong password?");
+		if (!anonymousMode && !receiveCommand(ftp->fdControl, SUCCESS_LOGIN)) {
+			return logError("received invalid response from server, wrong password?");
 		}
 
 		// CHECK IF COMMAND RETURN CODE IS VALID (ANOYMOUS MODE)
-		if (anonymousMode && !receiveCommand(ftp->fdControl, PASS_OK)) {
-			ERROR("received invalid response from server, no anonymous access?");
+		if (anonymousMode && !receiveCommand(ftp->fdControl, SUCCESS_LOGIN)) {
+			return logError("received invalid response from server, no anonymous access?");
 		}
 	}
 
@@ -248,33 +257,33 @@ static int sendPASV(int fd) {
 
 	// SEND "PASV" COMMAND
 	if (!sendCommand(fd, "PASV\r\n", strlen("PASV\r\n"))) {
-		ERROR("sending PASV command to server failed!");
+		return logError("sending PASV command to server failed!");
 	}
 
-	char* pasvResponse = receiveCommand(fd, PASV_READY);
+	char* pasvResponse = receiveCommand(fd, PASSIVE_MODE);
 	int remoteIP[4];
 	int remotePort[2];
 
 	// CHECK IF COMMAND RETURN CODE IS VALID
 	if (pasvResponse == NULL) {
-		ERROR("received invalid response from server, expected [221:PASV_READY]...");
+		return logError("received invalid response from server, expected [221:PASSIVE_MODE]...");
 	}
 
 	if ((sscanf(pasvResponse, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)", &remoteIP[0], &remoteIP[1], &remoteIP[2], &remoteIP[3], &remotePort[0], &remotePort[1])) < 6) {
-		ERROR("attempt to parse remote address and port failed, invalid format?");
+		return logError("attempt to parse remote address and port failed, invalid format?");
 	}
 
 	char* pasvHostname = (char*) malloc(strlen(pasvResponse) + 1);
 	int pasvPort = remotePort[0] * 256 + remotePort[1];
 
 	if ((sprintf(pasvHostname, "%d.%d.%d.%d", remoteIP[0], remoteIP[1], remoteIP[2], remoteIP[3])) < 0) {
-		ERROR("attempt to generate remote IP address failed, invalid format?");
+		return logError("attempt to generate remote IP address failed, invalid format?");
 	}
 
 	ftp->fdData = connectSocket(pasvHostname, pasvPort);
 
 	if (ftp->fdData < 0) {
-		ERROR("connection to remote host refused!");
+		return logError("connection to remote host refused!");
 	}
 
 	return TRUE;
@@ -284,15 +293,15 @@ int quitConnection() {
 
 	// SEND "QUIT" COMMAND
 	if (!sendCommand(ftp->fdControl, "QUIT\r\n", strlen("QUIT\r\n"))) {
-		ERROR("sending QUIT command to server failed!");
+		return logError("sending QUIT command to server failed!");
 	}
 
 	if (ftp->fdData && close(ftp->fdData) < 0) {
-		ERROR("%s connection problem: attempt to disconnect failed.\n");
+		return logError("%s connection problem: attempt to disconnect failed.\n");
 	}
 
 	if (ftp->fdControl && close(ftp->fdControl) < 0) {
-		ERROR("%s connection problem: attempt to disconnect failed.\n");
+		return logError("%s connection problem: attempt to disconnect failed.\n");
 	}
 
 	return TRUE;
@@ -311,8 +320,8 @@ int startConnection(char* serverUrl) {
 		return FALSE;
 	}
 
-	if (!receiveCommand(ftp->fdControl, SERVICE_READY)) {
-		ERROR("received invalid response from server, expected [220:SERVICE_READY]");
+	if (!receiveCommand(ftp->fdControl, SERVER_READY)) {
+		return logError("received invalid response from server, expected [220:SERVER_READY]");
 	}
 
 	if (!sendUSER(ftp->fdControl)) {
@@ -323,7 +332,9 @@ int startConnection(char* serverUrl) {
 		return FALSE;
 	}
 
-	retrieveFile();
+	if(!retrieveFile()) {
+		return FALSE;
+	}
 
 	return quitConnection();
 }
