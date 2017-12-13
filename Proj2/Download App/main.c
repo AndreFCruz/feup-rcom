@@ -1,5 +1,3 @@
-/*      (C)2000 FEUP  */
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -12,6 +10,7 @@
 #include <string.h>
 
 #include "getip.c"
+//#include "clientTCP.h"
 
 #define SERVER_PORT 21
 #define SERVER_ADDR "192.168.28.96"
