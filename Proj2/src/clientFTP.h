@@ -1,3 +1,6 @@
+#ifndef __CLIENTFTP_H
+#define __CLIENTFTP_H
+
 #include <string.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -31,3 +34,5 @@ int ftpDisconnect(ftp* ftp);
 int ftpSend(ftp* ftp, const char* str, size_t size);
 int ftpRead(ftp* ftp, char* str, size_t size);
 */
+
+#endif /* __CLIENTFTP_H */
