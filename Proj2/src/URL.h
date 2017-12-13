@@ -33,6 +33,7 @@ URL * constructURL();
  */
 int parseURL(URL* url, const char* str);
 
+void fillIp(URL * url);
 
 void setURLTestValues(URL * url);
 

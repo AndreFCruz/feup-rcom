@@ -23,7 +23,6 @@ int parseURL(URL * url, const char* str) {
 
 URL * constructURL() {
   URL * url = malloc(sizeof(URL));
-
   memset(url->user, 0, URL_STR_LEN);
   memset(url->password, 0, URL_STR_LEN);
   memset(url->host, 0, URL_STR_LEN);
@@ -35,12 +34,18 @@ URL * constructURL() {
 }
 
 void setURLTestValues(URL * url) {
-  strcpy(url->user, "john");
-  strcpy(url->password, "john");
+  strcpy(url->user, "anonymous");
+  strcpy(url->password, "");
+  //url->password = NULL;
   strcpy(url->host, "ftp.up.pt");
-  strcpy(url->path, "/centos/2.1/");
+  strcpy(url->path, "/centos/2.1");
   strcpy(url->filename, "readme.txt");
 
+}
+
+void fillIp(URL * url){
+    memset(url->ip, 0, URL_STR_LEN);
+    strcpy(url->ip,getIp(url->host));
 }
 
 void destructURL(URL * url) {

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <regex.h>
 #include "utils.h"
+#include "clientFTP.h"
 
 #define SERVER_PORT 21
 #define SERVER_ADDR "192.168.28.96"
@@ -22,6 +23,7 @@ void printUsage(char* argv0) {
 }
 
 int main(int argc, char** argv){
+	/*
   regex_t r;
   const char * regex_text;
   if (argc == 2) {
@@ -38,4 +40,7 @@ int main(int argc, char** argv){
   regfree (& r);
 
   return 0;
+	*/
+
+	startConnection("");
 }

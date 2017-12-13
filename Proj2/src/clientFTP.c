@@ -5,11 +5,11 @@
 FTP * ftp;
 URL * url;
 
-static int sendCWD();
+static int receiveCommand(int fd, char* responseCmd) {
 
-static char* receiveCommand(int fd, const char* responseCmd) {
+	/*char* responseMessage = (char*) malloc(MESSAGE_SIZE + 1);
 
-	char* responseMessage = (char*) malloc(MESSAGE_SIZE + 1);
+	printf("Response: %s\n", responseMessage);
 
 	if (read(fd, responseMessage, MESSAGE_SIZE) <= 0) {
 		return NULL;
@@ -21,12 +21,33 @@ static char* receiveCommand(int fd, const char* responseCmd) {
 		return NULL;
 	}
 
-	return responseMessage;
+	return responseMessage;*/
+
+
+
+
+
+
+	FILE* fp = fdopen(fd, "r");
+  int allocated = 0;
+  if(responseCmd == NULL) {
+    responseCmd = (char*) malloc(sizeof(char) * MESSAGE_SIZE);
+    allocated = 1;
+  }
+  do {
+    memset(responseCmd, 0, MESSAGE_SIZE);
+    responseCmd = fgets(responseCmd, MESSAGE_SIZE, fp);
+    printf("%s", responseCmd);
+	}  while (!('1' <= responseCmd[0] && responseCmd[0] <= '5') || responseCmd[3] != ' ');
+  char reply_series = responseCmd[0];
+  if(allocated)
+    free(responseCmd);
+  return (reply_series > '4');
 }
 
-static int sendCommand(int fd, const char* msg, unsigned length) {
+static int sendCommand(int fd, const char* msg, char* response, unsigned readAnswer) {
 
-	int nBytes = write(fd, msg, length);
+	/*int nBytes = write(fd, msg, length);
 
 	if (nBytes <= 0) {
 		return FALSE;
@@ -34,7 +55,13 @@ static int sendCommand(int fd, const char* msg, unsigned length) {
 
 	//printf("sent message: %s", msg);
 
-	return TRUE;
+	return TRUE;*/
+
+	int nBytes = write(fd, msg, strlen(msg));
+	if (readAnswer)
+		return receiveCommand(fd, response);
+	else return (nBytes == 0);
+
 }
 
 static int connectSocket(const char* ip, int port) {
@@ -49,24 +76,31 @@ static int connectSocket(const char* ip, int port) {
 
 	/*open an TCP socket*/
 	if ((sockfd = socket(AF_INET,SOCK_STREAM,0)) < 0) {
-				perror("socket()");
-					exit(0);
-			}
+			perror("socket()");
+			exit(0);
+	}
+
 	/*connect to the server*/
-			if(connect(sockfd,
-						 (struct sockaddr *)&server_addr,
-			 sizeof(server_addr)) < 0){
-					perror("connect()");
-		return -1;
+	if(connect(sockfd, (struct sockaddr *)&server_addr,sizeof(server_addr)) < 0){
+			perror("connect()");
+			return -1;
 	}
 
 	return sockfd;
 }
 
-static int retrieveFile() {
+static void retrieveFile(int fd) {
 
 	char userCommand[MESSAGE_SIZE + 1];
 
+	sendCommand(fd, "TYPE L 8\r\n", NULL, 1); //Setting type of file to be transferred -> local file
+	sprintf(userCommand, "RETR %s%s\r\n", url->path, url->filename);
+  if(sendCommand(fd, userCommand, NULL, 1) != 0){
+    printf("Error retrieving file. Exiting...\n");
+    exit(1);
+  }
+}
+/*
 	// SWITCH TO CURRENT WORKING DIRECTORY
 	if (url->path != NULL && !sendCWD()) {
 		return FALSE;
@@ -139,7 +173,7 @@ static int retrieveFile() {
 		}
 	}
 	*/
-
+/*
 	char dataBuffer[SOCKET_SIZE];
 	int length;
 	int bytesWritten = 0;
@@ -172,45 +206,33 @@ static int retrieveFile() {
 		logProgress(bytesRead, fileSize, transferSpeed);
 	}
 	*/
-
+/*
 	printf("[INFORMATION] file transfer completed successfully!");
 	//printf("[INFORMATION] TOTAL BYTES RECEIVED: %d bytes\n", bytesRead);
 	//printf("[INFORMATION] AVERAGE TRANSFER SPEED: %.2f kBytes/sec\n", (double) bytesRead / totalTime);
 
 	return TRUE;
-}
+}*/
 
-static int sendCWD() {
-
-	char userCommand[MESSAGE_SIZE + 1];
-
-	// FORMAT "CWD" COMMAND ARGUMENTS
-	sprintf(userCommand, "CWD %s\r\n", url->path);
-
-	// SEND "CWD" (change working directory) COMMAND
-	if (!sendCommand(ftp->fdControl, userCommand, strlen(userCommand))) {
-		return logError("sending CWD command to server failed!");
-	}
-
-	// CHECK IF COMMAND RETURN CODE IS VALID
-	if (!receiveCommand(ftp->fdControl, DIRECTORY_OK)) {
-		return logError("received invalid response from server, target directory not found?");
-	}
-
-	printf("[INFORMATION] entering directory %s...\n", url->path);
-
-	return TRUE;
-}
-
-static int sendUSER(int fd) {
+static void sendUSER(int fd) {
 
 	char userCommand[MESSAGE_SIZE + 1];
 	char passCommand[MESSAGE_SIZE + 1];
-	int anonymousMode = FALSE;
 
+	receiveCommand(fd, NULL);
+
+	sprintf(userCommand, "USER %s\r\n", url->user);
+	sendCommand(fd, userCommand, NULL, 1);
+	sprintf(passCommand, "PASS %s\r\n", url->password);
+  if(sendCommand(fd, userCommand, NULL, 1) != 0) {
+      printf("Bad login. Exiting...\n"); //TODO: Ask for valid login
+      exit(1);
+	}
+}
+/*
 	// FORMAT "USER" COMMAND ARGUMENTS
 	if (url->user == NULL || strcmp("anonymous", url->user) == 0) {
-		puts("[INFORMATION] entering anonymous mode...");
+		printf("[INFORMATION] entering anonymous mode...");
 		sprintf(userCommand, "USER %s\r\n", "anonymous");
 		anonymousMode = TRUE;
 	}
@@ -233,6 +255,7 @@ static int sendUSER(int fd) {
 
 	// CHECK IF COMMAND RETURN CODE IS VALID
 	char* responseCommand = receiveCommand(ftp->fdControl, NULL);
+	//printf("Response: %s\n", responseCommand);
 	int isAskingPassword = (strncmp(REQUIRED_PASSWORD, responseCommand, strlen(REQUIRED_PASSWORD)) == 0);
 	int isLoggedIn = (strncmp(SUCCESS_LOGIN, responseCommand, strlen(SUCCESS_LOGIN)) == 0);
 
@@ -259,11 +282,24 @@ static int sendUSER(int fd) {
 	}
 
 	return TRUE;
+}*/
+
+static void sendPASV(int fd) {
+
+	char response[MESSAGE_SIZE + 1];
+
+  if(sendCommand(fd, "PASV\r\n", response, 1) != 0){
+    printf("Error entering passive mode. Exiting...\n");
+    exit(1);
+  }
+
+  int values[6];
+  char* data = strchr(response, '(');
+  sscanf(data, "(%d, %d, %d, %d, %d, %d)", &values[0],&values[1],&values[2],&values[3],&values[4],&values[5]);
+  sprintf(url->ip, "%d.%d.%d.%d", values[0],values[1],values[2],values[3]);
+  url->port = values[4]*256+values[5];
 }
-
-static int sendPASV(int fd) {
-
-	// SEND "PASV" COMMAND
+	/*// SEND "PASV" COMMAND
 	if (!sendCommand(fd, "PASV\r\n", strlen("PASV\r\n"))) {
 		return logError("sending PASV command to server failed!");
 	}
@@ -295,9 +331,55 @@ static int sendPASV(int fd) {
 	}
 
 	return TRUE;
+}*/
+
+int download(int fd) {
+	FILE* outfile;
+  if(!(outfile = fopen(url->filename, "w"))) {
+		printf("ERROR: Cannot open file.\n");
+		return 1;
+	}
+
+  char buf[1024]; //TODO -> usar file size da macro
+  int bytes;
+  while ((bytes = read(fd, buf, sizeof(buf)))) {
+    if (bytes < 0) {
+      printf("ERROR: Nothing was received from data socket fd.\n");
+      return 1;
+    }
+
+    if ((bytes = fwrite(buf, bytes, 1, outfile)) < 0) {
+      printf("ERROR: Cannot write data in file.\n");
+      return 1;
+		}
+	}
+
+	fclose(outfile);
+
+  printf("Finished downloading file\n");
+
+	return 0;
 }
 
 int quitConnection() {
+
+	printf("Closing connection\n");
+  if(sendCommand(ftp->fdControl, "QUIT\r\n", NULL, 0) != 0){
+		printf("Error closing connection. Exiting anyway...\n");
+		close(ftp->fdData);
+		close(ftp->fdControl);
+    exit(1);
+  }
+
+	close(ftp->fdData);
+	close(ftp->fdControl);
+
+  printf("Goodbye!\n");
+
+	return 0;
+}
+
+	/*
 
 	// SEND "QUIT" COMMAND
 	if (!sendCommand(ftp->fdControl, "QUIT\r\n", strlen("QUIT\r\n"))) {
@@ -316,16 +398,45 @@ int quitConnection() {
 
 	return TRUE;
 }
+*/
 
 int startConnection(char* serverUrl) {
+
+	ftp = (FTP *) malloc(sizeof(FTP));
 
 	url = constructURL();
 
 	setURLTestValues(url);
 
+	fillIp(url);
+
+  /*
 	if (!parseURL(url, serverUrl)) {
 		return FALSE;
 	}
+	*/
+
+ 	if((ftp->fdControl = connectSocket(url->ip, url->port)) == 0){
+	 	printf("Error opening control connection\n");
+	 	exit(1);
+ 	}
+
+ 	sendUSER(ftp->fdControl);
+ 	sendPASV(ftp->fdControl);
+
+ 	if((ftp->fdData = connectSocket(url->ip, url->port)) == 0){
+	 	printf("Error opening data connection\n");
+	 	exit(1);
+ 	}
+ 	retrieveFile(ftp->fdControl);
+ 	download(ftp->fdControl);
+ 	quitConnection();
+
+	return 0;
+}
+
+
+	/*
 
 	ftp->fdControl = connectSocket(url->ip, url->port);
 
@@ -342,13 +453,21 @@ int startConnection(char* serverUrl) {
 		return FALSE;
 	}
 
+	printf("2\n");
+
+
 	if (!sendPASV(ftp->fdControl)) {
 		return FALSE;
 	}
+
+	printf("3\n");
 
 	if(!retrieveFile()) {
 		return FALSE;
 	}
 
+	printf("4\n");
+
 	return quitConnection();
 }
+*/
