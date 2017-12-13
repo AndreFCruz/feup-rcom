@@ -7,27 +7,6 @@ URL * url;
 
 static int receiveCommand(int fd, char* responseCmd) {
 
-	/*char* responseMessage = (char*) malloc(MESSAGE_SIZE + 1);
-
-	printf("Response: %s\n", responseMessage);
-
-	if (read(fd, responseMessage, MESSAGE_SIZE) <= 0) {
-		return NULL;
-	}
-
-	if (responseCmd != NULL && strncmp(responseCmd, responseMessage, strlen(responseCmd))) {
-		//printf("ERROR: %s", responseMessage);
-		logError(responseMessage);   //TODO
-		return NULL;
-	}
-
-	return responseMessage;*/
-
-
-
-
-
-
 	FILE* fp = fdopen(fd, "r");
   int allocated = 0;
   if(responseCmd == NULL) {
@@ -43,20 +22,10 @@ static int receiveCommand(int fd, char* responseCmd) {
   if(allocated)
     free(responseCmd);
   return (reply_series > '4');
+
 }
 
 static int sendCommand(int fd, const char* msg, char* response, unsigned readAnswer) {
-
-	/*int nBytes = write(fd, msg, length);
-
-	if (nBytes <= 0) {
-		return FALSE;
-	}
-
-	//printf("sent message: %s", msg);
-
-	return TRUE;*/
-
 	int nBytes = write(fd, msg, strlen(msg));
 	if (readAnswer)
 		return receiveCommand(fd, response);
@@ -224,7 +193,7 @@ static void sendUSER(int fd) {
 	sprintf(userCommand, "USER %s\r\n", url->user);
 	sendCommand(fd, userCommand, NULL, 1);
 	sprintf(passCommand, "PASS %s\r\n", url->password);
-  if(sendCommand(fd, userCommand, NULL, 1) != 0) {
+  if(sendCommand(fd, passCommand, NULL, 1) != 0) {
       printf("Bad login. Exiting...\n"); //TODO: Ask for valid login
       exit(1);
 	}
@@ -429,7 +398,7 @@ int startConnection(char* serverUrl) {
 	 	exit(1);
  	}
  	retrieveFile(ftp->fdControl);
- 	download(ftp->fdControl);
+ 	download(ftp->fdData);
  	quitConnection();
 
 	return 0;

@@ -35,11 +35,11 @@ URL * constructURL() {
 
 void setURLTestValues(URL * url) {
   strcpy(url->user, "anonymous");
-  strcpy(url->password, "");
+  strcpy(url->password, "mail@domain");
   //url->password = NULL;
-  strcpy(url->host, "ftp.up.pt");
-  strcpy(url->path, "/centos/2.1");
-  strcpy(url->filename, "readme.txt");
+  strcpy(url->host, "ftp.dei.uc.pt");
+  strcpy(url->path, "pub/linux/CentOS/");
+  strcpy(url->filename, "timestamp.txt");
 
 }
 
