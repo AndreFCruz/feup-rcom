@@ -12,12 +12,16 @@
 #include <arpa/inet.h>
 
 #include <netinet/in.h>
+#include <string.h>
 
-typedef struct FTP
-{
-    int control_socket_fd; // file descriptor to control socket
-    int data_socket_fd; // file descriptor to data socket
-} ftp;
+typedef struct ftp_t {
+	char* userName;
+	char* userPassword;
+	int fdControl;
+	int fdData;
+} FTP;
+
+
 
 /*
 int ftpConnect(ftp* ftp, const char* ip, int port);

@@ -1,33 +1,37 @@
-/*      (C)2000 FEUP  */
+#include "clientTCP.h"
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <signal.h>
-#include <netdb.h>
-#include <string.h>
+FTP * ftp;
 
-#include "getip.c"
+static char* receiveCommand(int fd, const char* responseCmd) {
 
-#define SERVER_PORT 21
-#define SERVER_ADDR "192.168.28.96"
-#define BUFFER_SIZE 1024
+	char* responseMessage = (char*) malloc(MESSAGE_SIZE + 1);
 
-char currIp[32];
-
-void printArray(char buffer[], int size) {
-	int i;
-	for (i = 0; i < size; i++) {
-		printf("%c", buffer[i]);
+	if (read(fd, responseMessage, MESSAGE_SIZE) <= 0) {
+		return NULL;
 	}
-	printf("\n");
+
+	if (responseCmd != NULL && strncmp(responseCmd, responseMessage, strlen(responseCmd))) {
+		printf("[ERROR] %s", responseMessage);
+		return NULL;
+	}
+
+	return responseMessage;
 }
 
-int connectSocket(const char* ip, int port) {
+static int sendCommand(int fd, const char* msg, unsigned length) {
+
+	int nBytes = write(fd, msg, length);
+
+	if (nBytes <= 0) {
+		return FALSE;
+	}
+
+	LOG_FORMAT("sent message: %s", msg);
+
+	return TRUE;
+}
+
+static int connectSocket(const char* ip, int port) {
 	int	sockfd;
 	struct	sockaddr_in server_addr;
 
@@ -53,37 +57,72 @@ int connectSocket(const char* ip, int port) {
 	return sockfd;
 }
 
+int startConnection(char* serverUrl) {
 
-void printUsage(char* argv0) {
-	printf("\nUsage1 Normal: %s ftp://[<user>:<password>@]<host>/<url-path>\n",
-			argv0);
-	printf("Usage2 Anonymous: %s ftp://<host>/<url-path>\n\n", argv0);
-}
-
-
-int main(int argc, char** argv){
-	if (argc != 2) {
-			printf("WARNING: Wrong number of arguments.\n");
-			printUsage(argv[0]);
-			exit(1);
-    }
-
-
-  strcpy(currIp, getIp(argv[1]));
-
-	int	sockfd;
-	if((sockfd = connectSocket(currIp, SERVER_PORT)) == -1)
-		exit(1);
-
-	char buf[BUFFER_SIZE];
-	int	bytes;
-
-    	/*send a string to the server*/
-	while((bytes = recv(sockfd, buf, BUFFER_SIZE,0)) > 0){
-		printf("Bytes Read %d\n",bytes);
-		printArray(buf,bytes);
+	if (!parseURL(serverUrl)) {
+		return FALSE;
 	}
 
-	close(sockfd);
-	exit(0);
+	ftp->fdControl = connectSocket(url->serverIP, url->serverPort);
+
+	if (ftp->fdControl < 0) {
+		perror("socket()");
+		return FALSE;
+	}
+
+	// PRINT HOST AND CONNECTION INFORMATION
+	debugFTP();
+
+	if (!receiveCommand(ftp->fdControl, SERVICE_READY)) {
+		ERROR("received invalid response from server, expected [220:SERVICE_READY]");
+	}
+
+	if (!sendUSER(ftp->fdControl)) {
+		return FALSE;
+	}
+
+	if (!sendPASV(ftp->fdControl)) {
+		return FALSE;
+	}
+
+	int userInput;
+
+	if (url->serverFile == NULL) {
+		action_listDirectory();
+	}
+	else {
+		puts("\n> PLEASE CHOOSE AN OPTION:");
+		puts("(1) List Directory\n(2) Download File\n(0) Exit Application\n");
+		userInput = readInteger(0, 2);
+
+		if (userInput == 1) {
+			action_listDirectory();
+		}
+		else if (userInput == 2) {
+			action_retrieveFile();
+		}
+		else if (userInput == 0) {
+			return TRUE;
+		}
+	}
+
+	return action_quitConnection();
+}
+
+int action_quitConnection(void) {
+
+	// SEND "QUIT" COMMAND
+	if (!sendCommand(ftp->fdControl, "QUIT\r\n", strlen("QUIT\r\n"))) {
+		ERROR("sending QUIT command to server failed!");
+	}
+
+	if (ftp->fdData && close(ftp->fdData) < 0) {
+		ERROR("%s connection problem: attempt to disconnect failed.\n");
+	}
+
+	if (ftp->fdControl && close(ftp->fdControl) < 0) {
+		ERROR("%s connection problem: attempt to disconnect failed.\n");
+	}
+
+	return TRUE;
 }
