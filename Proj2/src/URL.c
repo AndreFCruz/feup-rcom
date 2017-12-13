@@ -34,6 +34,15 @@ URL * constructURL() {
   return url;
 }
 
+void setURLTestValues(URL * url) {
+  strcpy(url->user, "john");
+  strcpy(url->password, "john");
+  strcpy(url->host, "ftp.up.pt");
+  strcpy(url->path, "/centos/2.1/");
+  strcpy(url->filename, "readme.txt");
+
+}
+
 void destructURL(URL * url) {
   free(url);
 }

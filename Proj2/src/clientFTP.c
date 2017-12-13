@@ -1,5 +1,5 @@
 #include "clientFTP.h"
-#include "Url.h"
+#include "URL.h"
 #include "utils.h"
 
 FTP * ftp;
@@ -32,7 +32,7 @@ static int sendCommand(int fd, const char* msg, unsigned length) {
 		return FALSE;
 	}
 
-	LOG_FORMAT("sent message: %s", msg);
+	//printf("sent message: %s", msg);
 
 	return TRUE;
 }
@@ -209,22 +209,22 @@ static int sendUSER(int fd) {
 	int anonymousMode = FALSE;
 
 	// FORMAT "USER" COMMAND ARGUMENTS
-	if (ftp->userName == NULL || strcmp("anonymous", ftp->userName) == 0) {
+	if (url->user == NULL || strcmp("anonymous", url->user) == 0) {
 		puts("[INFORMATION] entering anonymous mode...");
 		sprintf(userCommand, "USER %s\r\n", "anonymous");
 		anonymousMode = TRUE;
 	}
 	else {
 		puts("[INFORMATION] entering authentication mode...");
-		sprintf(userCommand, "USER %s\r\n", ftp->userName);
+		sprintf(userCommand, "USER %s\r\n", url->user);
 	}
 
-	if (ftp->userPassword == NULL && !anonymousMode) {
+	if (url->password == NULL && !anonymousMode) {
 		return logError("user must enter a password in authentication mode!");
 	}
 
 	// FORMAT "PASS" COMMAND ARGUMENTS
-	sprintf(passCommand, "PASS %s\r\n", ftp->userPassword);
+	sprintf(passCommand, "PASS %s\r\n", url->password);
 
 	// SEND "USER" COMMAND
 	if (!sendCommand(ftp->fdControl, userCommand, strlen(userCommand))) {
@@ -312,12 +312,18 @@ int quitConnection() {
 		return logError("%s connection problem: attempt to disconnect failed.\n");
 	}
 
+	destructURL(url);
+
 	return TRUE;
 }
 
 int startConnection(char* serverUrl) {
 
-	if (!parseURL(serverUrl)) {
+	url = constructURL();
+
+	setURLTestValues(url);
+
+	if (!parseURL(url, serverUrl)) {
 		return FALSE;
 	}
 

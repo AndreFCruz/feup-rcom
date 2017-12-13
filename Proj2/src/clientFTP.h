@@ -26,8 +26,6 @@
 #define DIRECTORY_OK	    "250"
 
 typedef struct ftp_t {
-	char* userName;
-	char* userPassword;
 	int fdControl;
 	int fdData;
 } FTP;
