@@ -4,8 +4,9 @@
 #include <sys/types.h>
 #include <regex.h>
 
-#define ERROR	1
-#define OK  	0
+#define ERROR	    1
+#define OK  	    0
+#define NO_MATCH    2
 
 #define SOCKET_SIZE             32768  //TODO user defined socket_size
 #define MESSAGE_SIZE            1024

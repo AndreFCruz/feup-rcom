@@ -3,7 +3,7 @@
 #include "URL.h"
 #include "utils.h"
 
-#define URL_REGEX "^ftp://(([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z0-9]+)@)?(([a-zA-Z][a-zA-Z0-9]*[.]?)+)/(([^/]+/)*)([^/]+.[a-zA-Z]+)$"
+#define URL_REGEX "^ftp://(([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z0-9]+)@)?(([a-z0-9]+[.]?)+)/(([^/]+[/])*)([^/]+[.][a-zA-Z]+)$"
 
 static int setInUrl(URL * url, int idx, const char * src, int size) {
   switch (idx) {
@@ -44,7 +44,7 @@ static int setInUrl(URL * url, int idx, const char * src, int size) {
       break;
   }
 
-  return 1;
+  return OK;
 }
 
 /*
@@ -62,31 +62,36 @@ static int match_url_regex(regex_t * r, const char * to_match, URL * url) {
   /* "m" contains the matches found. */
   regmatch_t m[N_MATCHES];
 
-  while (1) {
-    int i = 0;
-    int nomatch = regexec (r, p, N_MATCHES, m, 0);
+  int i = 0;
+  while (i++ < N_MATCHES) {
+    int j = 0;
+    int nomatch = regexec(r, p, N_MATCHES, m, 0);
     if (nomatch) {
-        return nomatch;
+        printf("No match found in regex.\n");
+        return i == 1 ? NO_MATCH : OK;
     }
-    for (i = 0; i < N_MATCHES; i++) {
-      int start = m[i].rm_so + (p - to_match);
-      int finish = m[i].rm_eo + (p - to_match);
+    for (j = 0; j < N_MATCHES; j++) {
+      int start = m[j].rm_so + (p - to_match);
+      int finish = m[j].rm_eo + (p - to_match);
 
-      setInUrl(url, i, to_match + start, finish - start);
+      setInUrl(url, j, to_match + start, finish - start);
     }
     p += m[0].rm_eo;
   }
+
   return 0;
 }
 
 int parseURL(URL * url, const char* str) {
   regex_t r;
   const char * regex_text = URL_REGEX;
-  compile_regex(&r, regex_text);
-  match_url_regex(&r, str, url);
+  int ret = 0;
+
+  ret |= compile_regex(&r, regex_text);
+  ret |= match_url_regex(&r, str, url);
   regfree(&r);
 
-  return 0;
+  return ret;
 }
 
 void printURL(URL * url) {
