@@ -23,19 +23,13 @@ void printUsage(char ** argv) {
 }
 
 int main(int argc, char** argv) {
+
   if (argc != 2) {
     printUsage(argv);
     exit(1);
   }
 
-  URL * url = constructURL();
-
-  if (argc == 2) {
-    parseURL(url, argv[1]);
-  }
-
-  printURL(url);
-  destructURL(url);
+  downloadFtpUrl(argv[1]);
 
   return 0;
 }

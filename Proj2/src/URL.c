@@ -118,6 +118,14 @@ URL * constructURL() {
   return url;
 }
 
+void setURLTestValues(URL * url) {
+  strcpy(url->username, "anonymous");
+  strcpy(url->password, "mail@domain");
+  strcpy(url->hostname, "ftp.dei.uc.pt");
+  strcpy(url->path, "pub/linux/CentOS/");
+  strcpy(url->filename, "timestamp.txt");
+}
+
 void setIp(URL * url){
     memset(url->ip, 0, URL_STR_LEN);
     strcpy(url->ip, getIp(url->hostname));
