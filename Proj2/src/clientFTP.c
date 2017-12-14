@@ -6,10 +6,16 @@ static FTP * ftp;
 static URL * url;
 
 
-//TODO meter a receber a respota que queremos
-static int receiveCommand(int fd, char* responseCmd) {
+void quitConnection();
 
+static void forceQuit(char * errorMSg){
+	quitConnection();
+	exit(logError(errorMSg));
+}
+
+//TODO meter a receber a respota que queremos
 //TODO - repetir estra função de fomra bonita
+static int receiveCommand(int fd, char* responseCmd) {
 
 	FILE* fp = fdopen(fd, "r");
 	int allocated = 0;
@@ -70,9 +76,8 @@ static void retrieveFile(int fd) {
 	sendCommand(fd, "TYPE L 8\r\n", NULL, 1); //Setting type of file to be transferred -> local file
 	sprintf(userCommand, "RETR %s%s\r\n", url->path, url->filename);
 	if(sendCommand(fd, userCommand, NULL, 1) != OK)
-		exit(logError("Failed to retrieve file. Terminating Program.\n"));
-
-		//TODO - abruptt exit - close stuff.
+		//exit(logError("Failed to retrieve file. Terminating Program.\n"));
+		forceQuit("Failed to retrieve file. Terminating Program.");
 }
 
 static void sendUSER(int fd) {
@@ -89,12 +94,14 @@ static void sendUSER(int fd) {
 
 	sprintf(userCommand, "USER %s\r\n", url->user);
 	if(sendCommand(fd, userCommand, NULL, 1) != OK)
-		exit(logError("Failed to log in, wrong username?\nTerminating Program.\n"));
+		//exit(logError("Failed to log in, wrong username?\nTerminating Program.\n"));
+		forceQuit("Failed to log in, wrong username?\nTerminating Program.");
 
 
 	sprintf(passCommand, "PASS %s\r\n", url->password);
 	if(sendCommand(fd, passCommand, NULL, 1) != OK)
-		exit(logError("Failed to log in, wrong password?\nTerminating Program.\n"));
+		//exit(logError("Failed to log in, wrong password?\nTerminating Program.\n"));
+		forceQuit("Failed to log in, wrong password?\nTerminating Program.");
 }
 
 static void sendPASV(int fd) {
@@ -102,7 +109,9 @@ static void sendPASV(int fd) {
 	char response[MESSAGE_SIZE + 1];
 
 	if(sendCommand(fd, "PASV\r\n", response, 1) != OK)
-		exit(logError("Failed to enter passive mode. Terminating program."));
+		//exit(logError("Failed to enter passive mode. Terminating program."));
+		forceQuit("Failed to enter passive mode. Terminating program.");
+
 
 	int remoteIP[6];
 	char* data = strchr(response, '(');
@@ -139,7 +148,7 @@ int download(int fd) {
 	return OK;
 }
 
-int quitConnection() {
+void quitConnection() {
 
 	printf("Closing connection with the server.\n");
 	if(sendCommand(ftp->fdControl, "QUIT\r\n", NULL, 0) != OK) {
@@ -150,8 +159,6 @@ int quitConnection() {
 
 	close(ftp->fdData);
 	close(ftp->fdControl);
-
-	return OK;
 }
 
 int startConnection(char* serverUrl) {
