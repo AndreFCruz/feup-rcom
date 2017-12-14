@@ -3,7 +3,7 @@
 #include "URL.h"
 #include "utils.h"
 
-#define URL_REGEX "^ftp://(([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z0-9]+)@){0,1}(([a-zA-Z][a-zA-Z0-9]*[.]?)+)((/[^/]+)*)/([a-zA-Z0-9]+.[a-zA-Z]+)$"
+#define URL_REGEX "^ftp://(([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z0-9]+)@)?(([a-zA-Z][a-zA-Z0-9]*[.]?)+)((/[^/]+)*)/([a-zA-Z0-9]+.[a-zA-Z]+)$"
 
 static int setInUrl(URL * url, int idx, const char * src, int size) {
   char match[size + 1];
@@ -69,21 +69,9 @@ static int match_url_regex(regex_t * r, const char * to_match, URL * url) {
         return nomatch;
     }
     for (i = 0; i < N_MATCHES; i++) {
-      int start;
-      int finish;
-      // if (m[i].rm_so == -1) {
-      //   break;
-      // }
-      start = m[i].rm_so + (p - to_match);
-      finish = m[i].rm_eo + (p - to_match);
-      // if (i == 0) {
-      //   printf ("$& is ");
-      // }
-      // else {
-      //   printf ("$%d is ", i);
-      // }
-      // printf ("'%.*s' (bytes %d:%d)\n", (finish - start),
-      //         to_match + start, start, finish);
+      int start = m[i].rm_so + (p - to_match);
+      int finish = m[i].rm_eo + (p - to_match);
+
       setInUrl(url, i, to_match + start, finish - start);
     }
     p += m[0].rm_eo;
