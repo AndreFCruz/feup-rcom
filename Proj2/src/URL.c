@@ -1,34 +1,127 @@
+#include <string.h>
 #include <regex.h>
 #include "URL.h"
 #include "utils.h"
 
-int parseURL(URL * url, const char* str) {
-  // regex_t r;
-  // const char * regex_text;
-  // const char * find_text;
-  // if (argc != 3) {
-  //   regex_text = "([[:digit:]]+)[^[:digit:]]+([[:digit:]]+)";
-  //   find_text = "This 1 is nice 2 so 33 for 4254";
-  // }
-  // else {
-  //   regex_text = argv[1];
-  //   find_text = argv[2];
-  // }
-  // printf ("Trying to find '%s' in '%s'\n", regex_text, find_text);
-  // compile_regex (& r, regex_text);
-  // match_regex (& r, find_text);
-  // regfree (& r);
+#define URL_REGEX "^ftp://(([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z0-9]+)@){0,1}(([a-zA-Z][a-zA-Z0-9]*[.]?)+)((/[^/]+)*)/([a-zA-Z0-9]+.[a-zA-Z]+)$"
+
+static int setInUrl(URL * url, int idx, const char * src, int size) {
+  char match[size + 1];
+
+  switch (idx) {
+    case 0: // whole capture
+    case 1: // identity:password
+    case 5: // host's country
+    case 7: // path termination
+      break;
+    case 2: // username
+      strncpy(url->username, src, size);
+      url->username[size] = 0;
+      break;
+    case 3: // password
+      strncpy(url->password, src, size);
+      url->password[size] = 0;
+      break;
+    case 4: // hostname
+      strncpy(url->hostname, src, size);
+      url->hostname[size] = 0;
+      break;
+    case 6: // path
+      strncpy(url->path, src, size);
+      url->path[size] = 0;
+      break;
+    case 8: // path
+      strncpy(url->filename, src, size);
+      url->filename[size] = 0;
+      break;
+    default:
+      break;
+  }
+
+  strncpy(match, src, size);
+  match[size] = 0;
+  printf("%d 1->%s\n", idx, match);
+  printf("%d 2->%.*s\n\n", idx, size, src);
+
+  return 1;
+}
+
+/*
+ * Match the string in "to_match" against the compiled regular
+ * expression in "r", storing the values in the given URL*.
+ */
+static int match_url_regex(regex_t * r, const char * to_match, URL * url) {
+  /* "p" is a pointer into the string which points to the end of the
+     previous match. */
+  const char * p = to_match;
+
+  /* "N_MATCHES" is the maximum number of matches allowed. */
+  const int N_MATCHES = 10;
+
+  /* "m" contains the matches found. */
+  regmatch_t m[N_MATCHES];
+
+  while (1) {
+    int i = 0;
+    int nomatch = regexec (r, p, N_MATCHES, m, 0);
+    if (nomatch) {
+        printf ("No more matches.\n");
+        return nomatch;
+    }
+    for (i = 0; i < N_MATCHES; i++) {
+      int start;
+      int finish;
+      // if (m[i].rm_so == -1) {
+      //   break;
+      // }
+      start = m[i].rm_so + (p - to_match);
+      finish = m[i].rm_eo + (p - to_match);
+      // if (i == 0) {
+      //   printf ("$& is ");
+      // }
+      // else {
+      //   printf ("$%d is ", i);
+      // }
+      // printf ("'%.*s' (bytes %d:%d)\n", (finish - start),
+      //         to_match + start, start, finish);
+      setInUrl(url, i, to_match + start, finish - start);
+    }
+    p += m[0].rm_eo;
+  }
   return 0;
+}
+
+int parseURL(URL * url, const char* str) {
+  regex_t r;
+  const char * regex_text = URL_REGEX;
+  compile_regex(&r, regex_text);
+
+  printf("Trying to find '%s' in '%s'\n", regex_text, str);
+  match_url_regex(&r, str, url);
+  regfree(&r);
+
+  return 0;
+}
+
+void printURL(URL * url) {
+  printf("\nContents of URL struct:\n");
+  printf("ip: %s\n", url->ip);
+  printf("path: %s\n", url->path);
+  printf("hostname: %s\n", url->hostname);
+  printf("filename: %s\n", url->filename);
+  printf("username: %s\n", url->username);
+  printf("password: %s\n\n", url->password);
 }
 
 URL * constructURL() {
   URL * url = malloc(sizeof(URL));
 
-  memset(url->user, 0, URL_STR_LEN);
-  memset(url->password, 0, URL_STR_LEN);
-  memset(url->host, 0, URL_STR_LEN);
+  memset(url->ip, 0, URL_STR_LEN);
   memset(url->path, 0, URL_STR_LEN);
+  memset(url->hostname, 0, URL_STR_LEN);
   memset(url->filename, 0, URL_STR_LEN);
+  memset(url->username, 0, URL_STR_LEN);
+  memset(url->password, 0, URL_STR_LEN);
   url->port = 21;
 
   return url;

@@ -14,7 +14,7 @@
 
 char * getIp(char * domain);
 int compile_regex(regex_t * r, const char * regex_text);
-int match_regex (regex_t * r, const char * to_match);
+void insertCharAt(char * dest, const char * src, char c, int size, int idx);
 int logError(char * msg);
 
 #endif /* __UTILS_H */
