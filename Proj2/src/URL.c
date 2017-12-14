@@ -15,12 +15,20 @@ static int setInUrl(URL * url, int idx, const char * src, int size) {
     case 7: // path termination
       break;
     case 2: // username
-      strncpy(url->username, src, size);
-      url->username[size] = 0;
+      if (0 == size) {
+        strcpy(url->username, "anonymous");
+      } else {
+        strncpy(url->username, src, size);
+        url->username[size] = 0;
+      }
       break;
     case 3: // password
-      strncpy(url->password, src, size);
-      url->password[size] = 0;
+      if (0 == size) {
+        strcpy(url->password, "a");
+      } else {
+        strncpy(url->password, src, size);
+        url->password[size] = 0;
+      }
       break;
     case 4: // hostname
       strncpy(url->hostname, src, size);
