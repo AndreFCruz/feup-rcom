@@ -6,7 +6,6 @@
 #define URL_REGEX "^ftp://(([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z0-9]+)@)?(([a-zA-Z][a-zA-Z0-9]*[.]?)+)/(([^/]+/)*)([^/]+.[a-zA-Z]+)$"
 
 static int setInUrl(URL * url, int idx, const char * src, int size) {
-  printf("Src: %s\n", src);
   switch (idx) {
     case 0: // whole capture
     case 1: // identity:password

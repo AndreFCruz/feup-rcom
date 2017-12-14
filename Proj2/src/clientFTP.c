@@ -176,11 +176,13 @@ int downloadFtpUrl(const char * str) {
 	ftp = (FTP *) malloc(sizeof(FTP));
 
 	url = constructURL();
-	//parseURL(url, str);
+	parseURL(url, str);
 
-	setURLTestValues(url);
+	//setURLTestValues(url);
 
 	setIp(url);
+
+	printURL(url);
 
 	if((ftp->fdControl = connectSocket(url->ip, url->port)) == 0)
 		exit(logError("Failed to open control conection. Terminating Program.\n"));
