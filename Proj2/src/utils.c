@@ -43,5 +43,19 @@ char * getIp(char * domain) {
 
 int logError(char * errorMsg) {
   fprintf(stderr, "Error: %s\n", errorMsg);
-  return FALSE;
+  return ERROR;
+}
+
+void printDownloadProgress(int * dots) {
+  (*dots)++;
+
+  if(*dots == 3*DOWNLOAD_PROGRESS_RESET){
+    *dots = 0;
+    printf("\r                  ");
+    printf("\rDownloading.");
+  }
+  else if(((*dots)%DOWNLOAD_PROGRESS_RESET) == 0)
+    printf(".");
+
+  fflush(stdout);
 }

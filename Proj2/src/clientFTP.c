@@ -2,10 +2,14 @@
 #include "URL.h"
 #include "utils.h"
 
-FTP * ftp;
-URL * url;
+static FTP * ftp;
+static URL * url;
 
+
+//TODO meter a receber a respota que queremos
 static int receiveCommand(int fd, char* responseCmd) {
+
+//TODO - repetir estra função de fomra bonita
 
 	FILE* fp = fdopen(fd, "r");
 	int allocated = 0;
@@ -51,7 +55,7 @@ static int connectSocket(const char* ip, int port) {
 	}
 
 	/*connect to the server*/
-	if(connect(sockfd, (struct sockaddr *)&server_addr,sizeof(server_addr)) < 0){
+	if (connect(sockfd, (struct sockaddr *)&server_addr,sizeof(server_addr)) < 0){
 			perror("connect()");
 			return -1;
 	}
@@ -65,8 +69,11 @@ static void retrieveFile(int fd) {
 
 	sendCommand(fd, "TYPE L 8\r\n", NULL, 1); //Setting type of file to be transferred -> local file
 	sprintf(userCommand, "RETR %s%s\r\n", url->path, url->filename);
-	if(sendCommand(fd, userCommand, NULL, 1) != TRUE)
+	if (sendCommand(fd, userCommand, NULL, 1) != OK) {
 		exit(logError("Failed to retrieve file. Terminating Program.\n"));
+	}
+
+		//TODO - abruptt exit - close stuff.
 }
 
 static void sendUSER(int fd) {
@@ -76,33 +83,44 @@ static void sendUSER(int fd) {
 
 	receiveCommand(fd, NULL);
 
-	sprintf(userCommand, "USER %s\r\n", url->username);
-	sendCommand(fd, userCommand, NULL, 1);
+	if (strcmp(url->user, "anonymous") == OK)
+		printf("Logging in: anonymous mode.\n");
+	else
+		printf("Logging in: authentication mode");
+
+	sprintf(userCommand, "USER %s\r\n", url->user);
+	if(sendCommand(fd, userCommand, NULL, 1) != OK)
+		exit(logError("Failed to log in, wrong username?\nTerminating Program.\n"));
+
+
 	sprintf(passCommand, "PASS %s\r\n", url->password);
-	if(sendCommand(fd, passCommand, NULL, 1) != TRUE)
-		exit(logError("Failed to log in. Terminating Program.\n"));
+	if(sendCommand(fd, passCommand, NULL, 1) != OK)
+		exit(logError("Failed to log in, wrong password?\nTerminating Program.\n"));
 }
 
 static void sendPASV(int fd) {
 
 	char response[MESSAGE_SIZE + 1];
 
-	if(sendCommand(fd, "PASV\r\n", response, 1) != TRUE)
+	if(sendCommand(fd, "PASV\r\n", response, 1) != OK)
 		exit(logError("Failed to enter passive mode. Terminating program."));
 
-	int values[6];
+	int remoteIP[6];
 	char* data = strchr(response, '(');
-	sscanf(data, "(%d, %d, %d, %d, %d, %d)", &values[0],&values[1],&values[2],&values[3],&values[4],&values[5]);
-	sprintf(url->ip, "%d.%d.%d.%d", values[0],values[1],values[2],values[3]);
-	url->port = values[4]*256+values[5];
+	sscanf(data, "(%d, %d, %d, %d, %d, %d)", &remoteIP[0],&remoteIP[1],&remoteIP[2],&remoteIP[3],&remoteIP[4],&remoteIP[5]);
+	sprintf(url->ip, "%d.%d.%d.%d", remoteIP[0],remoteIP[1],remoteIP[2],remoteIP[3]);
+	url->port = remoteIP[4]*256+remoteIP[5];
 }
 
 int download(int fd) {
 	FILE* outfile;
-	if( !(outfile = fopen(url->filename, "w")) ) 
+	if( !(outfile = fopen(url->filename, "w")) )
 		return logError("Unable to open file.");
 
-	char buf[1024]; //TODO -> usar file size da macro
+	int dots = 0;
+	printf("Downloading.");
+
+	char buf[SOCKET_SIZE];
 	int bytes;
 	while ( (bytes = read(fd, buf, sizeof(buf))) != 0 ) {
 		if (bytes < 0)
@@ -111,19 +129,21 @@ int download(int fd) {
 		if ((bytes = fwrite(buf, bytes, 1, outfile)) < 0) {
 			return logError("Unable to write data in file.\n");
 		}
+
+		printDownloadProgress(&dots);
 	}
 
 	fclose(outfile);
 
-	printf("Download finished with success.\n");
+	printf("\nDownload finished with success.\n");
 
-	return TRUE;
+	return OK;
 }
 
 int quitConnection() {
 
 	printf("Closing connection with the server.\n");
-	if(sendCommand(ftp->fdControl, "QUIT\r\n", NULL, 0) != TRUE) {
+	if(sendCommand(ftp->fdControl, "QUIT\r\n", NULL, 0) != OK) {
 		close(ftp->fdData);
 		close(ftp->fdControl);
 		exit(logError("Failed to exit connection. Forcing exit.\n"));
@@ -132,7 +152,7 @@ int quitConnection() {
 	close(ftp->fdData);
 	close(ftp->fdControl);
 
-	return TRUE;
+	return OK;
 }
 
 int startConnection(char* serverUrl) {
@@ -152,12 +172,15 @@ int startConnection(char* serverUrl) {
 
 	if((ftp->fdData = connectSocket(url->ip, url->port)) == 0)
 		exit(logError("Failed to open data connection. Terminating Program.\n"));
-	
+
 	retrieveFile(ftp->fdControl);
 	download(ftp->fdData);
+
+	destructURL(url);
+
 	quitConnection();
 
 	printf("TERMINATING PROGRAM\n");
 
-	return TRUE;
+	return OK;
 }
