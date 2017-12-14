@@ -3,7 +3,7 @@
 #include "URL.h"
 #include "utils.h"
 
-#define URL_REGEX "^ftp://(([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z0-9]+)@)?(([a-z0-9]+[.]?)+)/(([^/]+[/])*)([^/]+)$"
+#define URL_REGEX "^ftp://(([a-zA-Z][^:]*):([^@]+)@)?(([a-z0-9:]+[.]?)+)/(([^/]+[/])*)([^/]+)$"
 
 static int setInUrl(URL * url, int idx, const char * src, int size) {
   switch (idx) {
