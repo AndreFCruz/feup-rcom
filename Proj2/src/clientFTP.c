@@ -5,7 +5,6 @@
 static FTP * ftp;
 static URL * url;
 
-
 void quitConnection();
 
 static void forceQuit(char * errorMSg){
@@ -161,14 +160,13 @@ void quitConnection() {
 	close(ftp->fdControl);
 }
 
-int startConnection(char* serverUrl) {
+int downloadFtpUrl(const char * str) {
 
 	ftp = (FTP *) malloc(sizeof(FTP));
 
 	url = constructURL();
-
-	// TODO fill url values
-	fillIp(url);
+	parseURL(url, str);
+	setIp(url);
 
 	if((ftp->fdControl = connectSocket(url->ip, url->port)) == 0)
 		exit(logError("Failed to open control conection. Terminating Program.\n"));
@@ -183,8 +181,8 @@ int startConnection(char* serverUrl) {
 	download(ftp->fdData);
 
 	destructURL(url);
-
 	quitConnection();
+	free(ftp);
 
 	printf("TERMINATING PROGRAM\n");
 

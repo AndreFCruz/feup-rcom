@@ -33,7 +33,7 @@ URL * constructURL();
  */
 int parseURL(URL* url, const char* str);
 
-void fillIp(URL * url);
+void setIp(URL * url);
 
 /**
  * Prints the contents of the URL struct to STDOUT

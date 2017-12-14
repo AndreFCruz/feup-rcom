@@ -7,10 +7,10 @@
 #define ERROR	1
 #define OK  	0
 
-#define SOCKET_SIZE	              32768  //TODO user defined socket_size
-#define MESSAGE_SIZE	             1024
-#define PATH_MAX	                  255
-#define DOWNLOAD_PROGRESS_RESET    1000
+#define SOCKET_SIZE             32768  //TODO user defined socket_size
+#define MESSAGE_SIZE            1024
+#define PATH_MAX                255
+#define DOWNLOAD_PROGRESS_RESET 1000
 
 char * getIp(char * domain);
 

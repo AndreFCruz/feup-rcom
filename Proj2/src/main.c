@@ -14,17 +14,19 @@
 #include "utils.h"
 #include "clientFTP.h"
 
-#define SERVER_PORT 21
-#define SERVER_ADDR "192.168.28.96"
 #define BUFFER_SIZE 1024
 
-void printUsage(char* argv0) {
-	printf("\nUsage1 Normal: %s ftp://[<user>:<password>@]<host>/<url-path>\n",
-			argv0);
-	printf("Usage2 Anonymous: %s ftp://<host>/<url-path>\n\n", argv0);
+void printUsage(char ** argv) {
+	printf(
+    "\nUsage: %s ftp://[<user>:<password>@]<host>/<url-path>\n",
+		argv[0]);
 }
 
 int main(int argc, char** argv) {
+  if (argc != 2) {
+    printUsage(argv);
+    exit(1);
+  }
 
   URL * url = constructURL();
 

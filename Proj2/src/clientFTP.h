@@ -29,6 +29,6 @@ typedef struct ftp_t {
 	int fdData;
 } FTP;
 
-int startConnection(char* serverUrl);
+int downloadFtpUrl(const char * url);
 
 #endif /* __CLIENTFTP_H */
