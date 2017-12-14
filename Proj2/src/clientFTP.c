@@ -5,16 +5,27 @@
 static FTP * ftp;
 static URL * url;
 
-void quitConnection();
+static void quitConnection();
 
 static void forceQuit(char * errorMSg){
+	int errorStatus = logError(errorMSg);
 	quitConnection();
-	exit(logError(errorMSg));
+	exit(errorStatus);
 }
 
-//TODO meter a receber a respota que queremos
-//TODO - repetir estra função de fomra bonita
-static int receiveCommand(int fd, char* responseCmd) {
+static void printResponse(char * responseCmd){
+  if(DEBUG)
+    printf("%s", responseCmd);
+  else {
+    int msgLength = strlen(responseCmd)-RESPONSE_CODE_OFFSET;
+    char * msgWithoutCode = (char *) malloc(msgLength);
+    memcpy(msgWithoutCode, responseCmd+RESPONSE_CODE_OFFSET, msgLength);
+    printf("%s", msgWithoutCode);
+  }
+}
+
+//TODO - repetir estra função de forma bonita
+static int receiveCommand(int fd, char* responseCmd, char * expectedAnswer) {
 
 	FILE* fp = fdopen(fd, "r");
 	int allocated = 0;
@@ -25,24 +36,28 @@ static int receiveCommand(int fd, char* responseCmd) {
 	do {
 		memset(responseCmd, 0, MESSAGE_SIZE);
 		responseCmd = fgets(responseCmd, MESSAGE_SIZE, fp);
-		printf("%s", responseCmd);
+		printResponse(responseCmd);
 	}  while (!('1' <= responseCmd[0] && responseCmd[0] <= '5') || responseCmd[3] != ' ');
-	char reply_series = responseCmd[0];
+
+	if(expectedAnswer != NULL && strncmp(expectedAnswer, responseCmd, strlen(expectedAnswer))){
+		if(allocated)
+			free(responseCmd);
+		return ERROR;
+	}
+
 	if(allocated)
 		free(responseCmd);
-	return (reply_series > '4');
 
+	return OK;
 }
 
-static int sendCommand(int fd, const char* msg, char* response, unsigned readAnswer) {
+static int sendCommand(int fd, const char* msg, char* response, char * expectedAnswer) {
 	int nBytes = write(fd, msg, strlen(msg));
-	if (readAnswer)
-		return receiveCommand(fd, response);
+	if (expectedAnswer != NULL) 
+		return receiveCommand(fd, response, expectedAnswer);
 	else return (nBytes == 0);
-
 }
 
-//Code given by the teachers
 static int connectSocket(const char* ip, int port) {
 	int	sockfd;
 	struct	sockaddr_in server_addr;
@@ -72,10 +87,9 @@ static void retrieveFile(int fd) {
 
 	char userCommand[MESSAGE_SIZE + 1];
 
-	sendCommand(fd, "TYPE L 8\r\n", NULL, 1); //Setting type of file to be transferred -> local file
+	sendCommand(fd, "TYPE L 8\r\n", NULL, SET_TYPE); //Setting type of file to be transferred -> local file
 	sprintf(userCommand, "RETR %s%s\r\n", url->path, url->filename);
-	if(sendCommand(fd, userCommand, NULL, 1) != OK)
-		//exit(logError("Failed to retrieve file. Terminating Program.\n"));
+	if(sendCommand(fd, userCommand, NULL, FINISHED) != OK)
 		forceQuit("Failed to retrieve file. Terminating Program.");
 }
 
@@ -84,7 +98,7 @@ static void sendUSER(int fd) {
 	char userCommand[MESSAGE_SIZE + 1];
 	char passCommand[MESSAGE_SIZE + 1];
 
-	receiveCommand(fd, NULL);
+	receiveCommand(fd, NULL, NULL);
 
 	if (strcmp(url->username, "anonymous") == OK)
 		printf("Logging in: anonymous mode.\n");
@@ -92,14 +106,12 @@ static void sendUSER(int fd) {
 		printf("Logging in: authentication mode");
 
 	sprintf(userCommand, "USER %s\r\n", url->username);
-	if(sendCommand(fd, userCommand, NULL, 1) != OK)
-		//exit(logError("Failed to log in, wrong username?\nTerminating Program.\n"));
+	if(sendCommand(fd, userCommand, NULL, REQUIRED_PASSWORD) != OK)
 		forceQuit("Failed to log in, wrong username?\nTerminating Program.");
 
 
 	sprintf(passCommand, "PASS %s\r\n", url->password);
-	if(sendCommand(fd, passCommand, NULL, 1) != OK)
-		//exit(logError("Failed to log in, wrong password?\nTerminating Program.\n"));
+	if(sendCommand(fd, passCommand, NULL, SUCCESS_LOGIN) != OK)
 		forceQuit("Failed to log in, wrong password?\nTerminating Program.");
 }
 
@@ -107,8 +119,7 @@ static void sendPASV(int fd) {
 
 	char response[MESSAGE_SIZE + 1];
 
-	if(sendCommand(fd, "PASV\r\n", response, 1) != OK)
-		//exit(logError("Failed to enter passive mode. Terminating program."));
+	if(sendCommand(fd, "PASV\r\n", response, PASSIVE_MODE) != OK)
 		forceQuit("Failed to enter passive mode. Terminating program.");
 
 
@@ -119,7 +130,7 @@ static void sendPASV(int fd) {
 	url->port = remoteIP[4]*256+remoteIP[5];
 }
 
-int download(int fd) {
+static int download(int fd) {
 	FILE* outfile;
 	if( !(outfile = fopen(url->filename, "w")) )
 		return logError("Unable to open file.");
@@ -142,15 +153,15 @@ int download(int fd) {
 
 	fclose(outfile);
 
-	printf("\nDownload finished with success.\n");
+	printf("\rDownload finished with success.\n");
 
 	return OK;
 }
 
-void quitConnection() {
+static void quitConnection() {
 
 	printf("Closing connection with the server.\n");
-	if(sendCommand(ftp->fdControl, "QUIT\r\n", NULL, 0) != OK) {
+	if(sendCommand(ftp->fdControl, "QUIT\r\n", NULL, NULL) != OK) {
 		close(ftp->fdData);
 		close(ftp->fdControl);
 		exit(logError("Failed to exit connection. Forcing exit.\n"));
@@ -165,7 +176,10 @@ int downloadFtpUrl(const char * str) {
 	ftp = (FTP *) malloc(sizeof(FTP));
 
 	url = constructURL();
-	parseURL(url, str);
+	//parseURL(url, str);
+
+	setURLTestValues(url);
+
 	setIp(url);
 
 	if((ftp->fdControl = connectSocket(url->ip, url->port)) == 0)

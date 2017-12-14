@@ -6,6 +6,7 @@
 #define URL_REGEX "^ftp://(([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z0-9]+)@)?(([a-zA-Z][a-zA-Z0-9]*[.]?)+)/(([^/]+/)*)([^/]+.[a-zA-Z]+)$"
 
 static int setInUrl(URL * url, int idx, const char * src, int size) {
+  printf("Src: %s\n", src);
   switch (idx) {
     case 0: // whole capture
     case 1: // identity:password
@@ -111,6 +112,14 @@ URL * constructURL() {
   url->port = 21;
 
   return url;
+}
+
+void setURLTestValues(URL * url) {
+  strcpy(url->username, "anonymous");
+  strcpy(url->password, "mail@domain");
+  strcpy(url->hostname, "ftp.dei.uc.pt");
+  strcpy(url->path, "pub/linux/CentOS/");
+  strcpy(url->filename, "timestamp.txt");
 }
 
 void setIp(URL * url){

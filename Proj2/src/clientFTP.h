@@ -16,13 +16,16 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define SERVER_READY      "220"
-#define TRANSFER_COMPLETE "226"
-#define REQUIRED_PASSWORD "331"
-#define SUCCESS_LOGIN     "230"
+#define DEBUG					0
+
+#define SERVER_READY      	"220"
+#define TRANSFER_COMPLETE 	"226"
+#define REQUIRED_PASSWORD	"331"
+#define SUCCESS_LOGIN     	"230"
 #define FINISHED	      	"150"
 #define	PASSIVE_MODE	  	"227"
 #define DIRECTORY_OK	  	"250"
+#define SET_TYPE  			"200"
 
 typedef struct ftp_t {
 	int fdControl;

@@ -11,6 +11,7 @@
 #define MESSAGE_SIZE            1024
 #define PATH_MAX                255
 #define DOWNLOAD_PROGRESS_RESET 1000
+#define RESPONSE_CODE_OFFSET	4
 
 char * getIp(char * domain);
 
