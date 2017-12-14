@@ -9,6 +9,8 @@
 #include <netdb.h>
 #include <string.h>
 #include <regex.h>
+
+#include "URL.h"
 #include "utils.h"
 #include "clientFTP.h"
 
@@ -22,25 +24,16 @@ void printUsage(char* argv0) {
 	printf("Usage2 Anonymous: %s ftp://<host>/<url-path>\n\n", argv0);
 }
 
-int main(int argc, char** argv){
-	/*
-  regex_t r;
-  const char * regex_text;
-  if (argc == 2) {
-    regex_text = "^ftp://(([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z0-9]+)@)?(([a-zA-Z][a-zA-Z0-9]*[.]?)+)/(([^/]+/)*([^/]+))?$";
-    // regex_text = "^ftp://(([a-z]+):([a-z]+)@)?([a-z.]+)/([a-z/.]+)?$";
-  } else if (argc == 3) {
-    regex_text = argv[2];
-  }
-  const char * find_text = argv[1];
+int main(int argc, char** argv) {
 
-  printf ("Trying to find '%s' in '%s'\n", regex_text, find_text);
-  compile_regex (& r, regex_text);
-  match_regex (& r, find_text);
-  regfree (& r);
+  URL * url = constructURL();
+
+  if (argc == 2) {
+    parseURL(url, argv[1]);
+  }
+
+  printURL(url);
+  destructURL(url);
 
   return 0;
-	*/
-
-	startConnection("");
 }

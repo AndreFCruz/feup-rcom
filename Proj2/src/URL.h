@@ -15,12 +15,12 @@
 
 typedef struct url_t {
   int port;
-  char ip[URL_STR_LEN];   		// host's ip
-  char host[URL_STR_LEN];		// hostname
-  char path[URL_STR_LEN];		// file path
-  char filename[URL_STR_LEN];	// filename
-  char user[URL_STR_LEN];		// username
-  char password[URL_STR_LEN];	// password
+  char ip[URL_STR_LEN];       // host's ip
+  char path[URL_STR_LEN];     // file path
+  char hostname[URL_STR_LEN]; // hostname
+  char filename[URL_STR_LEN]; // filename
+  char username[URL_STR_LEN]; // username
+  char password[URL_STR_LEN]; // password
 } URL;
 
 /**
@@ -35,7 +35,10 @@ int parseURL(URL* url, const char* str);
 
 void fillIp(URL * url);
 
-void setURLTestValues(URL * url);
+/**
+ * Prints the contents of the URL struct to STDOUT
+ */
+void printURL(URL * url);
 
 /**
  * URL struct destructor

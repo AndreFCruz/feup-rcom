@@ -61,7 +61,7 @@ static int connectSocket(const char* ip, int port) {
 	}
 
 	/*connect to the server*/
-	if(connect(sockfd, (struct sockaddr *)&server_addr,sizeof(server_addr)) < 0){
+	if (connect(sockfd, (struct sockaddr *)&server_addr,sizeof(server_addr)) < 0){
 			perror("connect()");
 			return -1;
 	}
@@ -87,12 +87,12 @@ static void sendUSER(int fd) {
 
 	receiveCommand(fd, NULL);
 
-	if (strcmp(url->user, "anonymous") == OK)
+	if (strcmp(url->username, "anonymous") == OK)
 		printf("Logging in: anonymous mode.\n");
 	else
 		printf("Logging in: authentication mode");
 
-	sprintf(userCommand, "USER %s\r\n", url->user);
+	sprintf(userCommand, "USER %s\r\n", url->username);
 	if(sendCommand(fd, userCommand, NULL, 1) != OK)
 		//exit(logError("Failed to log in, wrong username?\nTerminating Program.\n"));
 		forceQuit("Failed to log in, wrong username?\nTerminating Program.");
@@ -130,7 +130,7 @@ int download(int fd) {
 
 	char buf[SOCKET_SIZE];
 	int bytes;
-	while ( (bytes = read(fd, buf, SOCKET_SIZE)) ) {
+	while ( (bytes = read(fd, buf, sizeof(buf))) != 0 ) {
 		if (bytes < 0)
 			return logError("Empty data socket, nothing to receive.\n");
 
@@ -167,15 +167,8 @@ int startConnection(char* serverUrl) {
 
 	url = constructURL();
 
-	setURLTestValues(url);
-
+	// TODO fill url values
 	fillIp(url);
-
-	/*
-	if (!parseURL(url, serverUrl)) {
-		return ERROR;
-	}
-	*/
 
 	if((ftp->fdControl = connectSocket(url->ip, url->port)) == 0)
 		exit(logError("Failed to open control conection. Terminating Program.\n"));
