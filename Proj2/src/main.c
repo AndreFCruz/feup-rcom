@@ -12,6 +12,7 @@
 
 #include "URL.h"
 #include "utils.h"
+#include "clientFTP.h"
 
 #define SERVER_PORT 21
 #define SERVER_ADDR "192.168.28.96"
@@ -23,7 +24,7 @@ void printUsage(char* argv0) {
 	printf("Usage2 Anonymous: %s ftp://<host>/<url-path>\n\n", argv0);
 }
 
-int main(int argc, char** argv){
+int main(int argc, char** argv) {
 
   URL * url = constructURL();
 

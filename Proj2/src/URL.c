@@ -113,6 +113,11 @@ URL * constructURL() {
   return url;
 }
 
+void fillIp(URL * url){
+    memset(url->ip, 0, URL_STR_LEN);
+    strcpy(url->ip, getIp(url->hostname));
+}
+
 void destructURL(URL * url) {
   free(url);
 }

@@ -32,34 +32,16 @@ void insertCharAt(char * dest, const char * src, char c, int size, int idx) {
 }
 
 char * getIp(char * domain) {
-    struct hostent *h;
-
-/*
-struct hostent {
-    char    *h_name;	Official name of the host.
-    char    **h_aliases;	A NULL-terminated array of alternate names for the host.
-    int     h_addrtype;	The type of address being returned; usually AF_INET.
-    int     h_length;	The length of the address in bytes.
-    char    **h_addr_list;	A zero-terminated array of network addresses for the host.
-    Host addresses are in Network Byte Order.
-};
-
-#define h_addr h_addr_list[0]	The first address in h_addr_list.
-*/
-    if ((h=gethostbyname(domain)) == NULL) {
-        herror("gethostbyname");
-        exit(1);
-    }
-
-    /*
-    printf("Host name  : %s\n", h->h_name);
-    printf("IP Address : %s\n",inet_ntoa(*((struct in_addr *)h->h_addr)));
-    */
-
-    return inet_ntoa(*((struct in_addr *)h->h_addr));
+  struct hostent *h;
+  if ((h=gethostbyname(domain)) == NULL) {
+      herror("gethostbyname");
+      exit(1);
+  }
+  
+  return inet_ntoa(*((struct in_addr *)h->h_addr));
 }
 
-int logError(char * msg) {
-  printf("%s %s\n", "ERROR:", msg);
+int logError(char * errorMsg) {
+  fprintf(stderr, "Error: %s\n", errorMsg);
   return FALSE;
 }
