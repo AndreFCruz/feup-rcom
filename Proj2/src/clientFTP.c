@@ -176,10 +176,9 @@ int downloadFtpUrl(const char * str) {
 	ftp = (FTP *) malloc(sizeof(FTP));
 
 	url = constructURL();
-	parseURL(url, str);
-
-	//setURLTestValues(url);
-
+	if (parseURL(url, str))
+		exit(logError("Error parsing url. Please provide a valid url.\n"));
+		
 	setIp(url);
 
 	printURL(url);
