@@ -6,8 +6,6 @@
 #define URL_REGEX "^ftp://(([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z0-9]+)@)?(([a-zA-Z][a-zA-Z0-9]*[.]?)+)/(([^/]+/)*)([^/]+.[a-zA-Z]+)$"
 
 static int setInUrl(URL * url, int idx, const char * src, int size) {
-  char match[size + 1];
-
   switch (idx) {
     case 0: // whole capture
     case 1: // identity:password
@@ -46,11 +44,6 @@ static int setInUrl(URL * url, int idx, const char * src, int size) {
       break;
   }
 
-  strncpy(match, src, size);
-  match[size] = 0;
-  printf("%d 1->%s\n", idx, match);
-  printf("%d 2->%.*s\n\n", idx, size, src);
-
   return 1;
 }
 
@@ -73,7 +66,6 @@ static int match_url_regex(regex_t * r, const char * to_match, URL * url) {
     int i = 0;
     int nomatch = regexec (r, p, N_MATCHES, m, 0);
     if (nomatch) {
-        printf ("No more matches.\n");
         return nomatch;
     }
     for (i = 0; i < N_MATCHES; i++) {
@@ -91,8 +83,6 @@ int parseURL(URL * url, const char* str) {
   regex_t r;
   const char * regex_text = URL_REGEX;
   compile_regex(&r, regex_text);
-
-  printf("Trying to find '%s' in '%s'\n", regex_text, str);
   match_url_regex(&r, str, url);
   regfree(&r);
 
