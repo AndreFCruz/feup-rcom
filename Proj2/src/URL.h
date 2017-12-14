@@ -15,12 +15,12 @@
 
 typedef struct url_t {
   int port;
-  char ip[URL_STR_LEN];   // host's ip
-  char host[URL_STR_LEN]; // hostname
-  char path[URL_STR_LEN]; // file path
-  char filename[URL_STR_LEN]; // filename
-  char user[URL_STR_LEN]; // username
-  char password[URL_STR_LEN]; // password
+  char ip[URL_STR_LEN];   		// host's ip
+  char host[URL_STR_LEN];		// hostname
+  char path[URL_STR_LEN];		// file path
+  char filename[URL_STR_LEN];	// filename
+  char user[URL_STR_LEN];		// username
+  char password[URL_STR_LEN];	// password
 } URL;
 
 /**

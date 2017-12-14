@@ -36,7 +36,6 @@ URL * constructURL() {
 void setURLTestValues(URL * url) {
   strcpy(url->user, "anonymous");
   strcpy(url->password, "mail@domain");
-  //url->password = NULL;
   strcpy(url->host, "ftp.dei.uc.pt");
   strcpy(url->path, "pub/linux/CentOS/");
   strcpy(url->filename, "timestamp.txt");
@@ -45,7 +44,7 @@ void setURLTestValues(URL * url) {
 
 void fillIp(URL * url){
     memset(url->ip, 0, URL_STR_LEN);
-    strcpy(url->ip,getIp(url->host));
+    strcpy(url->ip, getIp(url->host));
 }
 
 void destructURL(URL * url) {

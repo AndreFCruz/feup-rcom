@@ -91,7 +91,7 @@ struct hostent {
     return inet_ntoa(*((struct in_addr *)h->h_addr));
 }
 
-int logError(char * msg) {
-  printf("%s %s\n", "ERROR:", msg);
+int logError(char * errorMsg) {
+  fprintf(stderr, "Error: %s\n", errorMsg);
   return FALSE;
 }
